@@ -1,44 +1,45 @@
-import React, { useContext, useEffect, useState } from 'react';
-import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
-import { Corpus, Word } from '../../structs';
-import {
-  getAvailableCorpora,
-  getAvailableCorporaIds,
-  queryText,
-} from '../../workbench/query';
+import { CorpusContainer, Word } from '../../structs';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
-
-const getRefParam = (): string | null => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('ref');
-};
-
-const getRefFromURL = (): BCVWP | null => {
-  const refParam = getRefParam();
-
-  if (refParam) {
-    return parseFromString(refParam);
-  }
-  return null;
-};
+import { AppContext } from '../../App';
+import { UserPreference } from 'state/preferences/tableManager';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
+import _ from 'lodash';
+import { useAppDispatch } from '../../app/index';
+import { resetTextSegments } from '../../state/alignment.slice';
+import { Stack } from '@mui/material';
 
 const defaultDocumentTitle = 'ClearAligner';
 
-export const AlignmentEditor = () => {
+interface AlignmentEditorProps {
+  showNavigation?: boolean;
+}
+
+export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true }) => {
   const layoutCtx = useContext(LayoutContext);
+  const { sourceContainer, targetContainer } = useCorpusContainers();
   const [availableWords, setAvailableWords] = useState([] as Word[]);
-  const [selectedCorpora, setSelectedCorpora] = useState([] as Corpus[]);
+  const [selectedCorporaContainers, setSelectedCorporaContainers] = useState(
+    [] as CorpusContainer[]
+  );
+  const appCtx = useContext(AppContext);
+  const dispatch = useAppDispatch();
+  const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1,1,1), [appCtx.preferences?.bcv]);
 
-  const [currentPosition, setCurrentPosition] = useState(getRefFromURL());
+  useEffect(() => {
+    if (sourceContainer && targetContainer)
+      setSelectedCorporaContainers([ sourceContainer, targetContainer ]);
+  }, [sourceContainer, targetContainer]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentPosition) {
       layoutCtx.setWindowTitle(
         `${defaultDocumentTitle}: ${
-          currentPosition?.getBookInfo()?.EnglishBookName
+          currentPosition.getBookInfo()?.EnglishBookName
         } ${currentPosition?.chapter}:${currentPosition?.verse}`
       );
     } else {
@@ -46,64 +47,58 @@ export const AlignmentEditor = () => {
     }
   }, [currentPosition, layoutCtx]);
 
-  React.useEffect(() => {
-    const loadSourceWords = async () => {
-      const corpora = await getAvailableCorpora();
-      const corpus = corpora.find((v: Corpus) => v.id === 'sbl-gnt');
-      const currentPosition = new BCVWP(45, 5, 3);
-
-      const retrievedCorpora: Corpus[] = [];
-
-      for (const corpusId of corpora.map((c) => c.id)) {
-        const corpus = await queryText(corpusId, currentPosition);
-        if (corpus) retrievedCorpora.push(corpus!);
-      }
-
-      setSelectedCorpora(retrievedCorpora);
-      setAvailableWords(corpus?.words ?? []);
-      setCurrentPosition(currentPosition);
-    };
-
-    loadSourceWords().catch(console.error);
-  }, [setAvailableWords, setCurrentPosition, setSelectedCorpora]);
-
-  React.useEffect(() => {
-    if (!currentPosition) {
+  useEffect(() => {
+    if (!targetContainer) {
       return;
     }
-    const loadCorporaAtPosition = async () => {
-      const corpusIds = await getAvailableCorporaIds();
-
-      const retrievedCorpora: Corpus[] = [];
-      for (const corpusId of corpusIds) {
-        const corpus = await queryText(corpusId, currentPosition);
-        if (corpus) retrievedCorpora.push(corpus);
-      }
-      setSelectedCorpora(retrievedCorpora);
+    const loadSourceWords = async () => {
+      setAvailableWords(
+        targetContainer?.corpora.flatMap(({ words }) => words) ?? []
+      );
     };
-
-    void loadCorporaAtPosition();
-  }, [currentPosition, setSelectedCorpora]);
+    void loadSourceWords().catch(console.error);
+  }, [targetContainer?.corpora, setAvailableWords, targetContainer]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
-      <BCVDisplay currentPosition={currentPosition} />
+      <BCVDisplay currentPosition={appCtx.preferences?.bcv} />
     );
-  }, [layoutCtx, currentPosition]);
+  }, [layoutCtx, appCtx.preferences?.bcv]);
+
+  // reset selected tokens when the book, chapter or verse changes
+  useEffect(() => {
+    dispatch(resetTextSegments())
+  }, [appCtx.preferences?.bcv, dispatch])
 
   return (
-    <>
-      <div style={{ display: 'grid', justifyContent: 'center' }}>
-        <br />
-        <BCVNavigation
-          horizontal
-          disabled={!availableWords || availableWords.length < 1}
-          words={availableWords}
-          currentPosition={currentPosition ?? undefined}
-          onNavigate={setCurrentPosition}
-        />
-      </div>
-      <Workbench corpora={selectedCorpora} currentPosition={currentPosition} />
-    </>
+    <Stack direction={'column'} minWidth={'100%'} height={'100%'}>
+      {
+        showNavigation && (
+          <div style={{ display: 'grid', justifyContent: 'center' }}>
+            <br />
+            <BCVNavigation
+              horizontal
+              disabled={!availableWords || availableWords.length < 1}
+              words={availableWords}
+              currentPosition={currentPosition}
+              onNavigate={bcv => {
+                if (!_.isEqual(bcv, currentPosition)) {
+                  appCtx.setPreferences((previousState): UserPreference => {
+                    return {
+                      ...previousState as UserPreference,
+                      bcv
+                    };
+                  });
+                }
+              }}
+            />
+          </div>
+        )
+      }
+      <Workbench
+        corpora={selectedCorporaContainers}
+        currentPosition={currentPosition}
+      />
+    </Stack>
   );
 };

@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { PivotWord } from './structs';
 import { Paper } from '@mui/material';
 import { GridSortItem } from '@mui/x-data-grid';
+import { AlignmentSide, TextDirection } from '../../structs';
 
 const meta: Meta<typeof PivotWordTable> = {
-  title: 'PivotWordTable',
+  title: 'Concordance View/PivotWordTable',
   component: PivotWordTable,
 };
 
@@ -14,32 +15,67 @@ export default meta;
 
 const pivotWords: PivotWord[] = [
   {
-    frequency: 73_611,
-    pivotWord: 'the',
+    side: AlignmentSide.TARGET,
+    normalizedText: 'the',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR
+    },
+    frequency: 1
   },
   {
-    frequency: 60_382,
-    pivotWord: 'and',
+    side: AlignmentSide.TARGET,
+    normalizedText: 'and',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR
+    },
+    frequency: 1
   },
   {
-    frequency: 40_029,
-    pivotWord: 'of',
+    side: AlignmentSide.TARGET,
+    normalizedText: 'of',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR
+    },
+    frequency: 1
   },
   {
-    frequency: 16_372,
-    pivotWord: 'to',
+    side: AlignmentSide.TARGET,
+    normalizedText: 'to',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR
+    },
+    frequency: 1
   },
   {
-    frequency: 5_000,
-    pivotWord: 'thus',
+    side: AlignmentSide.TARGET,
+    normalizedText: 'thus',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR
+    },
+    frequency: 1
   },
   {
-    frequency: 4_999,
-    pivotWord: 'so',
+    side: AlignmentSide.TARGET,
+    normalizedText: 'so',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR
+    },
+    frequency: 1
   },
   {
-    frequency: 4_998,
-    pivotWord: 'as',
+    side: AlignmentSide.TARGET,
+    normalizedText: 'as',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR
+    },
+    frequency: 1
   },
 ];
 

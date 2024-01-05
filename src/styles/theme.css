@@ -17,3 +17,8 @@
   --day-selected-segment-font-color: white;
   --day-syntax-label-background: lightgrey;
 }
+
+@font-face {
+  font-family: 'sbl-hebrew';
+  src: url('./SBL_Hbrw.ttf') format('truetype');
+}

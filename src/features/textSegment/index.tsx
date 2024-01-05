@@ -1,17 +1,25 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
-import { toggleTextSegment, AlignmentMode } from 'state/alignment.slice';
-import { hover, relatedAlignments } from 'state/textSegmentHover.slice';
-import { Alignment, Word, Link, Corpus } from 'structs';
-import findRelatedAlignments from 'helpers/findRelatedAlignments';
+import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
+import { hover } from 'state/textSegmentHover.slice';
+import { AlignmentSide, LanguageInfo, Link, Word } from 'structs';
 
 import './textSegment.style.css';
+import { LocalizedTextDisplay } from '../localizedTextDisplay';
+import { LimitedToLinks } from '../corpus/verseDisplay';
+import { AlignmentMode } from '../../state/alignmentState';
+import _ from 'lodash';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
-interface TextSegmentProps {
-  corpus: Corpus;
+export interface TextSegmentProps extends LimitedToLinks {
+  readonly?: boolean;
   word: Word;
+  languageInfo?: LanguageInfo;
+  showAfter?: boolean;
+  alignment?: 'flex-end' | 'flex-start' | 'center';
+  links?: Map<string, Link>;
 }
 
 const computeVariant = (
@@ -28,6 +36,7 @@ const computeVariant = (
 };
 
 const computeDecoration = (
+  readonly: boolean,
   isHovered: boolean,
   isRelated: boolean,
   mode: AlignmentMode,
@@ -36,7 +45,12 @@ const computeDecoration = (
   isMemberOfMultipleAlignments: boolean
 ): string => {
   let decoration = '';
-  if (mode === AlignmentMode.Edit || mode === AlignmentMode.Select) {
+  if (
+    mode === AlignmentMode.Edit ||
+    mode === AlignmentMode.Create ||
+    mode === AlignmentMode.PartialCreate ||
+    mode === AlignmentMode.PartialEdit
+  ) {
     if (isLinked) {
       // Prevents previously linked segments being added to other links.
       decoration += ' locked';
@@ -50,7 +64,7 @@ const computeDecoration = (
     return decoration;
   }
 
-  if (isHovered) {
+  if (isHovered && !readonly) {
     decoration += ' focused';
   }
 
@@ -65,222 +79,144 @@ const computeDecoration = (
   return decoration;
 };
 
-export const TextSegment = (props: TextSegmentProps): ReactElement => {
-  const { corpus, word } = props;
-
+export const TextSegment = ({
+                              readonly,
+                              word,
+                              languageInfo,
+                              alignment,
+                              links,
+                              showAfter = false
+                            }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
   const dispatch = useAppDispatch();
-
-  const alignments = useAppSelector((state) => {
-    return state.alignment.present.alignments;
-  });
-
-  const mode = useAppSelector((state) => {
-    return state.alignment.present.mode;
-  });
-
-  const isHovered = useAppSelector(
+  const mode = useAppSelector(selectAlignmentMode); // get alignment mode
+  const isHoveredWord = useAppSelector(
     (state) =>
-      state.textSegmentHover.hovered?.id === word.id &&
-      state.textSegmentHover.hovered?.corpusId === word.corpusId
+      state.textSegmentHover.hovered?.side === word.side &&
+      state.textSegmentHover.hovered?.id === word.id
   );
-
-  const isMemberOfMultipleAlignments = useAppSelector((state) => {
-    const relatedAlignments = state.alignment.present.alignments.filter(
-      (alignment) => {
-        return (
-          alignment.source === word.corpusId ||
-          alignment.target === word.corpusId
-        );
-      }
-    );
-    return relatedAlignments.length > 1;
-  });
-
-  const isSelected = Boolean(
-    useAppSelector((state) => {
-      const alignment = state.alignment.present.alignments.find((_) => true);
-      if (!alignment) {
-        return false;
-      }
-      return (
-        (alignment.source === word.corpusId &&
-          state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
-        (alignment.target === word.corpusId &&
-          state.alignment.present.inProgressLink?.targets.includes(word.id))
-      );
-    })
+  const currentlyHoveredWord = useAppSelector(
+    (state) => state.textSegmentHover.hovered
   );
-
-  const isInProgressLinkMember = Boolean(
-    useAppSelector((state) => {
-      return (
-        corpus.id === word.corpusId &&
-        (state.alignment.present.inProgressLink?.sources.includes(word.id) ||
-          state.alignment.present.inProgressLink?.targets.includes(word.id))
-      );
-    })
-  );
-
-  const isRelated = Boolean(
-    useAppSelector((state) => {
-      if (word) {
-        const relatedAlignment = state.textSegmentHover.relatedAlignments.find(
-          (alignment: Alignment) => {
-            return (
-              alignment.source === word.corpusId ||
-              alignment.target === word.corpusId
-            );
-          }
-        );
-
-        const relatedLink = relatedAlignment?.links.filter((link: Link) => {
-          return (
-            (relatedAlignment.source === word.corpusId &&
-              link.sources.includes(word.id)) ||
-            (relatedAlignment.target === word.corpusId &&
-              link.targets.includes(word.id))
-          );
-        });
-
-        return Boolean(relatedLink?.length);
-      }
-    })
-  );
-
-  const link = useAppSelector((state) => {
-    const inProgressLink = state.alignment.present.inProgressLink;
-
-    const contextualAlignment = state.alignment.present.alignments.find(
-      (alignment: Alignment) => {
-        if (inProgressLink) {
-          return (
-            inProgressLink.source === alignment.source &&
-            inProgressLink.target === alignment.target
-          );
-        }
-        return false;
-      }
-    );
-
-    let foundLink = null;
-
-    if (contextualAlignment) {
-      if (word) {
-        for (const link of contextualAlignment.links) {
-          if (
-            (contextualAlignment.source === word.corpusId &&
-              link.sources.includes(word.id)) ||
-            (contextualAlignment.target === word.corpusId &&
-              link.targets.includes(word.id))
-          ) {
-            foundLink = link;
-          }
-        }
-      }
-    } else {
-      if (word) {
-        const possibleAlignments = state.alignment.present.alignments.filter(
-          (alignment: Alignment) => {
-            return (
-              alignment.source === word.corpusId ||
-              alignment.target === word.corpusId
-            );
-          }
-        );
-        for (const alignment of possibleAlignments) {
-          for (const link of alignment.links) {
-            if (
-              (alignment.source === word.corpusId &&
-                link.sources.includes(word.id)) ||
-              (alignment.target === word.corpusId &&
-                link.targets.includes(word.id))
-            ) {
-              foundLink = link;
-            }
-          }
-        }
-      }
+  const wordLinks = useMemo<Link[]>(() => {
+    if (!links
+      || !word?.id) {
+      return [];
     }
-    return foundLink;
-  });
+    const result = links.get(BCVWP.sanitize(word.id));
+    return (result ? [result] : []);
+  }, [links, word?.id]);
+  const hoveredLinks = useMemo<Link[]>(() => {
+    if (!links
+      || !currentlyHoveredWord?.id) {
+      return [];
+    }
+    const sanitized = BCVWP.sanitize(currentlyHoveredWord.id);
+    const result = [...links.values()].find((link: Link) => link[currentlyHoveredWord.side].includes(sanitized));
+    return result ? [result] : [];
+  }, [links, currentlyHoveredWord?.id, currentlyHoveredWord?.side]);
 
-  const isLinked = Boolean(link);
-
-  const mightBeWorkingOnLink = Boolean(
-    useAppSelector((state) => {
-      const inProgressLink = state.alignment.present.inProgressLink;
-
-      if (inProgressLink && link) {
-        const sourcesIntersection = link.sources.filter((sourceId) => {
-          return inProgressLink.sources.includes(sourceId);
-        });
-        const targetsIntersection = link.targets.filter((targetId) => {
-          return inProgressLink.targets.includes(targetId);
-        });
-
-        return sourcesIntersection.length > 0 || targetsIntersection.length > 0;
-      }
-    })
+  const isMemberOfMultipleAlignments = useMemo(
+    () => (wordLinks ?? []).length > 1,
+    [wordLinks]
   );
 
-  const isCurrentLinkMember = mightBeWorkingOnLink || isInProgressLinkMember;
+  const wasMemberOfCurrentlyEditedLink = useAppSelector((state) =>
+    state.alignment.present.inProgressLink?.id && wordLinks.map((link) => link.id).includes(state.alignment.present.inProgressLink?.id)
+  );
 
-  const isInvolved = Boolean(
-    useAppSelector((state) => {
-      const inProgressLink = state.alignment.present.inProgressLink;
-      if (inProgressLink) {
-        return (
-          inProgressLink.source === word.corpusId ||
-          inProgressLink.target === word.corpusId
+  const isSelectedInEditedLink = useAppSelector((state) => {
+    switch (word.side) {
+      case AlignmentSide.SOURCE:
+        return !!state.alignment.present.inProgressLink?.sources.includes(
+          BCVWP.sanitize(word.id)
         );
-      }
-    })
+      case AlignmentSide.TARGET:
+        return !!state.alignment.present.inProgressLink?.targets.includes(
+          BCVWP.sanitize(word.id)
+        );
+    }
+  });
+
+  const isRelatedToCurrentlyHovered = useMemo(
+    () => {
+      return _.intersection(wordLinks, hoveredLinks).length > 0;
+    },
+    [wordLinks, hoveredLinks]
+  );
+
+  const isLinked = useMemo(
+    () => (wordLinks ?? []).length > 0,
+    [wordLinks]
+  );
+
+  const hasInProgressLink = useAppSelector(
+    (state) => !!state.alignment.present.inProgressLink
   );
 
   if (!word) {
     return <span>{'ERROR'}</span>;
   }
+
   return (
     <React.Fragment>
-      <span> </span>
-      <Typography
-        paragraph={false}
-        component="span"
-        variant={computeVariant(isSelected, isLinked)}
-        className={`text-segment ${computeDecoration(
-          isHovered,
-          isRelated,
-          mode,
-          isLinked,
-          isInvolved,
-          isMemberOfMultipleAlignments
-        )}`}
-        style={{ padding: '1px' }}
-        onMouseEnter={() => {
-          dispatch(hover(word));
-          dispatch(relatedAlignments(findRelatedAlignments(alignments, word)));
-        }}
-        onMouseLeave={() => {
-          dispatch(hover(null));
-          dispatch(relatedAlignments([]));
-        }}
-        onClick={() => {
-          const editOrSelect =
-            [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) &&
-            (!isLinked || isCurrentLinkMember) &&
-            isInvolved;
-          const unLinkedEdit = mode === AlignmentMode.PartialEdit && !isLinked;
-          const cleanSlate = mode === AlignmentMode.CleanSlate;
-
-          if (editOrSelect || unLinkedEdit || cleanSlate) {
-            dispatch(toggleTextSegment(word));
-          }
-        }}
-      >
-        {props.word.text}
-      </Typography>
+        <LocalizedTextDisplay languageInfo={languageInfo}>
+            <Typography
+              paragraph={false}
+              component="span"
+              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              style={{
+                ...(languageInfo?.fontFamily
+                  ? { fontFamily: languageInfo.fontFamily }
+                  : {})
+              }} >
+              <Typography
+              paragraph={false}
+              component="span"
+              variant={computeVariant(isSelectedInEditedLink, isLinked)}
+              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              className={`text-segment${
+                readonly ? '.readonly' : ''
+              } ${computeDecoration(
+                !!readonly,
+                isHoveredWord,
+                isRelatedToCurrentlyHovered,
+                mode,
+                isLinked,
+                hasInProgressLink,
+                isMemberOfMultipleAlignments
+              )}`}
+              style={{
+                ...(languageInfo?.fontFamily
+                  ? { fontFamily: languageInfo.fontFamily }
+                  : {})
+              }}
+              onMouseEnter={
+                readonly
+                  ? undefined
+                  : () => {
+                    dispatch(hover(word));
+                  }
+              }
+              onMouseLeave={
+                readonly
+                  ? undefined
+                  : () => {
+                    dispatch(hover(null));
+                  }
+              }
+              onClick={
+                readonly || (isLinked && hasInProgressLink && !wasMemberOfCurrentlyEditedLink)
+                  ? undefined
+                  : () => dispatch(toggleTextSegment({ foundRelatedLinks: (wordLinks ?? []), word }))
+              }
+            >
+              {word.text}
+            </Typography>
+            {showAfter ? (word.after || '').trim() : ''}
+          </Typography>
+        </LocalizedTextDisplay>
     </React.Fragment>
   );
 };

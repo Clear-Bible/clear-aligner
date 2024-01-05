@@ -1,34 +1,17 @@
 import { renderWithProvider, RootState } from 'test/harness';
 import preloadedState from 'test/preloadedState';
-import { AlignmentMode } from 'state/alignment.slice';
 import TextSegment from 'features/textSegment';
-import { Corpus } from '../../structs';
+import { AlignmentSide } from '../../structs';
 
 const testState: RootState = {
   ...preloadedState,
   alignment: {
     ...preloadedState.alignment,
     present: {
-      alignments: [
-        {
-          source: 'sbl',
-          target: 'leb',
-          links: [],
-          polarity: {
-            type: 'primary',
-            syntaxSide: 'sources',
-            nonSyntaxSide: 'targets',
-          },
-        },
-      ],
-      corpora: [],
       inProgressLink: {
-        source: 'sbl',
-        target: 'leb',
         sources: ['sbl_0'],
         targets: [],
       },
-      mode: AlignmentMode.CleanSlate,
     },
   },
 };
@@ -36,12 +19,13 @@ describe('TextSegment', () => {
   it('renders without crashing', () => {
     renderWithProvider(
       <TextSegment
-        corpus={{} as Corpus}
         word={{
           id: 'test_1',
           corpusId: 'test',
+          side: AlignmentSide.TARGET,
           text: 'mikey',
           position: 0,
+          normalizedText: 'mikey'
         }}
       />,
       null
@@ -51,17 +35,17 @@ describe('TextSegment', () => {
   it('is selected', () => {
     const { getByText } = renderWithProvider(
       <TextSegment
-        corpus={{} as Corpus}
         word={{
           id: 'sbl_0',
           corpusId: 'sbl',
+          side: AlignmentSide.SOURCE,
           text: 'mikey',
           position: 0,
+          normalizedText: 'mikey'
         }}
       />,
       testState
     );
-    const textSegment = getByText(/mikey/);
     // BLURG, custom css properties don't work with js-dom.
     // See https://github.com/jsdom/cssstyle/pull/127
     // and https://github.com/testing-library/jest-dom/issues/322

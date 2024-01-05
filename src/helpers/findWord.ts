@@ -1,10 +1,18 @@
 import { Corpus, Word } from 'structs';
+import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 
-export const findWordById = (corpora: Corpus[], wordId: string) => {
+export const findWordById = (corpora: Corpus[], word: BCVWP) =>
+  findWordByString(corpora, word.toReferenceString());
+
+export const findWordByString = (corpora: Corpus[], word: string) => {
   for (const corpus of corpora) {
     const found = (
-      corpus.wordsByVerse[wordId.substring(0, 8)]?.words || []
-    ).find((word: Word) => word.id === wordId);
+      corpus.wordsByVerse[BCVWP.truncateTo(word, BCVWPField.Verse)]?.words || []
+    ).find(
+      (w: Word) =>
+        BCVWP.truncateTo(word, BCVWPField.Part) ===
+        BCVWP.truncateTo(w.id, BCVWPField.Part)
+    );
 
     if (Boolean(found)) {
       return found;

@@ -5,7 +5,7 @@ const generateLinkId = (links: Link[]): number => {
   try {
     const linkIds = links
       .map((link) => {
-        const idTagParsed = /^.*-([0-9]+)$/.exec(link._id ?? '');
+        const idTagParsed = /^.*-([0-9]+)$/.exec(link.id ?? '');
         if (idTagParsed) {
           return Number(idTagParsed[1]);
         }

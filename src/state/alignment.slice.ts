@@ -1,150 +1,46 @@
-import { createSlice, PayloadAction, Draft, current } from '@reduxjs/toolkit';
-import {
-  Word,
-  Alignment,
-  Link,
-  InProgressLink,
-  Corpus,
-  SyntaxType,
-} from 'structs';
-import removeSegmentFromLink from 'helpers/removeSegmentFromLink';
-import singularizeAlignmentPolarityField from 'helpers/singularizeAlignmentPolarityField';
-import generateLinkId from 'helpers/generateLinkId';
-import syntaxMapper from 'features/treedown/syntaxMapper';
-
-export enum AlignmentMode {
-  CleanSlate = 'cleanSlate', // Default mode
-  Select = 'select', // An existing link has been selected
-  Edit = 'edit', // Editing a new or existing link
-  PartialEdit = 'partialEdit', // Only one 'side' has been selected
-}
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Link, Word } from 'structs';
+import { AlignmentMode } from './alignmentState';
+import { AppState } from './app.slice';
+import { TextSegmentState } from './textSegmentHover.slice';
+import { StateWithHistory } from 'redux-undo';
+import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 export interface AlignmentState {
-  alignments: Alignment[];
-  inProgressLink: InProgressLink | null;
-  mode: AlignmentMode;
-  corpora: Corpus[];
+  inProgressLink: Link | null;
 }
 
 export const initialState: AlignmentState = {
-  alignments: [],
-  corpora: [],
   inProgressLink: null,
-  mode: AlignmentMode.CleanSlate,
 };
 
-const createNextLinkId = (alignment: Alignment) => {
-  return `${alignment.source}-${alignment.target}-${generateLinkId(
-    alignment.links
-  )}`;
-};
-
-const findPrimaryAlignmentBySecondary = (
-  alignments: Alignment[],
-  secondaryAlignment: Alignment
-) => {
-  if (secondaryAlignment.polarity.type === 'secondary') {
-    let mappedSecondaryCorpusId: string;
-    if (secondaryAlignment.polarity.mappedSide === 'sources') {
-      mappedSecondaryCorpusId = secondaryAlignment['source'];
+export const selectAlignmentMode = (state: {
+  app: AppState;
+  alignment: StateWithHistory<AlignmentState>;
+  textSegmentHover: TextSegmentState;
+}): AlignmentMode => {
+  const { inProgressLink } = state.alignment.present;
+  if (!inProgressLink) {
+    return AlignmentMode.CleanSlate;
+  }
+  if (inProgressLink.id) {
+    // edit
+    if (
+      inProgressLink.sources.length > 0 &&
+      inProgressLink.targets.length > 0
+    ) {
+      return AlignmentMode.Edit;
     }
-    if (secondaryAlignment.polarity.mappedSide === 'targets') {
-      mappedSecondaryCorpusId = secondaryAlignment['target'];
-    }
-    return alignments.find((alignment) => {
-      if (alignment.polarity.type === 'primary') {
-        const nonSyntaxSide = singularizeAlignmentPolarityField(
-          alignment.polarity,
-          'nonSyntaxSide'
-        );
-        return alignment[nonSyntaxSide] === mappedSecondaryCorpusId;
-      }
-      return false;
-    });
+    return AlignmentMode.PartialEdit;
   } else {
-    throw new Error(
-      'Attempted to find a primary alignment for the wrong polarity.'
-    );
-  }
-};
-
-const remapSyntax = (state: Draft<AlignmentState>, alignmentIndex: number) => {
-  const sourceCorpusId = state.alignments[alignmentIndex].source;
-  const targetCorpusId = state.alignments[alignmentIndex].target;
-  const sourceCorpusIndex = state.corpora.findIndex((corpus: Corpus) => {
-    return corpus.id === sourceCorpusId;
-  });
-  const targetCorpusIndex = state.corpora.findIndex((corpus: Corpus) => {
-    return corpus.id === targetCorpusId;
-  });
-
-  const sourceCorpusSyntaxType =
-    state.corpora[sourceCorpusIndex]?.syntax?._syntaxType;
-  const targetCorpusSyntaxType =
-    state.corpora[targetCorpusIndex]?.syntax?._syntaxType;
-
-  if (state.alignments[alignmentIndex].polarity.type === 'primary') {
-    if (sourceCorpusSyntaxType === SyntaxType.Mapped) {
-      const oldSyntax = state.corpora[sourceCorpusIndex].syntax;
-
-      if (oldSyntax) {
-        state.corpora[sourceCorpusIndex].syntax = syntaxMapper(
-          oldSyntax,
-          state.alignments[alignmentIndex]
-        );
-      }
+    // create
+    if (
+      inProgressLink.sources.length > 0 &&
+      inProgressLink.targets.length > 0
+    ) {
+      return AlignmentMode.Create;
     }
-
-    if (targetCorpusSyntaxType === SyntaxType.Mapped) {
-      const oldSyntax = state.corpora[targetCorpusIndex].syntax;
-
-      if (oldSyntax) {
-        state.corpora[targetCorpusIndex].syntax = syntaxMapper(
-          oldSyntax,
-          state.alignments[alignmentIndex]
-        );
-      }
-    }
-  }
-
-  if (state.alignments[alignmentIndex].polarity.type === 'secondary') {
-    if (sourceCorpusSyntaxType === SyntaxType.MappedSecondary) {
-      const secondaryAlignment = state.alignments[alignmentIndex];
-      const oldSyntax = state.corpora[sourceCorpusIndex].syntax;
-      if (oldSyntax && secondaryAlignment) {
-        const primaryAlignment = findPrimaryAlignmentBySecondary(
-          state.alignments,
-          secondaryAlignment
-        );
-
-        if (primaryAlignment) {
-          state.corpora[sourceCorpusIndex].syntax = syntaxMapper(
-            oldSyntax,
-            primaryAlignment,
-            secondaryAlignment
-          );
-        }
-      }
-    }
-
-    if (targetCorpusSyntaxType === SyntaxType.MappedSecondary) {
-      const secondaryAlignment = state.alignments[alignmentIndex];
-      const oldSyntax = state.corpora[targetCorpusIndex].syntax;
-      if (oldSyntax && secondaryAlignment) {
-        const primaryAlignment = findPrimaryAlignmentBySecondary(
-          state.alignments,
-          secondaryAlignment
-        );
-
-        if (primaryAlignment) {
-          state.corpora[targetCorpusIndex].syntax = syntaxMapper(
-            oldSyntax,
-            primaryAlignment,
-            secondaryAlignment
-          );
-        }
-      }
-    }
+    return AlignmentMode.PartialCreate;
   }
 };
 
@@ -152,261 +48,63 @@ const alignmentSlice = createSlice({
   name: 'alignment',
   initialState,
   reducers: {
-    loadAlignments: (state, action: PayloadAction<Alignment[]>) => {
-      state.alignments = action.payload.map((alignment) => {
-        return {
-          ...alignment,
-          links: alignment.links.map((link, index) => {
-            return {
-              ...link,
-              _id: `${alignment.source}-${alignment.target}-${index}`,
-            };
-          }),
-        };
-      });
+    loadInProgressLink: (state, action: PayloadAction<Link>) => {
+      state.inProgressLink = action.payload;
     },
 
-    toggleTextSegment: (state, action: PayloadAction<Word>) => {
-      if (state.inProgressLink?._id === '?') {
-        // There is a partial in-progress link.
-        if (state.inProgressLink.source === action.payload.corpusId) {
-          state.inProgressLink.source = action.payload.corpusId;
-          state.inProgressLink.sources.push(action.payload.id);
-        } else if (state.inProgressLink.target === action.payload.corpusId) {
-          state.inProgressLink.target = action.payload.corpusId;
-          state.inProgressLink.targets.push(action.payload.id);
+    toggleTextSegment: (
+      state,
+      action: PayloadAction<{ foundRelatedLinks: Link[]; word: Word }>
+    ) => {
+      const relatedLink = action.payload.foundRelatedLinks.find((_) => true);
+      if (!state.inProgressLink) {
+        if (relatedLink) {
+          state.inProgressLink = {
+            id: relatedLink.id,
+            sources: relatedLink.sources.map(BCVWP.sanitize),
+            targets: relatedLink.targets.map(BCVWP.sanitize),
+          };
+          return;
+        } else {
+          state.inProgressLink = {
+            sources: [],
+            targets: [],
+          };
         }
-
-        if (
-          state.inProgressLink.sources.length !== 0 &&
-          state.inProgressLink.targets.length !== 0
-        ) {
-          state.mode = AlignmentMode.Edit;
-          const relatedAlignment = state.alignments.find((alignment) => {
-            return (
-              alignment.source === state.inProgressLink?.source &&
-              alignment.target === state.inProgressLink?.target
-            );
-          });
-
-          if (!relatedAlignment) {
-            throw new Error(
-              `Unable to find alignment for proposed link: ${current(
-                state.inProgressLink
-              )}`
-            );
-          }
-          state.inProgressLink._id = createNextLinkId(relatedAlignment);
-        } else if (
-          state.inProgressLink.sources.length === 0 ||
-          state.inProgressLink.targets.length === 0
-        ) {
-          state.mode = AlignmentMode.PartialEdit;
-        }
-        return;
       }
 
-      if (state.inProgressLink) {
-        // There is already an in progress link.
-        state.mode = AlignmentMode.Edit;
-
-        const alreadyToggled =
-          (state.inProgressLink.source === action.payload.corpusId &&
-            state.inProgressLink.sources.includes(action.payload.id)) ||
-          (state.inProgressLink.target === action.payload.corpusId &&
-            state.inProgressLink.targets.includes(action.payload.id));
-
-        if (alreadyToggled) {
-          // remove segment from link
-          state.inProgressLink = removeSegmentFromLink(
-            action.payload,
-            state.inProgressLink
-          );
-
-          if (
-            !(
-              state.inProgressLink.sources.length > 0 ||
-              state.inProgressLink.targets.length > 0
-            )
-          ) {
-            // if nothing is selected, clear the link
-            state.inProgressLink = null;
-            state.mode = AlignmentMode.CleanSlate;
-          }
-        } else {
-          // add segment to link
-          if (action.payload.corpusId === state.inProgressLink.source) {
-            state.inProgressLink.sources.push(action.payload.id);
-          }
-
-          if (action.payload.corpusId === state.inProgressLink.target) {
-            state.inProgressLink.targets.push(action.payload.id);
-          }
-        }
-      } else {
-        // No in progress link.
-        // Either create, or load existing link to edit.
-        const newInProgressLink = {
-          _id: '?',
-          source: '?',
-          target: '?',
-          sources: [] as string[],
-          targets: [] as string[],
-        };
-
-        const potentialAlignments = state.alignments.filter(
-          (alignment) =>
-            alignment.target === action.payload.corpusId ||
-            alignment.source === action.payload.corpusId
-        );
-
-        if (potentialAlignments.length === 0) {
-          // No alignments found for text segment.
-          throw new Error(
-            `No alignment found for selected text segment: ${action.payload.id}, ${action.payload.corpusId}`
-          );
-        }
-
-        if (potentialAlignments.length === 1) {
-          // Single alignmnent for text segment found.
-          const alignment = potentialAlignments[0];
-
-          const existingLink = alignment.links.find((link: Link) => {
-            return (
-              (alignment.source === action.payload.corpusId &&
-                link.sources.includes(action.payload.id)) ||
-              (alignment.target === action.payload.corpusId &&
-                link.targets.includes(action.payload.id))
+      // There is a partial in-progress link.
+      switch (action.payload.word.side) {
+        case 'sources':
+          if (state.inProgressLink.sources.includes(action.payload.word.id)) {
+            state.inProgressLink.sources.splice(
+              state.inProgressLink.sources.indexOf(action.payload.word.id),
+              1
             );
-          });
-
-          if (existingLink) {
-            // Load the existing link
-            state.inProgressLink = {
-              _id: existingLink._id,
-              source: alignment.source,
-              target: alignment.target,
-              sources: existingLink.sources,
-              targets: existingLink.targets,
-            };
-            state.mode = AlignmentMode.Select;
-            return;
+          } else {
+            state.inProgressLink.sources.push(action.payload.word.id);
           }
-
-          if (!existingLink) {
-            // Initialize partial edit mode.
-
-            newInProgressLink._id = createNextLinkId(alignment);
-            newInProgressLink.source = alignment.source;
-            newInProgressLink.target = alignment.target;
-
-            if (action.payload.corpusId === alignment.source) {
-              newInProgressLink.sources.push(action.payload.id);
-            } else if (action.payload.corpusId === alignment.target) {
-              newInProgressLink.targets.push(action.payload.id);
-            }
-            state.inProgressLink = newInProgressLink;
-            state.mode = AlignmentMode.Edit;
-            return;
+          break;
+        case 'targets':
+          if (state.inProgressLink.targets.includes(action.payload.word.id)) {
+            state.inProgressLink.targets.splice(
+              state.inProgressLink.targets.indexOf(action.payload.word.id),
+              1
+            );
+          } else {
+            state.inProgressLink.targets.push(action.payload.word.id);
           }
-        }
-
-        if (potentialAlignments.length > 1) {
-          // Multiple potential alignments for text segment.
-          // Punt?
-          //
-          // Both sides are not known.
-          // Enter partial edit mode.
-          alert(
-            'The feature "DISAMBIGUATE POTENTIAL ALIGNMENTS" has not been implemented yet. Please contact support.'
-          );
-          throw new Error(
-            'DISAMBIGUATE POTENTIAL ALIGNMENTS? Not implemented yet.'
-          );
-        }
+          break;
       }
     },
 
     resetTextSegments: (state) => {
       state.inProgressLink = null;
-      state.mode = AlignmentMode.CleanSlate;
-    },
-
-    createLink: (state) => {
-      if (state.inProgressLink) {
-        const alignment = state.alignments.find((alignment: Alignment) => {
-          return (
-            alignment.source === state.inProgressLink?.source &&
-            alignment.target === state.inProgressLink?.target
-          );
-        });
-
-        if (!alignment) {
-          throw new Error(
-            `Could find alignment to update with link: ${state.inProgressLink}`
-          );
-        }
-
-        let updated = false;
-        for (const link of alignment.links) {
-          if (link._id === state.inProgressLink._id) {
-            link.sources = state.inProgressLink.sources;
-            link.targets = state.inProgressLink.targets;
-            updated = true;
-          }
-        }
-
-        if (!updated) {
-          alignment.links.push({
-            _id: state.inProgressLink._id,
-            sources: state.inProgressLink.sources,
-            targets: state.inProgressLink.targets,
-          });
-        }
-
-        state.inProgressLink = null;
-        state.mode = AlignmentMode.CleanSlate;
-        remapSyntax(state, state.alignments.indexOf(alignment));
-      }
-    },
-    deleteLink: (state) => {
-      const inProgressLink = state.inProgressLink;
-
-      if (inProgressLink) {
-        const alignmentIndex = state.alignments.findIndex(
-          (alignment: Alignment) => {
-            return (
-              alignment.source === inProgressLink.source &&
-              alignment.target === inProgressLink.target
-            );
-          }
-        );
-
-        if (Number.isFinite(alignmentIndex)) {
-          const linkToDeleteIndex = state.alignments[
-            alignmentIndex
-          ].links.findIndex((link: Link) => {
-            return link._id === inProgressLink._id;
-          });
-
-          if (Number.isFinite(linkToDeleteIndex)) {
-            state.alignments[alignmentIndex].links.splice(linkToDeleteIndex, 1);
-            state.inProgressLink = null;
-            state.mode = AlignmentMode.CleanSlate;
-            remapSyntax(state, alignmentIndex);
-          }
-        }
-      }
     },
   },
 });
 
-export const {
-  loadAlignments,
-  toggleTextSegment,
-  resetTextSegments,
-  createLink,
-  deleteLink,
-} = alignmentSlice.actions;
+export const { loadInProgressLink, toggleTextSegment, resetTextSegments } =
+  alignmentSlice.actions;
 
 export default alignmentSlice.reducer;

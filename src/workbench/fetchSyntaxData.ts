@@ -7,7 +7,7 @@ const MACULA_ENV = 'http://labs.clear.bible/symphony-dev';
 
 const jsonizeXml = async (xmlString: string): Promise<object | null> => {
   try {
-    const jsonizedXml = await xmlToJson(
+    return await xmlToJson(
       xmlString,
       [
         'class',
@@ -32,7 +32,6 @@ const jsonizeXml = async (xmlString: string): Promise<object | null> => {
       ],
       'sentence'
     );
-    return jsonizedXml;
   } catch (error) {
     console.error('Problem encountered converting xml to json.');
     console.error(error);

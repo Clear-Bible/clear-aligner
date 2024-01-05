@@ -2,6 +2,12 @@
   cursor: pointer;
 }
 
+.text-segment.readonly {
+  cursor: auto;
+  background-color: black;
+  color: white;
+}
+
 .text-segment.focused {
   text-decoration: underline;
 }

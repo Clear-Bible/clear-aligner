@@ -1,4 +1,4 @@
-import { Word, InProgressLink } from 'structs';
+import { AlignmentSide, Link, Word } from 'structs';
 
 const removeFromArray = (originArray: string[], id: string): string[] => {
   const _array = originArray.concat([]);
@@ -7,14 +7,14 @@ const removeFromArray = (originArray: string[], id: string): string[] => {
   return _array;
 };
 
-const removeSegmentFromLink = (
-  wordToRemove: Word,
-  link: InProgressLink
-): InProgressLink => {
-  if (link.sources.includes(wordToRemove.id)) {
-    link.sources = removeFromArray(link.sources, wordToRemove.id);
-  } else if (link.targets.includes(wordToRemove.id)) {
-    link.targets = removeFromArray(link.targets, wordToRemove.id);
+const removeSegmentFromLink = (wordToRemove: Word, link: Link): Link => {
+  switch (wordToRemove.side) {
+    case AlignmentSide.SOURCE:
+      link.sources = removeFromArray(link.sources, wordToRemove.id);
+      break;
+    case AlignmentSide.TARGET:
+      link.targets = removeFromArray(link.targets, wordToRemove.id);
+      break;
   }
 
   return link;

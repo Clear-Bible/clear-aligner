@@ -24,13 +24,14 @@ The component currently supports react v18.x.
 ## Local development Quickstart
 
 - Install dependencies: `source ./setup.sh`
-- Run local server: `yarn start` (starts local CRA server with component wrapper in a UI workbench)
 - Build: `yarn build`
-  - build for Windows: `yarn build:win`
-  - build for Mac: `yarn build:mac`
-- Electron: `yarn dev-electron`
+    - build for Windows: `yarn build:win`
+    - build for Mac: `yarn build:mac`
+- Run electron in dev mode: `yarn dev-electron`
+    - **Note:** `yarn start` _will not work_, due to the use of platform-specific
+      libraries (sqlite3) and main/renderer process IPC.
 
-### install electron build dependencies on Ubuntu 22.04
+### Install electron build dependencies on Ubuntu 22.04
 
 ```bash
 sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
@@ -38,12 +39,37 @@ sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
                        libcups2-dev libxtst-dev \
                        libxss1 libnss3-dev gcc-multilib g++-multilib curl \
                        gperf bison python3-dbusmock openjdk-8-jre \
-		       libfuse2
+                       libfuse2 sqlite3 python3 python3-regex
 ```
 
 ### Run Electron AppImage on Ubuntu 20.04+ - requires fuse
 
 - requires `libfuse2` package
+
+## The Template, Default, and User Databases
+
+These database files are the basis of all project databases and included with the platform
+builds. These files are:
+
+```
+sql/clear-aligner-template.sqlite
+sql/clear-aligner-user.sqlite
+sql/projects/clear-aligner-default.sqlite
+```
+
+...in the project directory during development and the application footprint after
+installation.
+
+These are created automatically when executing `yarn dev-electron` or any of the
+`yarn build*` commands, including the platform builds. These build steps will
+_only_ create these files when they're missing. These may be manually recreated at
+any time by executing the following shell script:
+
+```
+sql/create-db.sh
+```
+
+This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
 
 ## Basic Usage
 
@@ -80,7 +106,8 @@ specifies which css theme is used.
 
 NOT YET IMPLEMENTED
 
-The consuming application can provide a `localizationCode` that component will conform internationalized UI elements to. The [ISO 639-3](https://iso639-3.sil.org/code_tables/639/data) is expected. Supported languages are:
+The consuming application can provide a `localizationCode` that component will conform internationalized UI elements to.
+The [ISO 639-3](https://iso639-3.sil.org/code_tables/639/data) is expected. Supported languages are:
 
 - English (eng)
 - something else here...
@@ -90,7 +117,8 @@ The consuming application can provide a `localizationCode` that component will c
 
 `Corpus[]`
 
-_Corpora_ is the plural form of corpus. A corpus is one body of text that the user will interact with when using this component. Up to 4 corpus entities can be supplied.
+_Corpora_ is the plural form of corpus. A corpus is one body of text that the user will interact with when using this
+component. Up to 4 corpus entities can be supplied.
 
 A `Corpus` looks like:
 
@@ -118,7 +146,8 @@ interface Corpus {
 
 #### `Word`
 
-`Word` is an object representing a word in a corpus. In English, words are surrounded by whitespace, but in other languages not neccesarily.
+`Word` is an object representing a word in a corpus. In English, words are surrounded by whitespace, but in other
+languages not neccesarily.
 
 A `Word` looks like:
 
@@ -139,15 +168,20 @@ export interface Word {
 
 #### `SyntaxRoot`
 
-In some use cases, one of the supplied corpora can have syntax data. In this case, "Syntax data" is a tree-like structure denoting words, word groups, and their relationships to other. The component current supports a json representation of [Lowfat Syntax XML](https://github.com/Clear-Bible/macula-greek/tree/main/Nestle1904/lowfat).
+In some use cases, one of the supplied corpora can have syntax data. In this case, "Syntax data" is a tree-like
+structure denoting words, word groups, and their relationships to other. The component current supports a json
+representation of [Lowfat Syntax XML](https://github.com/Clear-Bible/macula-greek/tree/main/Nestle1904/lowfat).
 
-`Note`: The component could recieve lowfat xml in string form and then internally convert to json structure. This may be preferable.
+`Note`: The component could recieve lowfat xml in string form and then internally convert to json structure. This may be
+preferable.
 
 ### `alignments`
 
 `Alignment[]`
 
-An `Alignment` is a set of data the describes the relationship between two corpora. The component enables users to view and modify alignment data. It also uses alignment data to generate syntactic views in [treedown](http://jonathanrobie.biblicalhumanities.org/blog/2017/05/12/lowfat-treebanks-visualizing/) notation.
+An `Alignment` is a set of data the describes the relationship between two corpora. The component enables users to view
+and modify alignment data. It also uses alignment data to generate syntactic views
+in [treedown](http://jonathanrobie.biblicalhumanities.org/blog/2017/05/12/lowfat-treebanks-visualizing/) notation.
 
 ```ts
 interface Alignment {
@@ -160,7 +194,8 @@ interface Alignment {
 
 - `source: string` id of the source corpus
 - `target: string` id of the target corpus
-- `polarity: AlignmentPolarity` describes the directionality of the alignment see [`AlignmentPolarity`](#alignmentpolarity) below.
+- `polarity: AlignmentPolarity` describes the directionality of the alignment
+  see [`AlignmentPolarity`](#alignmentpolarity) below.
 - `links: Link[]` relationship entities between the two corpora. see [`Links`](#links)
 
 #### `AlignmentPolarity`
@@ -196,7 +231,9 @@ interface SecondaryAlignmentPolarity {
 
 `Link[]`
 
-A `Link` is a single instance of alignment data. It describes the relationship between the words of two corpora. The strings on either side of the link are IDs of words that were cpecified in the provided `Corpus[]`. There can be one or many words on either side of a `Link`.
+A `Link` is a single instance of alignment data. It describes the relationship between the words of two corpora. The
+strings on either side of the link are IDs of words that were cpecified in the provided `Corpus[]`. There can be one or
+many words on either side of a `Link`.
 
 ```ts
 export interface Link {
@@ -212,4 +249,6 @@ export interface Link {
 
 ### `alignmentUpdated`
 
-This is function provided by the consuming application that is called when a user saves alignment data. At the time of invocation, the current alignment state is passed to the function which can be used to display, send, or persist the user's alignment data.
+This is function provided by the consuming application that is called when a user saves alignment data. At the time of
+invocation, the current alignment state is passed to the function which can be used to display, send, or persist the
+user's alignment data.

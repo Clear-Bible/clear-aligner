@@ -1,12 +1,20 @@
 html {
-  font-family: 'Roboto';
+  font-family: 'Roboto', sans-serif;
+  overflow-y: auto;
+  height: 100vh;
 }
 
 body {
   margin: 0;
-  overflow-y: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
 }
 
 code {

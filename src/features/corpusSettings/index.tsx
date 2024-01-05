@@ -58,7 +58,7 @@ const CorpusSettingsComponent = (props: CorpusSettingsProps) => {
             dispatch(
               changeCorpusViewport({
                 viewportIndex,
-                newViewport: { corpusId: selectedCorpusId },
+                newViewport: { containerId: selectedCorpusId },
               })
             );
           }}

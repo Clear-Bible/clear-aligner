@@ -10,6 +10,13 @@ export interface SingleSelectButtonGroupProps {
   onSelect: (value: string) => void;
 }
 
+/**
+ * Display a group of buttons, each with its own corresponding value
+ * @param value currently chosen value, highlights the button with this value to indicate it is selected
+ * @param items list of buttons and their corresponding values
+ * @param onSelect callback when a button is clicked by the user
+ * @param sx style parameters
+ */
 export const SingleSelectButtonGroup = ({
   value,
   items,

@@ -33,6 +33,8 @@ export default class BCVWP {
    */
   part?: number;
 
+  referenceString?: string;
+
   constructor(
     book?: number,
     chapter?: number,
@@ -47,22 +49,32 @@ export default class BCVWP {
     this.part = part;
   }
 
+  toHumanReadableString(): string {
+    return `${this.getBookInfo()?.EnglishBookName ?? ''} ${
+      this.chapter ?? 'NA'
+    }:${this.verse ?? 'NA'} ${this.word ? `w${this.word}` : ''}${
+      this.word && this.part ? `/${this.part}` : ''
+    }`.trim();
+  }
+
   toTruncatedReferenceString(truncation: BCVWPField): string {
     return this.toReferenceString().substring(0, truncation);
   }
 
   toReferenceString(): string {
+    if (this.referenceString) return this.referenceString;
     const bookFormet = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
     const chapterFormat = Intl.NumberFormat('en-US', {
-      minimumIntegerDigits: 3,
+      minimumIntegerDigits: 3
     });
     const verseFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
     const wordFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
-    return `${this.book ? bookFormet.format(this.book) : '  '}${
+    this.referenceString = `${this.book ? bookFormet.format(this.book) : '  '}${
       this.chapter ? chapterFormat.format(this.chapter) : '   '
     }${this.verse ? verseFormat.format(this.verse) : '   '}${
       this.word ? wordFormat.format(this.word) : '   '
-    }${this.part ?? 1}`;
+    }${this.word && this.part ? this.part ?? 1 : ''}`;
+    return this.referenceString;
   }
 
   getBookInfo(): BookInfo | undefined {
@@ -71,8 +83,8 @@ export default class BCVWP {
 
   /**
    * checks whether the given BCVWP match at the given level of truncation
-   * @param other: BCVWP to check for a match
-   * @param truncation: amount of truncation to match to
+   * @param other BCVWP to check for a match
+   * @param truncation amount of truncation to match to
    */
   matchesTruncated(other: BCVWP, truncation: BCVWPField): boolean {
     return (
@@ -99,27 +111,63 @@ export default class BCVWP {
       }
     });
   }
-}
 
-export const parseFromString = (reference: string): BCVWP => {
-  if (!reference || reference.match(/\D/) || reference.length < 2) {
-    throw new Error(`Illegal reference string given to parser: ${reference}`);
+  static isValidString(reference: string): boolean {
+    return (
+      !!reference && !!reference.match(/^[onON]?\d/) && reference.length > 1
+    );
   }
-  const bookString = reference.substring(0, 2);
-  const chapterString =
-    reference.length >= 5 ? reference.substring(2, 5) : undefined;
-  const verseString =
-    reference.length >= 8 ? reference.substring(5, 8) : undefined;
-  const wordString =
-    reference.length >= 11 ? reference.substring(8, 11) : undefined;
-  const partString =
-    reference.length >= 12 ? reference.substring(11, 12) : undefined;
 
-  const bookNum = bookString ? Number(bookString) : undefined;
-  const chapterNum = chapterString ? Number(chapterString) : undefined;
-  const verseNum = verseString ? Number(verseString) : undefined;
-  const wordNum = wordString ? Number(wordString) : undefined;
-  const partNum = partString ? Number(partString) : undefined;
+  static sanitize(wordId: string): string {
+    const wordId1 = wordId.trim();
+    return !!wordId1.match(/^[onON]\d/)
+      ? wordId1.substring(1) : wordId1;
+  }
 
-  return new BCVWP(bookNum, chapterNum, verseNum, wordNum, partNum);
-};
+  static truncateTo(reference: string, field: BCVWPField): string {
+    return BCVWP.sanitize(reference).substring(0, field);
+  }
+
+  static parseFromString(reference: string): BCVWP {
+    if (!BCVWP.isValidString(reference)) {
+      throw new Error(`Illegal reference string given to parser: ${reference}`);
+    }
+    const sanitized = BCVWP.sanitize(reference);
+    const bookString = sanitized.substring(0, 2);
+    const chapterString =
+      sanitized.length >= 5 ? sanitized.substring(2, 5) : undefined;
+    const verseString =
+      sanitized.length >= 8 ? sanitized.substring(5, 8) : undefined;
+    const wordString =
+      sanitized.length >= 11 ? sanitized.substring(8, 11) : undefined;
+    const partString =
+      sanitized.length >= 12 ? sanitized.substring(11, 12) : undefined;
+
+    const bookNum = bookString ? Number(bookString) : undefined;
+    const chapterNum = chapterString ? Number(chapterString) : undefined;
+    const verseNum = verseString ? Number(verseString) : undefined;
+    const wordNum = wordString ? Number(wordString) : undefined;
+    const partNum = partString ? Number(partString) : undefined;
+
+    return new BCVWP(bookNum, chapterNum, verseNum, wordNum, partNum);
+  }
+
+  static compare(a?: BCVWP, b?: BCVWP): number {
+    if (a?.book !== b?.book) {
+      return (a?.book ?? 0) - (b?.book ?? 0);
+    }
+    if (a?.chapter !== b?.chapter) {
+      return (a?.chapter ?? 0) - (b?.chapter ?? 0);
+    }
+    if (a?.verse !== b?.verse) {
+      return (a?.verse ?? 0) - (b?.verse ?? 0);
+    }
+    if (a?.word !== b?.word) {
+      return (a?.word ?? 0) - (b?.word ?? 0);
+    }
+    if (a?.part !== b?.part) {
+      return (a?.part ?? 0) - (b?.part ?? 0);
+    }
+    return 0;
+  }
+}
