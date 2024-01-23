@@ -16,6 +16,9 @@ import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
 import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
+// Arabic VD Target
+// @ts-ignore
+import ARB_VD_TSV from 'tsv/target_arb-vd.tsv';
 
 let isInitialized: boolean = false;
 
@@ -256,14 +259,35 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(na27Ylt);
 
+    let arbVd: Corpus = {
+      id: 'arb-vd',
+      name: 'ARB VD',
+      fullName: 'Arabic VD translation',
+      language: {
+        code: 'arb',
+        textDirection: 'rtl',
+      },
+      words: [],
+      wordsByVerse: {},
+      books: {},
+    };
+    const arbVdWords = await parseTsvByFileType(
+      ARB_VD_TSV,
+      arbVd,
+      'targets',
+      CorpusFileFormat.TSV_TARGET
+    );
+    arbVd = {
+      ...arbVd,
+      ...arbVdWords,
+    };
+    putVersesInCorpus(arbVd);
+
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,
       sblGnt,
     ]);
-    const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
-      wlcYltOt,
-      na27Ylt,
-    ]);
+    const targetContainer = CorpusContainer.fromIdAndCorpora('target', [arbVd]);
 
     availableCorpora.push(sourceContainer);
     availableCorpora.push(targetContainer);
