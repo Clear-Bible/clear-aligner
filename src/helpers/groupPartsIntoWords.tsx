@@ -1,6 +1,13 @@
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { Word } from '../structs';
 
+/**
+ * Words as a type represent entire words as well as word parts and this function takes a list of Words in and returns
+ * a two-dimensional array in which the top level contains words and each of those arrays contains the parts of those
+ * words
+ * @param words list of words and/or word-part inputs
+ * @returns two-dimensional array of word parts grouped by word
+ */
 export const groupPartsIntoWords = <T extends Word>(words: T[]): T[][] =>
   words
     .reduce((accumulator, currentValue) => {
