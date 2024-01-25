@@ -17,39 +17,30 @@ import { LocalizedTextDisplay } from '../localizedTextDisplay';
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
+ * @param id for keys
  * @param words words to be rendered
  */
-const renderWords = (words: LocalizedWordEntry[]) => {
-  switch (words.length) {
-    case 0:
-      return <></>;
-    case 1:
-      return (
-        <LocalizedTextDisplay languageInfo={words[0].languageInfo}>
-          {words[0].text}
-        </LocalizedTextDisplay>
-      );
-    default:
-      const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
-      return (
-        <span
-          style={{
-            ...(languageInfo?.textDirection === 'rtl'
-              ? { direction: languageInfo.textDirection! }
-              : {}),
-          }}
-        >
-          {words.map((word, idx) => (
-            <>
-              <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
-                {word.text}
-              </LocalizedTextDisplay>
-              {words.length - 1 !== idx && ', '}
-            </>
-          ))}
-        </span>
-      );
-  }
+const renderWords = (id: string, words: LocalizedWordEntry[]) => {
+  const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
+  return (
+    <span
+      key={id}
+      style={{
+        ...(languageInfo?.textDirection === 'rtl'
+          ? { direction: languageInfo.textDirection! }
+          : {}),
+      }}
+    >
+      {words.map((word, idx) => (
+        <>
+          <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
+            {word.text}
+          </LocalizedTextDisplay>
+          {words.length - 1 !== idx && <span>{' '}</span>}
+        </>
+      ))}
+    </span>
+  ); //*/
 };
 
 const columns: GridColDef[] = [
@@ -64,7 +55,7 @@ const columns: GridColDef[] = [
     sortable: false,
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
-      renderWords(row.sourceWordTexts),
+      renderWords(`${row.id}-sources`, row.sourceWordTexts),
   },
   {
     field: 'targetWordTexts',
@@ -72,7 +63,7 @@ const columns: GridColDef[] = [
     sortable: false,
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
-      renderWords(row.targetWordTexts),
+      renderWords(`${row.id}-targets`, row.targetWordTexts),
   },
 ];
 

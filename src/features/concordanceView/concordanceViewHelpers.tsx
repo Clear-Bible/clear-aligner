@@ -5,10 +5,10 @@ import {
   NormalizedTextToAlignmentLink,
   NormalizedTextToPivotWord,
   NormalizedWordsToFrequencyAndLocalization,
-  PivotWord,
+  PivotWord
 } from './structs';
 import _ from 'lodash';
-import BCVWP from '../bcvwp/BCVWPSupport';
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import findWord from '../../helpers/findWord';
 import { WordSource } from './concordanceView';
 
@@ -146,6 +146,7 @@ export const generateListOfNavigablePivotWords = (
               if (!wort) return undefined;
               return {
                 text: wort.text.toLowerCase(),
+                position: BCVWP.parseFromString(wort.id).toTruncatedReferenceString(BCVWPField.Word),
                 languageInfo,
               };
             })
@@ -159,6 +160,7 @@ export const generateListOfNavigablePivotWords = (
               if (!wort) return undefined;
               return {
                 text: wort.text.toLowerCase(),
+                position: BCVWP.parseFromString(wort.id).toTruncatedReferenceString(BCVWPField.Word),
                 languageInfo,
               };
             })
@@ -214,7 +216,9 @@ export const generateListOfNavigablePivotWords = (
         if (!pivotWordsMap[wordEntry.text].alignedWords) {
           pivotWordsMap[wordEntry.text].alignedWords = [];
         }
-        pivotWordsMap[wordEntry.text].alignedWords!.push(alignedWord);
+        if (!pivotWordsMap[wordEntry.text].alignedWords!.includes(alignedWord)) {
+          pivotWordsMap[wordEntry.text].alignedWords!.push(alignedWord);
+        }
       });
     });
 
