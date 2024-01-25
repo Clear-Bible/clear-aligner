@@ -261,7 +261,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     let arbVd: Corpus = {
       id: 'arb-vd',
-      name: 'ARB VD',
+      name: 'AVD',
       fullName: 'Arabic VD translation',
       language: {
         code: 'arb',
