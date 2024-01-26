@@ -186,8 +186,8 @@ export const getAvailableCorporaContainers = async (): Promise<
     // YLT Old Testament
     let wlcYltOt: Corpus = {
       id: 'wlc-ylt',
-      name: 'WLC YLT OT',
-      fullName: 'WLC YLT Old Testament',
+      name: 'YLT',
+      fullName: 'YLT Old Testament',
       language: {
         code: 'en',
         textDirection: 'ltr',
@@ -236,7 +236,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     let na27Ylt: Corpus = {
       id: 'na27-YLT',
-      name: 'YLT NT',
+      name: 'YLT',
       fullName: "Young's Literal Translation text New Testament",
       language: {
         code: 'eng',
