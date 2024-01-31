@@ -214,7 +214,11 @@ export const generateListOfNavigablePivotWords = (
         if (!pivotWordsMap[wordEntry.text].alignedWords) {
           pivotWordsMap[wordEntry.text].alignedWords = [];
         }
-        pivotWordsMap[wordEntry.text].alignedWords!.push(alignedWord);
+        if (
+          !pivotWordsMap[wordEntry.text].alignedWords!.includes(alignedWord)
+        ) {
+          pivotWordsMap[wordEntry.text].alignedWords!.push(alignedWord);
+        }
       });
     });
 

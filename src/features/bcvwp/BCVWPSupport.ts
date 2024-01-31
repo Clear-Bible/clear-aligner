@@ -130,4 +130,23 @@ export default class BCVWP {
 
     return new BCVWP(bookNum, chapterNum, verseNum, wordNum, partNum);
   }
+
+  static compare(a?: BCVWP, b?: BCVWP): number {
+    if (a?.book !== b?.book) {
+      return (a?.book ?? 0) - (b?.book ?? 0);
+    }
+    if (a?.chapter !== b?.chapter) {
+      return (a?.chapter ?? 0) - (b?.chapter ?? 0);
+    }
+    if (a?.verse !== b?.verse) {
+      return (a?.verse ?? 0) - (b?.verse ?? 0);
+    }
+    if (a?.word !== b?.word) {
+      return (a?.word ?? 0) - (b?.word ?? 0);
+    }
+    if (a?.part !== b?.part) {
+      return (a?.part ?? 0) - (b?.part ?? 0);
+    }
+    return 0;
+  }
 }

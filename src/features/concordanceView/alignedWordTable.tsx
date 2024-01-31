@@ -25,7 +25,10 @@ const renderWords = (words: LocalizedWordEntry[]) => {
       return <></>;
     case 1:
       return (
-        <LocalizedTextDisplay languageInfo={words[0].languageInfo}>
+        <LocalizedTextDisplay
+          key={words[0].text}
+          languageInfo={words[0].languageInfo}
+        >
           {words[0].text}
         </LocalizedTextDisplay>
       );
@@ -40,12 +43,12 @@ const renderWords = (words: LocalizedWordEntry[]) => {
           }}
         >
           {words.map((word, idx) => (
-            <>
+            <React.Fragment key={`${word.text}/${idx}`}>
               <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
                 {word.text}
               </LocalizedTextDisplay>
               {words.length - 1 !== idx && ', '}
-            </>
+            </React.Fragment>
           ))}
         </span>
       );

@@ -9,105 +9,19 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Word } from '../../structs';
-import { BookInfo } from '../../workbench/books';
 import { Box } from '@mui/system';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
-import { BCVWPField } from 'features/bcvwp/BCVWPSupport';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
-
-export interface Verse {
-  reference: number;
-}
-
-export interface Chapter {
-  reference: number;
-  verses: Verse[];
-}
-
-export interface NavigableBook extends BookInfo {
-  index: number;
-  chapters: Chapter[];
-}
-
-const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
-  words
-    .map((word) => word.id)
-    .map(BCVWP.parseFromString)
-    .filter((ref) =>
-      ref.hasFields(
-        BCVWPField.Book,
-        BCVWPField.Chapter,
-        BCVWPField.Verse,
-        BCVWPField.Word
-      )
-    )
-    .map(
-      (ref): NavigableBook => ({
-        index: ref.book! - 1,
-        ...ref.getBookInfo()!,
-        chapters: [
-          {
-            reference: ref.chapter ?? 0,
-            verses: [
-              {
-                reference: ref.verse ?? 0,
-              },
-            ],
-          },
-        ],
-      })
-    )
-    /**
-     * merge the individual verse references into books with lists of available chapters and verses
-     */
-    .reduce((accumulator, currentReference): NavigableBook[] => {
-      const book = accumulator.find(
-        (book) => book.index === currentReference.index
-      );
-      if (!book) {
-        // add book
-        return [...accumulator, currentReference];
-      }
-      const currentChapter = currentReference.chapters[0];
-      const chapter = book.chapters.find(
-        (chapter) => chapter.reference === currentChapter.reference
-      );
-      if (!chapter) {
-        // add chapter
-        book.chapters = [...book.chapters, currentChapter].sort(
-          (a, b): number => a.reference - b.reference
-        );
-        return [
-          ...accumulator.filter((b) => b.index !== currentReference.index),
-          book,
-        ];
-      }
-      const currentVerse = currentChapter.verses[0];
-      const verse = chapter.verses.find(
-        (verse) => verse.reference === currentVerse.reference
-      );
-      if (!verse) {
-        // add verse
-        chapter.verses = [...chapter.verses, currentVerse].sort(
-          (a, b): number => a.reference - b.reference
-        );
-        return [
-          ...accumulator.filter((b) => b.index !== currentReference.index),
-          book,
-        ];
-      }
-      return accumulator;
-    }, [] as NavigableBook[])
-    .sort((a, b): number => a.BookNumber - b.BookNumber);
-
-const findBookInNavigableBooksByBookNumber = (
-  navigableBooks: NavigableBook[],
-  bookNumber?: number
-): NavigableBook | null =>
-  bookNumber
-    ? navigableBooks.find((book) => book.BookNumber === bookNumber) ?? null
-    : null;
+import {
+  Chapter,
+  findBookInNavigableBooksByBookNumber,
+  findNextNavigableVerse,
+  findPreviousNavigableVerse,
+  getReferenceListFromWords,
+  NavigableBook,
+  Verse,
+} from './structs';
 
 export interface BCVNavigationProps {
   sx?: SxProps<Theme>;
@@ -218,62 +132,16 @@ const BCVNavigation = ({
     setSelectedVerse(null);
   };
 
-  const previousNavigableVerse: BCVWP | null = useMemo(() => {
-    if (
-      !availableBooks ||
-      !availableChapters ||
-      !availableVerses ||
-      !currentPosition ||
-      !currentPosition?.hasFields(
-        BCVWPField.Book,
-        BCVWPField.Chapter,
-        BCVWPField.Verse
-      )
-    ) {
-      return null;
-    }
-    const selectedVerseIndex = availableVerses.findIndex(
-      (verse) => verse.reference === currentPosition?.verse
-    );
-    if (selectedVerseIndex < 0) {
-      return null;
-    }
-    if (selectedVerseIndex > 0) {
-      return new BCVWP(
-        currentPosition.book,
-        currentPosition.chapter,
-        availableVerses[selectedVerseIndex - 1].reference
-      );
-    }
-    // must go back to end of previous chapter
-    const selectedChapterIndex = availableChapters.findIndex(
-      (chapter) => chapter.reference === currentPosition?.chapter
-    );
-    if (selectedChapterIndex < 0) {
-      return null;
-    }
-    if (selectedChapterIndex > 0) {
-      const chapter = availableChapters[selectedChapterIndex - 1]; // go back one chapter
-      return new BCVWP(
-        currentPosition.book,
-        chapter.reference,
-        chapter.verses.at(-1)?.reference
-      );
-    }
-    const selectedBookIndex = availableBooks.findIndex(
-      (book) => book.BookNumber === currentPosition?.book
-    );
-    if (selectedBookIndex < 0) {
-      return null;
-    }
-    if (selectedBookIndex > 0) {
-      const book = availableBooks[selectedBookIndex - 1]; // go back one book
-      const chapter = book.chapters.at(-1);
-      const verse = chapter?.verses.at(-1);
-      return new BCVWP(book.BookNumber, chapter?.reference, verse?.reference);
-    }
-    return null;
-  }, [currentPosition, availableBooks, availableChapters, availableVerses]);
+  const previousNavigableVerse: BCVWP | null = useMemo(
+    () =>
+      findPreviousNavigableVerse(
+        availableBooks,
+        availableChapters,
+        availableVerses,
+        currentPosition
+      ),
+    [currentPosition, availableBooks, availableChapters, availableVerses]
+  );
 
   const navigateBack: (() => void) | null = useMemo(() => {
     if (!previousNavigableVerse) {
@@ -311,65 +179,16 @@ const BCVNavigation = ({
     [disabled, navigateBack, previousNavigableVerse]
   );
 
-  const nextNavigableVerse: BCVWP | null = useMemo(() => {
-    if (
-      !availableBooks ||
-      !availableChapters ||
-      !availableVerses ||
-      !currentPosition ||
-      !currentPosition?.hasFields(
-        BCVWPField.Book,
-        BCVWPField.Chapter,
-        BCVWPField.Verse
-      )
-    ) {
-      return null;
-    }
-    const selectedVerseIndex = availableVerses.findIndex(
-      (verse) => verse.reference === currentPosition?.verse
-    );
-    if (selectedVerseIndex < 0) {
-      return null;
-    }
-    if (selectedVerseIndex < availableVerses.length - 1) {
-      // if not the last verse in the chapter
-      return new BCVWP(
-        currentPosition?.book,
-        currentPosition?.chapter,
-        availableVerses[selectedVerseIndex + 1].reference
-      );
-    }
-    // must go to next chapter
-    const selectedChapterIndex = availableChapters.findIndex(
-      (chapter) => chapter.reference === currentPosition?.chapter
-    );
-    if (selectedChapterIndex < 0) {
-      return null;
-    }
-    if (selectedChapterIndex < availableChapters.length - 1) {
-      // if not the last chapter in the book
-      const chapter = availableChapters[selectedChapterIndex + 1]; // go forward one chapter
-      return new BCVWP(
-        currentPosition.book,
-        chapter.reference,
-        chapter.verses[0].reference
-      );
-    }
-    const selectedBookIndex = availableBooks.findIndex(
-      (book) => book.BookNumber === currentPosition?.book
-    );
-    if (selectedBookIndex < 0) {
-      return null;
-    }
-    if (selectedBookIndex < availableBooks.length - 1) {
-      // if not the last book
-      const book = availableBooks[selectedBookIndex + 1]; // go back one book
-      const chapter = book.chapters[0];
-      const verse = chapter?.verses[0];
-      return new BCVWP(book.BookNumber, chapter?.reference, verse?.reference);
-    }
-    return null;
-  }, [currentPosition, availableBooks, availableChapters, availableVerses]);
+  const nextNavigableVerse: BCVWP | null = useMemo(
+    () =>
+      findNextNavigableVerse(
+        availableBooks,
+        availableChapters,
+        availableVerses,
+        currentPosition
+      ),
+    [currentPosition, availableBooks, availableChapters, availableVerses]
+  );
 
   const navigateForward: (() => void) | null = useMemo(() => {
     if (!nextNavigableVerse) {
@@ -424,7 +243,7 @@ const BCVNavigation = ({
         options={availableVerses ?? []}
         typeof={'select'}
         value={
-          selectedVerse && (availableVerses?.length ?? 0) > 0
+          selectedVerse && availableVerses?.includes(selectedVerse)
             ? selectedVerse
             : null
         }
@@ -491,7 +310,11 @@ const BCVNavigation = ({
           return 'Apocrypha';
         }}
         getOptionLabel={(option) => option.EnglishBookName}
-        value={selectedBook}
+        value={
+          selectedBook && availableBooks?.includes(selectedBook)
+            ? selectedBook
+            : null
+        }
         onChange={(_, value) => handleSetBook(value)}
         renderInput={(params) => (
           <TextField {...params} label={'Book'} variant={'standard'} />
@@ -508,7 +331,11 @@ const BCVNavigation = ({
         options={availableChapters}
         typeof={'select'}
         getOptionLabel={(option) => String(option.reference)}
-        value={selectedChapter}
+        value={
+          selectedChapter && availableChapters?.includes(selectedChapter)
+            ? selectedChapter
+            : null
+        }
         onChange={(_, value) => handleSetChapter(value)}
         renderInput={(params) => (
           <TextField label={'Chapter'} {...params} variant={'standard'} />

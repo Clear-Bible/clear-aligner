@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import BCVNavigation, { BCVNavigationProps } from './BCVNavigation';
 import { Meta } from '@storybook/react';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import bcvNavigationSampleTargetWordsData from './bcvNavigationSampleTargetWordsData.json';
+import { Word } from '../../structs';
 
 const meta: Meta<typeof BCVNavigation> = {
   title: 'BCVNavigation',
@@ -29,14 +31,7 @@ export const Horizontal = (props: BCVNavigationProps) => (
 );
 Horizontal.args = {
   horizontal: true,
-  words: [
-    {
-      id: '45005003001',
-    },
-    {
-      id: '48006002001',
-    },
-  ],
+  words: bcvNavigationSampleTargetWordsData as Word[],
 } as BCVNavigationProps;
 
 export const Disabled = (props: BCVNavigationProps) => (
@@ -54,48 +49,30 @@ Disabled.args = {
   ],
 } as BCVNavigationProps;
 
-export const WithCurrentPositionAtGalatians6_2 = (
-  props: BCVNavigationProps
-) => {
-  const [currentPosition, setCurrentPosition] = useState(props.currentPosition);
+export const WithCurrentPositionAtGalatians6_2 = ({
+  words,
+  onNavigate,
+  currentPosition,
+}: BCVNavigationProps) => {
+  const [currentPositionState, setCurrentPositionState] =
+    useState(currentPosition);
   const currentPositionDelegate = useMemo(
     () => (currentPosition: BCVWP) => {
-      setCurrentPosition(currentPosition);
-      props?.onNavigate?.(currentPosition);
+      setCurrentPositionState(currentPosition);
+      onNavigate?.(currentPosition);
     },
-    [props?.onNavigate, setCurrentPosition]
+    [onNavigate, setCurrentPositionState]
   );
   return (
     <BCVNavigation
-      words={props.words}
-      currentPosition={currentPosition}
+      words={words}
+      currentPosition={currentPositionState}
       onNavigate={currentPositionDelegate}
     />
   );
 };
 WithCurrentPositionAtGalatians6_2.args = {
-  words: [
-    {
-      id: '45005001001',
-    },
-    {
-      id: '45005002001',
-    },
-    {
-      id: '45005003001',
-    },
-    {
-      id: '45005004001',
-    },
-    {
-      id: '45005005001',
-    },
-    {
-      id: '45005006001',
-    },
-    {
-      id: '48006002001',
-    },
-  ],
-  currentPosition: new BCVWP(48, 6, 2),
+  horizontal: true,
+  words: bcvNavigationSampleTargetWordsData,
+  currentPosition: new BCVWP(1, 1, 31),
 } as BCVNavigationProps;
