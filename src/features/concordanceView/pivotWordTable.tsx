@@ -15,15 +15,12 @@ import {
   DataGridScrollbarDisplayFix,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
-import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
 import { TextDirection } from '../../structs';
 
 interface PivotWordTextCellProps {
   pivotWord: PivotWord;
 }
 const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _alignedWords = useAlignedWordsFromPivotWord(pivotWord);
   return (
     <span
       key={pivotWord.normalizedText}
@@ -41,11 +38,11 @@ const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
 
 const columns: GridColDef[] = [
   {
-    field: 'instances.length',
+    field: 'frequency',
     headerName: 'Frequency',
     flex: 1,
     valueGetter: (row: GridValueGetterParams<PivotWord>) =>
-      row.row.instances.length,
+      row.row.frequency,
   },
   {
     field: 'normalizedText',
@@ -144,9 +141,7 @@ export const PivotWordTable = ({
             onChooseWord(clickEvent.row);
           }
         }}
-        isRowSelectable={({
-          row: { hasAlignmentLinks },
-        }: GridRowParams<PivotWord>) => !!hasAlignmentLinks}
+        isRowSelectable={(_: GridRowParams<PivotWord>) => true}
       />
     </TableContainer>
   );

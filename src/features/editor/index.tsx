@@ -1,22 +1,38 @@
-import { Fragment } from 'react';
+import { ReactElement } from 'react';
+import { Container } from '@mui/material';
 
-import Editor from './editor';
+import useDebug from 'hooks/useDebug';
+
+import Polyglot from 'features/polyglot';
+import ControlPanel from 'features/controlPanel';
+import ContextPanel from 'features/contextPanel';
+
 import { CorpusContainer } from 'structs';
 
-import './styles.css';
+import '../../styles/theme.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 
-interface EditorWrapperProps {
-  corpora: CorpusContainer[];
-  currentPosition: BCVWP;
+interface EditorProps {
+  containers: CorpusContainer[];
+  position: BCVWP;
 }
 
-const EditorWrapper = (props: EditorWrapperProps): any => {
+const Editor = (props: EditorProps): ReactElement => {
+  useDebug('Editor');
+
   return (
-    <Fragment>
-      <Editor containers={props.corpora} position={props.currentPosition} />
-    </Fragment>
+    <Container maxWidth={false} sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      flexShrink: 1,
+      marginBottom: '1rem'
+    }}>
+            <Polyglot containers={props.containers} position={props.position} />
+            <ControlPanel containers={props.containers} position={props.position} />
+            <ContextPanel containers={props.containers} />
+    </Container>
   );
 };
 
-export default EditorWrapper;
+export default Editor;

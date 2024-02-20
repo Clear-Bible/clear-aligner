@@ -1,12 +1,12 @@
-import { Corpus, Word } from '../../structs';
+import { Corpus, Link, Word } from '../../structs';
 import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
-import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
 import GlossSegment from '../textSegment/glossSegment';
+import uuid from 'uuid-random';
 
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
@@ -14,6 +14,7 @@ export interface WordDisplayProps extends LimitedToLinks {
   parts?: Word[];
   corpus?: Corpus;
   allowGloss?: boolean;
+  links?: Map<string, Link>;
 }
 
 /**
@@ -30,9 +31,10 @@ export const WordDisplay = ({
                               onlyLinkIds,
                               parts,
                               corpus,
+                              links,
                               allowGloss = false
                             }: WordDisplayProps) => {
-  const { language: languageInfo, hasGloss } = corpus ?? { languageInfo: null, hasGloss: false };
+  const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? { language: undefined, hasGloss: false }, [corpus]);
   const { preferences } = React.useContext(AppContext);
   const ref = parts?.find((part) => part.id)?.id;
 
@@ -45,17 +47,18 @@ export const WordDisplay = ({
             ? BCVWP.parseFromString(ref).toTruncatedReferenceString(
               BCVWPField.Word
             )
-            : ''
+            : uuid()
         }-${languageInfo?.code}`}
         style={{
           padding: '1px'
         }}
       >
         {
-          (hasGloss && preferences.showGloss && allowGloss) ? (
+          (hasGloss && preferences?.showGloss && allowGloss) ? (
             <GlossSegment
               readonly={readonly}
               suppressAfter={suppressAfter}
+              links={links}
               parts={parts}
               corpus={corpus}
               allowGloss={allowGloss}
@@ -70,20 +73,10 @@ export const WordDisplay = ({
                     readonly={readonly}
                     onlyLinkIds={onlyLinkIds}
                     word={part}
+                    links={links}
                     languageInfo={languageInfo}
+                    showAfter={!suppressAfter}
                   />
-                  {!suppressAfter && (
-                    <>
-                      {part.after && (
-                        <LocalizedTextDisplay
-                          key={`${part.id}-after`}
-                          languageInfo={languageInfo}
-                        >
-                          {part.after}
-                        </LocalizedTextDisplay>
-                      )}
-                    </>
-                  )}
                 </React.Fragment>
               ))}
               <span> </span>

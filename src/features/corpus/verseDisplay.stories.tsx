@@ -20,6 +20,7 @@ const mockVerse: Verse = {
       side: 'targets',
       text: 'And',
       position: 1,
+      normalizedText: 'and'
     },
     {
       id: '45005003002',
@@ -27,6 +28,7 @@ const mockVerse: Verse = {
       side: 'targets',
       text: 'not',
       position: 2,
+      normalizedText: 'not'
     },
     {
       id: '45005003003',
@@ -34,6 +36,7 @@ const mockVerse: Verse = {
       side: 'targets',
       text: 'only',
       position: 3,
+      normalizedText: 'only'
     },
     {
       id: '45005003004',
@@ -41,6 +44,7 @@ const mockVerse: Verse = {
       side: 'targets',
       text: 'so',
       position: 4,
+      normalizedText: 'so'
     },
   ],
 };

@@ -14,8 +14,6 @@ import {
   DataGridSetMinRowHeightToDefault
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
-import { groupLocalizedPartsByWord } from '../../helpers/groupPartsIntoWords';
-import BCVWP from '../bcvwp/BCVWPSupport';
 import { TextDirection } from '../../structs';
 import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
 import { Box } from '@mui/system';
@@ -25,16 +23,8 @@ import { Box } from '@mui/system';
  * Render an individual word or list of words with the appropriate display for their language
  * @param words words to be rendered
  */
-const renderWords = (words: LocalizedWordEntry[]) => {
-  const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
-  const partsByWord = groupLocalizedPartsByWord(
-    words.sort((a, b) =>
-      BCVWP.compare(
-        BCVWP.parseFromString(a.position),
-        BCVWP.parseFromString(b.position)
-      )
-    )
-  );
+const renderWords = (words: LocalizedWordEntry) => {
+  const { languageInfo } = words;
   return (
     <span
       style={{
@@ -44,19 +34,11 @@ const renderWords = (words: LocalizedWordEntry[]) => {
         width: '100%'
       }}
     >
-      {partsByWord?.map((word, idx) => (
-        <React.Fragment key={idx}>
-          {word.map((wordPart, wordPartIndex) => (
-            <LocalizedTextDisplay
-              key={wordPartIndex}
-              languageInfo={wordPart.languageInfo}
-            >
-              {wordPart.text}
-            </LocalizedTextDisplay>
-          ))}
-          {words.length - 1 !== idx && ' '}
-        </React.Fragment>
-      ))}
+      <React.Fragment>
+        <LocalizedTextDisplay languageInfo={languageInfo}>
+          {words.text}
+        </LocalizedTextDisplay>
+      </React.Fragment>
     </span>
   );
 };
@@ -117,7 +99,7 @@ export const AlignedWordTable = ({
   onChooseAlignedWord,
   onChangeSort,
 }: AlignedWordTableProps) => {
-  const alignedWords = useAlignedWordsFromPivotWord(pivotWord);
+  const alignedWords = useAlignedWordsFromPivotWord(pivotWord, sort);
 
   const loading: boolean = useMemo(
     () => !!pivotWord && !alignedWords,
@@ -196,16 +178,8 @@ export const AlignedWordTable = ({
             },
           }}
           pageSizeOptions={[20, 50]}
-          onRowClick={(clickEvent: GridRowParams<AlignedWord>) => {
-            if (onChooseAlignedWord) {
-              onChooseAlignedWord(clickEvent.row);
-            }
-          }}
-          isRowSelectable={({
-            row: { alignments },
-          }: GridRowParams<AlignedWord>) =>
-            !!alignments && (alignments?.length || 0) > 0
-          }
+          onRowClick={(clickEvent: GridRowParams<AlignedWord>) => onChooseAlignedWord?.(clickEvent.row)}
+          isRowSelectable={(_: GridRowParams<AlignedWord>) => true}
           getRowHeight={() => 'auto'}
         />
       )}

@@ -1,42 +1,15 @@
 import { CorpusContainer } from '../structs';
-import { getAvailableCorporaContainers } from '../workbench/query';
-import { useEffect, useState } from 'react';
+import { useContext } from 'react';
+import { AppContext } from '../App';
 
-interface Containers {
+export interface Containers {
+  projectId?: string;
   sourceContainer?: CorpusContainer;
   targetContainer?: CorpusContainer;
 }
 
 export const useCorpusContainers = (): Containers => {
-  const [sourceContainer, setSourceContainer] = useState(
-    undefined as CorpusContainer | undefined
-  );
-  const [targetContainer, setTargetContainer] = useState(
-    undefined as CorpusContainer | undefined
-  );
+  const appContextProps = useContext(AppContext);
 
-  useEffect(() => {
-    const loadCorpora = async () => {
-      const containers: CorpusContainer[] =
-        await getAvailableCorporaContainers();
-
-      containers.forEach((container) => {
-        if (container.id === 'source') {
-          setSourceContainer(container);
-        } else if (container.id === 'target') {
-          setTargetContainer(container);
-        }
-      });
-    };
-
-    if (sourceContainer && targetContainer) {
-      return;
-    }
-    void loadCorpora();
-  }, [ sourceContainer, setSourceContainer, targetContainer, setTargetContainer]);
-
-  return {
-    sourceContainer,
-    targetContainer
-  };
+  return appContextProps.containers;
 };

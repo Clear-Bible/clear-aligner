@@ -1,61 +1,31 @@
-import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, TextDirection, Verse, Word } from 'structs';
+import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
+import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
+import { AppContextProps } from '../App';
+import { Containers } from '../hooks/useCorpusContainers';
 
-// @ts-ignore
-import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
-// @ts-ignore
-import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
-// @ts-ignore
-import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
-// @ts-ignore
-import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
-
-enum InitializationStates {
-  UNINITIALiZED,
+export enum InitializationStates {
+  UNINITIALIZED,
   INITIALIZING,
   INITIALIZED
 }
 
-let initializationState: InitializationStates = InitializationStates.UNINITIALiZED;
+let IsLoadingAnyCorpora = false;
 
-const availableCorpora: CorpusContainer[] = [];
+export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 
-const punctuationFilter = [
-  ',',
-  '.',
-  '[',
-  ']',
-  ':',
-  '‘',
-  '’',
-  '—',
-  '?',
-  '!',
-  ';',
-  'FALSE',
-  '(',
-  ')',
-  'TRUE',
-];
-
-const parseTsvByFileType = async (
-  tsv: RequestInfo,
-  refCorpus: Corpus,
-  side: AlignmentSide,
-  fileType: CorpusFileFormat
-): Promise<Corpus> => {
-  const fetchedTsv = await fetch(tsv);
-  const response = await fetchedTsv.text();
-  const [header, ...rows] = response.split('\n');
+export const parseTsv = (fileContent: string, refCorpus: Corpus, side: AlignmentSide, fileType: CorpusFileFormat) => {
+  const [header, ...rows] = fileContent.split('\n');
   const headerMap: Record<string, number> = {};
   if (!refCorpus.wordsByVerse) {
     refCorpus.wordsByVerse = {} as Record<string, Verse>;
   }
 
   header.split('\t').forEach((header, idx) => {
+    header = header === 'identifier' ? 'id' : header; //Standard for header in files will be id
     headerMap[header] = idx;
   });
-  const hasGloss = !!(headerMap["english"] ?? headerMap["gloss"]);
+  const hasGloss = !!(headerMap['english'] ?? headerMap['gloss']);
 
   rows.forEach((row) => {
     const values = row.split('\t');
@@ -64,28 +34,33 @@ const parseTsvByFileType = async (
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
+        const wordText = (values[headerMap['text']] || values[headerMap['lemma']] || '');
         // filter out punctuation in content
-        if (punctuationFilter.includes(values[headerMap['text']])) {
+        if (wordText.match(/^[\p{P}\s]*$/gu)) {
           // skip punctuation
           return;
         }
 
         // remove redundant 'o'/'n' qualifier
-        id = values[headerMap['identifier']];
+        id = values[headerMap['id']];
         if (!BCVWP.isValidString(id)) {
           return;
         }
         wordRef = BCVWP.parseFromString(id);
         pos = +id.substring(8, 11); // grab word position
+        if (!wordText || wordText.length < 1) return;
+        const normalizedText = wordText.toLowerCase();
         word = {
           id: id, // standardize n40001001002 to  40001001002
           side,
           corpusId: refCorpus.id,
-          text: values[headerMap['text']] || values[headerMap['lemma']] || '',
-          position: pos
+          text: wordText,
+          position: pos,
+          sourceVerse: values[headerMap['source_verse']] || '',
+          normalizedText
         };
 
-        wordKey = word.text.toLowerCase();
+        wordKey = normalizedText;
         if (refCorpus.wordLocation.has(wordKey)) {
           refCorpus.wordLocation.get(wordKey)?.add(wordRef);
         } else {
@@ -94,9 +69,10 @@ const parseTsvByFileType = async (
         verse = refCorpus.wordsByVerse[id.substring(0, 8)] || {};
         refCorpus.wordsByVerse[id.substring(0, 8)] = {
           ...verse,
+          sourceVerse: values[headerMap['source_verse']],
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
-          words: (verse.words || []).concat([word]),
+          words: (verse.words || []).concat([word])
         };
         refCorpus.words.push(word);
         break;
@@ -108,7 +84,7 @@ const parseTsvByFileType = async (
         pos = +id.substring(8, 11);
         // Gloss is defined at this level since both english and gloss headers can exist.
         // Either could be null within the TSV file.
-        const gloss = values[headerMap["english"]] || values[headerMap["gloss"]] || "-";
+        const gloss = values[headerMap['english']] || values[headerMap['gloss']] || '-';
 
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -118,7 +94,7 @@ const parseTsvByFileType = async (
           after: values[headerMap['after']],
           position: pos,
           gloss: (new RegExp(/^(.+\..+)+$/)).test(gloss)
-            ? gloss.replaceAll(".", " ")
+            ? gloss.replaceAll('.', ' ')
             : gloss
         } as Word;
 
@@ -135,7 +111,7 @@ const parseTsvByFileType = async (
           ...verse,
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
-          words: (verse.words || []).concat([word]),
+          words: (verse.words || []).concat([word])
         };
         refCorpus.words.push(word);
         break;
@@ -146,6 +122,18 @@ const parseTsvByFileType = async (
     ...refCorpus,
     hasGloss
   };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const parseTsvByFileType = async (
+  tsv: RequestInfo,
+  refCorpus: Corpus,
+  side: AlignmentSide,
+  fileType: CorpusFileFormat
+): Promise<Corpus> => {
+  const fetchedTsv = await fetch(tsv);
+  const response = await fetchedTsv.text();
+  return parseTsv(response, refCorpus, side, fileType);
 };
 
 const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
@@ -166,152 +154,96 @@ const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
   chapterRef[verse.bcvId.verse] = verse;
 };
 
-const putVersesInCorpus = (corpus: Corpus) => {
+export const putVersesInCorpus = (corpus: Corpus) =>
   Object.values(corpus.wordsByVerse).forEach((verse) =>
     putVerseInCorpus(corpus, verse)
   );
+
+const WordQueryBatchSize = 100_000;
+
+export const getCorpusFromDatabase = async (
+  inputCorpus: Corpus,
+  sourceName?: string
+): Promise<Corpus> => {
+  inputCorpus.wordsByVerse = {} as Record<string, Verse>;
+  inputCorpus.words = [];
+  let offset = 0;
+  while (true) {
+    // @ts-ignore
+    const words = ((await window.databaseApi.getAllWordsByCorpus(
+      sourceName ?? DefaultProjectName,
+      inputCorpus.side,
+      inputCorpus.id,
+      WordQueryBatchSize, offset)) as Word[]);
+    if (!words
+      || words.length < 1) {
+      break;
+    }
+    for (const word of words) {
+      if (!word.text) {
+        continue;
+      }
+      const verseId = (word.id ?? EmptyWordId).substring(0, 8);
+      const verseBCV = BCVWP.parseFromString(verseId);
+      const verse: Verse = inputCorpus.wordsByVerse[verseId] ?? {};
+      inputCorpus.wordsByVerse[verseId] = {
+        ...verse,
+        sourceVerse: word.sourceVerse ?? verseId,
+        bcvId: verseBCV,
+        citation: verse.citation ?? `${verseBCV.chapter}:${verseBCV.verse}`,
+        words: (verse.words || []).concat([word])
+      };
+      inputCorpus.words.push(word);
+    }
+    offset += words.length;
+    if (words.length < WordQueryBatchSize) {
+      break;
+    }
+  }
+  return inputCorpus;
 };
 
-const waitForInitialization = async () => {
-  while (initializationState !== InitializationStates.INITIALIZED) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-}
-
-export const getAvailableCorporaContainers = async (): Promise<
-  CorpusContainer[]
+export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Promise<
+  Containers
 > => {
-  if (initializationState === InitializationStates.UNINITIALiZED) {
-    initializationState = InitializationStates.INITIALIZING;
-    // Macula Hebrew OT
-    let maculaHebOT: Corpus = {
-      id: 'wlc-hebot',
-      name: 'WLC',
-      fullName: 'Macula Hebrew Old Testament',
-      language: {
-        code: 'heb',
-        textDirection: TextDirection.RTL,
-        fontFamily: 'sbl-hebrew',
-      },
-      words: [],
-      wordsByVerse: {},
-      wordLocation: new Map<string, Set<BCVWP>>(),
-      books: {},
+  if (!appCtx.preferences?.currentProject) {
+    return {
+      projectId: appCtx.preferences?.currentProject,
+      sourceContainer: undefined,
+      targetContainer: undefined
     };
-    const maculaHebOTWords = await parseTsvByFileType(
-      MACULA_HEBOT_TSV,
-      maculaHebOT,
-      'sources',
-      CorpusFileFormat.TSV_MACULA
-    );
-    maculaHebOT = {
-      ...maculaHebOT,
-      ...maculaHebOTWords,
-    };
-    putVersesInCorpus(maculaHebOT);
-
-    // YLT Old Testament
-    let wlcYltOt: Corpus = {
-      id: 'wlc-ylt',
-      name: 'YLT',
-      fullName: 'YLT Old Testament',
-      language: {
-        code: 'en',
-        textDirection: TextDirection.LTR,
-      },
-      words: [],
-      wordsByVerse: {},
-      wordLocation: new Map<string, Set<BCVWP>>(),
-      books: {},
-    };
-    const wlcYltOtWords = await parseTsvByFileType(
-      WLC_OT_YLT_TSV,
-      wlcYltOt,
-      'targets',
-      CorpusFileFormat.TSV_TARGET
-    );
-    wlcYltOt = {
-      ...wlcYltOt,
-      ...wlcYltOtWords,
-    };
-    putVersesInCorpus(wlcYltOt);
-
-    // SBL GNT
-    let sblGnt: Corpus = {
-      id: 'sbl-gnt',
-      name: 'SBLGNT',
-      fullName: 'SBL Greek New Testament',
-      language: {
-        code: 'grc',
-        textDirection: TextDirection.LTR,
-      },
-      words: [],
-      wordsByVerse: {},
-      wordLocation: new Map<string, Set<BCVWP>>(),
-      books: {},
-    };
-
-    const sblWords = await parseTsvByFileType(
-      MACULA_SBLGNT,
-      sblGnt,
-      'sources',
-      CorpusFileFormat.TSV_MACULA
-    );
-    sblGnt = {
-      ...sblGnt,
-      ...sblWords,
-    };
-    putVersesInCorpus(sblGnt);
-
-    let na27Ylt: Corpus = {
-      id: 'na27-YLT',
-      name: 'YLT',
-      fullName: "Young's Literal Translation text New Testament",
-      language: {
-        code: 'eng',
-        textDirection: TextDirection.LTR,
-      },
-      words: [],
-      wordsByVerse: {},
-      wordLocation: new Map<string, Set<BCVWP>>(),
-      books: {},
-    };
-
-    const na27Words = await parseTsvByFileType(
-      NA27_YLT,
-      na27Ylt,
-      'targets',
-      CorpusFileFormat.TSV_TARGET
-    );
-    na27Ylt = {
-      ...na27Ylt,
-      ...na27Words,
-    };
-    putVersesInCorpus(na27Ylt);
-
-    const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
-      maculaHebOT,
-      sblGnt,
-    ]);
-    const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
-      wlcYltOt,
-      na27Ylt,
-    ]);
-
-    availableCorpora.push(sourceContainer);
-    availableCorpora.push(targetContainer);
-    initializationState = InitializationStates.INITIALIZED;
-  } else if (initializationState === InitializationStates.INITIALIZING) {
-    await waitForInitialization();
   }
 
-  return availableCorpora;
-};
+  IsLoadingAnyCorpora = true;
+  try {
+    // @ts-ignore
+    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject)) as Corpus[]) ?? []);
+    const corpusPromises: Promise<Corpus>[] = inputCorpora
+      .map(inputCorpus =>
+        getCorpusFromDatabase({
+          ...inputCorpus,
+          words: [],
+          wordsByVerse: {},
+          wordLocation: new Map<string, Set<BCVWP>>(),
+          books: {},
+          hasGloss: inputCorpus.side === AlignmentSide.SOURCE
+        }, appCtx.preferences?.currentProject));
+    const outputCorpora: Corpus[] =
+      (await Promise.all(corpusPromises));
+    outputCorpora.forEach(
+      outputCorpus => putVersesInCorpus(outputCorpus));
 
-export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (
-    initializationState ? availableCorpora : await getAvailableCorporaContainers()
-  ).map((corpus) => {
-    return corpus.id;
-  });
+    const sourceContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE,
+      outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.SOURCE));
+    const targetContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET,
+      outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.TARGET));
+
+    return {
+      projectId: appCtx.preferences?.currentProject,
+      sourceContainer,
+      targetContainer
+    };
+  } finally {
+    IsLoadingAnyCorpora = false;
+  }
 };

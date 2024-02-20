@@ -1,6 +1,6 @@
 {
   "name": "clear-aligner",
-  "version": "0.0.26",
+  "version": "0.0.29",
   "license": "MIT",
   "private": false,
   "homepage": ".",
@@ -13,16 +13,22 @@
     "@mui/x-data-grid": "^6.18.2",
     "@reduxjs/toolkit": "^1.8.1",
     "@rgrove/parse-xml": "^3.0.0",
+    "@uidotdev/usehooks": "^2.4.1",
+    "better-sqlite3": "^9.4.3",
+    "cache-manager": "^5.4.0",
     "electron-is-dev": "^2.0.0",
     "queue-promise": "^2.2.1",
     "react-redux": "^7.2.8",
     "react-router-dom": "^6.20.0",
     "react-scripts": "5.0.0",
     "redux-undo": "^1.0.1",
+    "reflect-metadata": "^0.2.1",
+    "sanitize-filename": "^1.6.3",
     "stream-browserify": "^3.0.0",
-    "typescript": "^4.6.3",
-    "usehooks-ts": "^2.15.1",
-    "uuid": "^9.0.1",
+    "typeorm": "^0.3.20",
+    "typescript": "^5.3.3",
+    "usehooks-ts": "^2.16.0",
+    "uuid-random": "^1.3.2",
     "web-vitals": "^2.1.4"
   },
   "peerDependencies": {
@@ -32,14 +38,17 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build && electron-builder",
-    "build:mac": "yarn build -m",
-    "build:linux": "docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"yarn install && yarn build -l\"",
-    "build:win": "docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"yarn install && yarn build -w\"",
+    "build:mac": "sql/scripts/create-db.sh && yarn build -m",
+    "build:linux": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
+    "build:win": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
+    "build:mac:fast": "sql/scripts/create-db.sh --no-remove && yarn build -m",
+    "build:linux:fast": "sql/scripts/create-db.sh --no-remove && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
+    "build:win:fast": "sql/scripts/create-db.sh --no-remove && docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
     "test": "craco test",
     "eject": "craco eject",
     "prettier": "prettier --write .",
     "prepublishOnly": "rm -rf dist/ && rollup -c",
-    "dev-electron": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
+    "dev-electron": "sql/scripts/create-db.sh --no-remove && concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron .",
     "storybook": "STORYBOOK_DISABLE_TELEMETRY=true storybook dev -p 6006",
     "build-storybook": "STORYBOOK_DISABLE_TELEMETRY=true storybook build"
@@ -49,16 +58,7 @@
       "react-app",
       "react-app/jest",
       "plugin:storybook/recommended"
-    ],
-    "rules": {
-      "no-restricted-syntax": [
-        "error",
-        {
-          "selector": "NewExpression[callee.name='PouchDB']",
-          "message": "Find or declare a factory in databaseManagement.tsx to initialize PouchDB"
-        }
-      ]
-    }
+    ]
   },
   "browserslist": {
     "production": [
@@ -95,11 +95,12 @@
     "@types/node": "^16.11.26",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.1",
     "electron": "^27.0.0",
     "electron-build": "^0.0.3",
     "electron-builder": "^24.9.1",
+    "electron-devtools-installer": "^3.2.0",
+    "electron-rebuild": "^3.2.9",
     "eslint-plugin-storybook": "^0.6.15",
     "prettier": "^2.6.1",
     "react": "^18.0.0",
@@ -123,7 +124,21 @@
     "directories": {
       "buildResources": "build/",
       "app": "."
-    }
+    },
+    "extraFiles": [
+      {
+        "from": "sql/projects/clear-aligner-default.sqlite",
+        "to": "sql/projects/clear-aligner-default.sqlite"
+      },
+      {
+        "from": "sql/clear-aligner-template.sqlite",
+        "to": "sql/clear-aligner-template.sqlite"
+      },
+      {
+        "from": "sql/clear-aligner-user.sqlite",
+        "to": "sql/clear-aligner-user.sqlite"
+      }
+    ]
   },
   "babel": {
     "sourceType": "unambiguous",

@@ -1,17 +1,17 @@
 import { AlignedWord, PivotWord } from './structs';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { useCorpusContainers } from '../../hooks/useCorpusContainers';
-import {
-  fullyResolveLink, generateWordListFromCorpusContainerAndLink, getLinksForPivotWord
-} from './concordanceViewHelpers';
+import { useDatabase } from '../../hooks/useDatabase';
+import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableManager';
+import { GridSortItem } from '@mui/x-data-grid';
+import { useLanguages } from '../../hooks/useLanguages';
 import { AppContext } from '../../App';
 
-export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord[] | undefined => {
-  const {
-    projectState: { linksTable }
-  } = useContext(AppContext);
-  const { sourceContainer, targetContainer } = useCorpusContainers();
-  const [alignedWords, setAlignedWords] = useState<AlignedWord[] | undefined>(pivotWord?.alignedWords);
+export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridSortItem | null): AlignedWord[] | undefined => {
+  const { preferences } = useContext(AppContext);
+  const lastUpdate = useDataLastUpdated();
+  const languages = useLanguages();
+  const db = useDatabase();
+  const [alignedWords, setAlignedWords] = useState<AlignedWord[] | undefined>(undefined);
   const setAlignedWordsRef = useRef(setAlignedWords);
 
   useEffect(() => {
@@ -19,63 +19,34 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord
   }, [setAlignedWordsRef, setAlignedWords]);
 
   useEffect(() => {
-      setAlignedWords(pivotWord?.alignedWords);
-    }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [setAlignedWords, pivotWord, pivotWord?.alignedWords, pivotWord?.alignedWords?.length]);
-
-  useEffect(() => {
-    if (pivotWord?.alignedWords) {
-      setAlignedWordsRef.current(pivotWord.alignedWords);
-      return;
-    }
-
-    const loadAlignedWords = async () => {
-      return new Promise<void>((resolve) => {
-        setTimeout(async () => {
-          if (!sourceContainer || !targetContainer || !pivotWord || !linksTable) {
-            resolve();
-            return;
-          }
-
-          if (!pivotWord.alignmentLinks) {
-            await getLinksForPivotWord(linksTable, pivotWord);
-          }
-
-          const links = pivotWord.alignmentLinks!.map((link) => fullyResolveLink(link, sourceContainer, targetContainer));
-
-          const alignedWordsPromises = links.map(async (link): Promise<AlignedWord> => {
-            const key = [...generateWordListFromCorpusContainerAndLink(link, 'sources'), ...generateWordListFromCorpusContainerAndLink(link, 'targets')].join(',');
-            return {
-              id: key,
-              frequency: 1,
-              sourceWordTexts: Array.from(link.sourceResolvedWords).map((word) => word.localized),
-              targetWordTexts: Array.from(link.targetResolvedWords).map((word) => word.localized),
-              sourceTextId: Array.from(link.sourceResolvedWords).find((w) => !!w.word.corpusId)?.word.corpusId ?? '',
-              targetTextId: Array.from(link.targetResolvedWords).find((w) => !!w.word.corpusId)?.word.corpusId ?? '',
-              alignments: [link]
-            };
-          });
-
-          const alignedWordsMap = (await Promise.all(alignedWordsPromises)).reduce((accumulator, currentValue) => {
-            if (accumulator[currentValue.id]) {
-              accumulator[currentValue.id].alignments = [...(accumulator[currentValue.id].alignments ?? []), ...(currentValue.alignments ?? [])];
-              accumulator[currentValue.id].frequency = accumulator[currentValue.id].alignments!.length;
-            } else {
-              accumulator[currentValue.id] = currentValue;
-            }
-            return accumulator;
-          }, {} as { [key: string]: AlignedWord });
-
-          const newAlignedWords = Object.values(alignedWordsMap);
-          setAlignedWordsRef.current(newAlignedWords);
-          pivotWord.alignedWords = newAlignedWords;
-          resolve();
-        }, 2);
-      });
+    if (!pivotWord || !languages) return;
+    const load = async () => {
+      console.time(`useAlignedWordsFromPivotWord('${pivotWord.normalizedText}')`);
+      const alignedWords = (await db.corporaGetAlignedWordsByPivotWord(
+        preferences?.currentProject ?? DefaultProjectName,
+        pivotWord.side,
+        pivotWord.normalizedText,
+        sort))
+        .map((aw): AlignedWord => {
+          return {
+            id: `${aw.t}:${aw.st}-${aw.tt}`,
+            sourceWordTexts: {
+              languageInfo: languages.get(aw.sl),
+              text: aw.st
+            },
+            targetWordTexts: {
+              languageInfo: languages.get(aw.tl),
+              text: aw.tt
+            },
+            frequency: aw.c
+          };
+        });
+      console.timeEnd(`useAlignedWordsFromPivotWord('${pivotWord.normalizedText}')`);
+      setAlignedWords(alignedWords);
     };
 
-    void loadAlignedWords();
-  }, [pivotWord, linksTable, sourceContainer, targetContainer, setAlignedWordsRef]);
+    void load();
+  }, [db, sort, setAlignedWords, pivotWord, languages, preferences?.currentProject, lastUpdate]);
 
   return alignedWords;
 };

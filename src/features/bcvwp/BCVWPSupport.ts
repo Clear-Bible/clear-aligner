@@ -52,7 +52,7 @@ export default class BCVWP {
   toHumanReadableString(): string {
     return `${this.getBookInfo()?.EnglishBookName ?? ''} ${
       this.chapter ?? 'NA'
-    }:${this.verse ?? 'NA'} ${this.word ?? ''}${
+    }:${this.verse ?? 'NA'} ${this.word ? `w${this.word}` : ''}${
       this.word && this.part ? `/${this.part}` : ''
     }`.trim();
   }
@@ -65,7 +65,7 @@ export default class BCVWP {
     if (this.referenceString) return this.referenceString;
     const bookFormet = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
     const chapterFormat = Intl.NumberFormat('en-US', {
-      minimumIntegerDigits: 3,
+      minimumIntegerDigits: 3
     });
     const verseFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
     const wordFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
@@ -111,15 +111,17 @@ export default class BCVWP {
       }
     });
   }
+
   static isValidString(reference: string): boolean {
     return (
       !!reference && !!reference.match(/^[onON]?\d/) && reference.length > 1
     );
   }
 
-  static sanitize(reference: string): string {
-    const trimmed = reference.trim();
-    return !!trimmed.match(/^[onON]\d/) ? trimmed.substring(1) : trimmed;
+  static sanitize(wordId: string): string {
+    const wordId1 = wordId.trim();
+    return !!wordId1.match(/^[onON]\d/)
+      ? wordId1.substring(1) : wordId1;
   }
 
   static truncateTo(reference: string, field: BCVWPField): string {

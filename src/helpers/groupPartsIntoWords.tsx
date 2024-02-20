@@ -44,18 +44,3 @@ export const groupPartsIntoWords = <T extends Word>(words: T[]): T[][] =>
       [] as T[][]
     )
     .filter((value) => value.length >= 1);
-
-export const groupLocalizedPartsByWord = (
-  words: LocalizedWordEntry[]
-): LocalizedWordEntry[][] =>
-  words
-    .reduce(
-      (accumulator, currentValue) =>
-        groupingReducer(
-          accumulator,
-          currentValue,
-          (part: LocalizedWordEntry) => part.position
-        ),
-      [] as LocalizedWordEntry[][]
-    )
-    .filter((value) => value.length >= 1);

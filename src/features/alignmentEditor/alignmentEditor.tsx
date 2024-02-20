@@ -1,97 +1,104 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { CorpusContainer, Word } from '../../structs';
-import { getAvailableCorporaContainers } from '../../workbench/query';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
-import { useSearchParams } from 'react-router-dom';
 import { AppContext } from '../../App';
+import { UserPreference } from 'state/preferences/tableManager';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
+import _ from 'lodash';
+import { useAppDispatch } from '../../app/index';
+import { resetTextSegments } from '../../state/alignment.slice';
+import { Stack } from '@mui/material';
 
 const defaultDocumentTitle = 'ClearAligner';
 
-export const AlignmentEditor = () => {
+interface AlignmentEditorProps {
+  showNavigation?: boolean;
+}
+
+export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true }) => {
   const layoutCtx = useContext(LayoutContext);
+  const { sourceContainer, targetContainer } = useCorpusContainers();
   const [availableWords, setAvailableWords] = useState([] as Word[]);
   const [selectedCorporaContainers, setSelectedCorporaContainers] = useState(
     [] as CorpusContainer[]
   );
-
   const appCtx = useContext(AppContext);
+  const dispatch = useAppDispatch();
+  const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1,1,1), [appCtx.preferences?.bcv]);
 
-  // set current reference to default if none set
   useEffect(() => {
-    if (!appCtx.currentReference) {
-      appCtx.setCurrentReference(new BCVWP(45, 5, 3)); // set current reference to default
-    }
-  }, [appCtx, appCtx.currentReference, appCtx.setCurrentReference]);
+    if (sourceContainer && targetContainer)
+      setSelectedCorporaContainers([ sourceContainer, targetContainer ]);
+  }, [sourceContainer, targetContainer]);
 
-  React.useEffect(() => {
-    if (appCtx.currentReference) {
+  useEffect(() => {
+    if (currentPosition) {
       layoutCtx.setWindowTitle(
         `${defaultDocumentTitle}: ${
-          appCtx.currentReference?.getBookInfo()?.EnglishBookName
-        } ${appCtx.currentReference?.chapter}:${appCtx.currentReference?.verse}`
+          currentPosition.getBookInfo()?.EnglishBookName
+        } ${currentPosition?.chapter}:${currentPosition?.verse}`
       );
     } else {
       layoutCtx.setWindowTitle(defaultDocumentTitle);
     }
-  }, [appCtx.currentReference, layoutCtx]);
+  }, [currentPosition, layoutCtx]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!targetContainer) {
+      return;
+    }
     const loadSourceWords = async () => {
-      const containers = await getAvailableCorporaContainers();
-      const targetCorpora = containers.find(
-        (v: CorpusContainer) => v.id === 'target'
-      );
-
-      setSelectedCorporaContainers(containers);
       setAvailableWords(
-        targetCorpora?.corpora.flatMap(({ words }) => words) ?? []
+        targetContainer?.corpora.flatMap(({ words }) => words) ?? []
       );
     };
-
-    loadSourceWords().catch(console.error);
-  }, [
-    setAvailableWords,
-    appCtx.setCurrentReference,
-    setSelectedCorporaContainers,
-  ]);
+    void loadSourceWords().catch(console.error);
+  }, [targetContainer?.corpora, setAvailableWords, targetContainer]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
-      <BCVDisplay currentPosition={appCtx.currentReference} />
+      <BCVDisplay currentPosition={appCtx.preferences?.bcv} />
     );
-  }, [layoutCtx, appCtx.currentReference]);
+  }, [layoutCtx, appCtx.preferences?.bcv]);
 
-  const [searchParams, setSearchParams] = useSearchParams();
-
+  // reset selected tokens when the book, chapter or verse changes
   useEffect(() => {
-    if (searchParams.has('ref')) {
-      const newPosition = BCVWP.parseFromString(searchParams.get('ref')!);
-      appCtx.setCurrentReference(newPosition);
-      searchParams.delete('ref');
-      setSearchParams(searchParams);
-    }
-  }, [searchParams, appCtx, appCtx.setCurrentReference, setSearchParams]);
+    dispatch(resetTextSegments())
+  }, [appCtx.preferences?.bcv, dispatch])
 
   return (
-    <>
-      <div style={{ display: 'grid', justifyContent: 'center' }}>
-        <br />
-        <BCVNavigation
-          horizontal
-          disabled={!availableWords || availableWords.length < 1}
-          words={availableWords}
-          currentPosition={appCtx.currentReference ?? undefined}
-          onNavigate={appCtx.setCurrentReference}
-        />
-      </div>
+    <Stack direction={'column'} minWidth={'100%'} height={'100%'}>
+      {
+        showNavigation && (
+          <div style={{ display: 'grid', justifyContent: 'center' }}>
+            <br />
+            <BCVNavigation
+              horizontal
+              disabled={!availableWords || availableWords.length < 1}
+              words={availableWords}
+              currentPosition={currentPosition}
+              onNavigate={bcv => {
+                if (!_.isEqual(bcv, currentPosition)) {
+                  appCtx.setPreferences((previousState): UserPreference => {
+                    return {
+                      ...previousState as UserPreference,
+                      bcv
+                    };
+                  });
+                }
+              }}
+            />
+          </div>
+        )
+      }
       <Workbench
         corpora={selectedCorporaContainers}
-        currentPosition={appCtx.currentReference}
+        currentPosition={currentPosition}
       />
-    </>
+    </Stack>
   );
 };

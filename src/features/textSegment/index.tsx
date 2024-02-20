@@ -1,16 +1,14 @@
-import React, { ReactElement, useContext, useMemo } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { LanguageInfo, Word } from 'structs';
-import findRelatedAlignments from 'helpers/findRelatedAlignments';
+import { AlignmentSide, LanguageInfo, Link, Word } from 'structs';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
-import { AppContext } from '../../App';
 import { AlignmentMode } from '../../state/alignmentState';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -21,6 +19,7 @@ export interface TextSegmentProps extends LimitedToLinks {
   languageInfo?: LanguageInfo;
   showAfter?: boolean;
   alignment?: 'flex-end' | 'flex-start' | 'center';
+  links?: Map<string, Link>;
 }
 
 const computeVariant = (
@@ -81,103 +80,78 @@ const computeDecoration = (
 };
 
 export const TextSegment = ({
-  readonly,
-  word,
-  languageInfo,
-  onlyLinkIds,
-  alignment,
-  showAfter = false
-}: TextSegmentProps): ReactElement => {
+                              readonly,
+                              word,
+                              languageInfo,
+                              alignment,
+                              links,
+                              showAfter = false
+                            }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
   const dispatch = useAppDispatch();
-  const { projectState } = useContext(AppContext);
-
   const mode = useAppSelector(selectAlignmentMode); // get alignment mode
-
-  const isHovered = useAppSelector(
+  const isHoveredWord = useAppSelector(
     (state) =>
       state.textSegmentHover.hovered?.side === word.side &&
       state.textSegmentHover.hovered?.id === word.id
   );
-
-  const currentlyHovered = useAppSelector(
+  const currentlyHoveredWord = useAppSelector(
     (state) => state.textSegmentHover.hovered
   );
-
-  const foundRelatedLinks = useMemo(
-    () => {
-      const related = findRelatedAlignments(word, projectState.linksTable);
-      if (onlyLinkIds) {
-        return related.filter(
-          (link) => link.id && onlyLinkIds.includes(link.id)
-        );
-      }
-      return related;
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      word,
-      projectState.linksTable,
-      projectState.linksTable?.lastUpdate,
-      onlyLinkIds,
-      onlyLinkIds?.length,
-    ]
-  );
+  const wordLinks = useMemo<Link[]>(() => {
+    if (!links
+      || !word?.id) {
+      return [];
+    }
+    const result = links.get(BCVWP.sanitize(word.id));
+    return (result ? [result] : []);
+  }, [links, word?.id]);
+  const hoveredLinks = useMemo<Link[]>(() => {
+    if (!links
+      || !currentlyHoveredWord?.id) {
+      return [];
+    }
+    const sanitized = BCVWP.sanitize(currentlyHoveredWord.id);
+    const result = [...links.values()].find((link: Link) => link[currentlyHoveredWord.side].includes(sanitized));
+    return result ? [result] : [];
+  }, [links, currentlyHoveredWord?.id, currentlyHoveredWord?.side]);
 
   const isMemberOfMultipleAlignments = useMemo(
-    () => foundRelatedLinks.length > 1,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [foundRelatedLinks.length]
+    () => (wordLinks ?? []).length > 1,
+    [wordLinks]
+  );
+
+  const wasMemberOfCurrentlyEditedLink = useAppSelector((state) =>
+    state.alignment.present.inProgressLink?.id && wordLinks.map((link) => link.id).includes(state.alignment.present.inProgressLink?.id)
   );
 
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (word.side) {
-      case 'sources':
+      case AlignmentSide.SOURCE:
         return !!state.alignment.present.inProgressLink?.sources.includes(
           BCVWP.sanitize(word.id)
         );
-      case 'targets':
+      case AlignmentSide.TARGET:
         return !!state.alignment.present.inProgressLink?.targets.includes(
           BCVWP.sanitize(word.id)
         );
     }
-    return false;
   });
-
-  const hoverRelatedLinks = useMemo(
-    () => {
-      // links related to the hovered word
-      if (!currentlyHovered) return [];
-      return findRelatedAlignments(currentlyHovered, projectState.linksTable);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      currentlyHovered,
-      projectState.linksTable,
-      projectState.linksTable?.lastUpdate,
-    ]
-  );
 
   const isRelatedToCurrentlyHovered = useMemo(
     () => {
-      return _.intersection(foundRelatedLinks, hoverRelatedLinks).length > 0;
+      return _.intersection(wordLinks, hoveredLinks).length > 0;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      hoverRelatedLinks,
-      hoverRelatedLinks.length,
-      foundRelatedLinks,
-      foundRelatedLinks.length,
-    ]
+    [wordLinks, hoveredLinks]
   );
 
   const isLinked = useMemo(
-    () => foundRelatedLinks.length > 0,
-    [foundRelatedLinks.length]
+    () => (wordLinks ?? []).length > 0,
+    [wordLinks]
   );
 
-  const isInvolved = useAppSelector(
+  const hasInProgressLink = useAppSelector(
     (state) => !!state.alignment.present.inProgressLink
   );
 
@@ -187,51 +161,62 @@ export const TextSegment = ({
 
   return (
     <React.Fragment>
-      <Typography
-        paragraph={false}
-        component="span"
-        variant={computeVariant(isSelectedInEditedLink, isLinked)}
-        sx={alignment ? {display: 'flex', justifyContent: alignment} : {}}
-        className={`text-segment${
-          readonly ? '.readonly' : ''
-        } ${computeDecoration(
-          !!readonly,
-          isHovered,
-          isRelatedToCurrentlyHovered,
-          mode,
-          isLinked,
-          isInvolved,
-          isMemberOfMultipleAlignments
-        )}`}
-        style={{
-          ...(languageInfo?.fontFamily
-            ? { fontFamily: languageInfo.fontFamily }
-            : {}),
-        }}
-        onMouseEnter={
-          readonly
-            ? undefined
-            : () => {
-                dispatch(hover(word));
-              }
-        }
-        onMouseLeave={
-          readonly
-            ? undefined
-            : () => {
-                dispatch(hover(null));
-              }
-        }
-        onClick={
-          readonly
-            ? undefined
-            : () => dispatch(toggleTextSegment({ foundRelatedLinks, word }))
-        }
-      >
         <LocalizedTextDisplay languageInfo={languageInfo}>
-          {word.text}{showAfter ? (word.after || "").trim() : ""}
+            <Typography
+              paragraph={false}
+              component="span"
+              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              style={{
+                ...(languageInfo?.fontFamily
+                  ? { fontFamily: languageInfo.fontFamily }
+                  : {})
+              }} >
+              <Typography
+              paragraph={false}
+              component="span"
+              variant={computeVariant(isSelectedInEditedLink, isLinked)}
+              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              className={`text-segment${
+                readonly ? '.readonly' : ''
+              } ${computeDecoration(
+                !!readonly,
+                isHoveredWord,
+                isRelatedToCurrentlyHovered,
+                mode,
+                isLinked,
+                hasInProgressLink,
+                isMemberOfMultipleAlignments
+              )}`}
+              style={{
+                ...(languageInfo?.fontFamily
+                  ? { fontFamily: languageInfo.fontFamily }
+                  : {})
+              }}
+              onMouseEnter={
+                readonly
+                  ? undefined
+                  : () => {
+                    dispatch(hover(word));
+                  }
+              }
+              onMouseLeave={
+                readonly
+                  ? undefined
+                  : () => {
+                    dispatch(hover(null));
+                  }
+              }
+              onClick={
+                readonly || (isLinked && hasInProgressLink && !wasMemberOfCurrentlyEditedLink)
+                  ? undefined
+                  : () => dispatch(toggleTextSegment({ foundRelatedLinks: (wordLinks ?? []), word }))
+              }
+            >
+              {word.text}
+            </Typography>
+            {showAfter ? (word.after || '').trim() : ''}
+          </Typography>
         </LocalizedTextDisplay>
-      </Typography>
     </React.Fragment>
   );
 };

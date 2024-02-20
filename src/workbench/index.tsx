@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { CorpusContainer } from 'structs';
-import EditorWrapper from 'features/editor';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
+import Editor from '../features/editor';
 
 interface WorkbenchProps {
   corpora?: CorpusContainer[];
@@ -15,7 +15,6 @@ const Workbench: React.FC<WorkbenchProps> = ({
   return (
     <>
       {corpora && (
-        <div>
           <div
             style={{
               display: 'flex',
@@ -24,16 +23,16 @@ const Workbench: React.FC<WorkbenchProps> = ({
               border: '1px solid',
               margin: 'auto',
               marginTop: '1rem',
-              marginBottom: '1rem',
-              maxWidth: '1200px',
+              marginBottom: '0',
+              minWidth: '100%',
+              flexGrow: 1
             }}
           >
-            <EditorWrapper
-              corpora={corpora}
-              currentPosition={currentPosition as BCVWP}
+            <Editor
+              containers={corpora}
+              position={currentPosition as BCVWP}
             />
           </div>
-        </div>
       )}
     </>
   );

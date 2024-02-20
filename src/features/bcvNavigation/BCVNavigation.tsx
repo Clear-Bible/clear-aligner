@@ -1,13 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Autocomplete,
-  Button,
-  IconButton,
-  SxProps,
-  TextField,
-  Theme,
-  Tooltip,
-} from '@mui/material';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Autocomplete, Button, IconButton, SxProps, TextField, Theme, Tooltip } from '@mui/material';
 import { Word } from '../../structs';
 import { Box } from '@mui/system';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
@@ -18,10 +10,10 @@ import {
   findBookInNavigableBooksByBookNumber,
   findNextNavigableVerse,
   findPreviousNavigableVerse,
-  getReferenceListFromWords,
   NavigableBook,
-  Verse,
+  Verse
 } from './structs';
+import { useBooksWithNavigationInfo } from './useBooksWithNavigationInfo';
 
 export interface BCVNavigationProps {
   sx?: SxProps<Theme>;
@@ -44,82 +36,63 @@ const ICON_BTN_VERT_MARGIN = '.5em';
  * @param horizontal optional parameter to specify horizontal layout
  */
 const BCVNavigation = ({
-  sx,
-  disabled,
-  words,
-  currentPosition,
-  onNavigate,
-  horizontal,
-}: BCVNavigationProps) => {
-  const [availableBooks, setAvailableBooks] = useState([] as NavigableBook[]);
-  const [selectedBook, setSelectedBook] = useState(
-    null as NavigableBook | null
-  );
-  const [selectedChapter, setSelectedChapter] = useState(
-    null as Chapter | null
-  );
-  const [selectedVerse, setSelectedVerse] = useState(null as Verse | null);
+                         sx,
+                         disabled,
+                         words,
+                         currentPosition,
+                         onNavigate,
+                         horizontal
+                       }: BCVNavigationProps) => {
+  const allAvailableBooks = useBooksWithNavigationInfo(words);
+  const [selectedBook, setSelectedBook] = useState<NavigableBook | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
+  const [availableBooks, setAvailableBooks] = useState<NavigableBook[]>([]);
+  const [availableChapters, setAvailableChapters] = useState<Chapter[]>([]);
+  const [availableVerses, setAvailableVerses] = useState<Verse[]>([]);
+  const isPositionReset = useRef<boolean>(true);
 
-  const getBooksWithNavigationInfo = async (words: Word[]) => {
-    const referenceList = getReferenceListFromWords(words);
-    setAvailableBooks(referenceList ?? []);
+  const findAvailableChaptersByBook = (books?: NavigableBook[], bookNum?: number) => {
+    return (books && bookNum
+      ? books.find((book) => book.BookNumber === bookNum)?.chapters : []) ?? [];
+  };
+  const findAvailableVersesByChapter = (chapters?: Chapter[], chapterNum?: number) => {
+    return (chapters && chapterNum
+      ? chapters.find((chapter) => chapter.reference === chapterNum)?.verses : []) ?? [];
   };
 
-  /**
-   * asynchronously initialize the book->chapter->verse listings from the given word list
-   */
   useEffect(() => {
-    void getBooksWithNavigationInfo(words ?? []);
-  }, [words]);
+    if (!currentPosition
+      || !allAvailableBooks?.length
+      || !isPositionReset.current) {
+      return;
+    }
+    isPositionReset.current = false;
 
-  /**
-   * when the book->chapter->verse listings are ready and there is a value for "currentPosition.book", set the selected book based on it
-   */
+    const nextAvailableBooks = [...allAvailableBooks];
+    const nextSelectedBook = findBookInNavigableBooksByBookNumber(nextAvailableBooks, currentPosition?.book);
+    setAvailableBooks(nextAvailableBooks);
+    setSelectedBook(nextSelectedBook);
+
+    const nextAvailableChapters = findAvailableChaptersByBook(nextAvailableBooks, nextSelectedBook?.BookNumber);
+    const nextSelectedChapter = nextAvailableChapters.find(chapter =>
+      !currentPosition?.chapter || chapter.reference === currentPosition?.chapter) ?? null;
+    setAvailableChapters(nextAvailableChapters);
+    setSelectedChapter(nextSelectedChapter);
+
+    const nextAvailableVerses = findAvailableVersesByChapter(nextAvailableChapters, nextSelectedChapter?.reference);
+    const nextSelectedVerse = nextAvailableVerses.find(verse =>
+      !currentPosition?.verse || verse.reference === currentPosition?.verse) ?? null;
+    setAvailableVerses(nextAvailableVerses);
+    setSelectedVerse(nextSelectedVerse);
+  }, [allAvailableBooks, currentPosition, isPositionReset, words]);
+
   useEffect(() => {
-    setSelectedBook(
-      findBookInNavigableBooksByBookNumber(
-        availableBooks,
-        currentPosition?.book
-      )
-    );
-  }, [availableBooks, currentPosition, setSelectedBook]);
-
-  const availableChapters = useMemo(
-    () => (selectedBook ? selectedBook?.chapters : []),
-    [selectedBook]
-  );
-
-  /**
-   * this is to ensure that the chapter selection is properly set after the available words have been loaded into navigable books
-   */
+    setAvailableChapters(findAvailableChaptersByBook(availableBooks, selectedBook?.BookNumber));
+  }, [availableBooks, selectedBook]);
   useEffect(() => {
-    setSelectedChapter(
-      availableChapters?.find(
-        (chapter) => chapter.reference === currentPosition?.chapter
-      ) ?? null
-    );
-  }, [availableChapters, currentPosition, setSelectedChapter]);
-
-  const availableVerses = useMemo(
-    () =>
-      availableChapters && selectedChapter
-        ? availableChapters.find(
-            (chapter) => chapter.reference === selectedChapter.reference
-          )?.verses
-        : [],
-    [availableChapters, selectedChapter]
-  );
-
-  /**
-   * this is to ensure that the verse selection is properly set after the available words have been loaded into navigable books
-   */
-  useEffect(() => {
-    setSelectedVerse(
-      availableVerses?.find(
-        (verse) => verse.reference === currentPosition?.verse
-      ) ?? null
-    );
-  }, [availableVerses, currentPosition?.verse, setSelectedVerse]);
+    setAvailableVerses(findAvailableVersesByChapter(availableChapters, selectedChapter?.reference));
+  }, [availableChapters, selectedChapter]);
 
   const handleSetBook = (book: NavigableBook | null) => {
     setSelectedBook(book);
@@ -130,6 +103,10 @@ const BCVNavigation = ({
   const handleSetChapter = (chapter: Chapter | null) => {
     setSelectedChapter(chapter);
     setSelectedVerse(null);
+  };
+
+  const resetSelectedPosition = () => {
+    isPositionReset.current = true;
   };
 
   const previousNavigableVerse: BCVWP | null = useMemo(
@@ -151,6 +128,7 @@ const BCVNavigation = ({
       if (!previousNavigableVerse || !onNavigate) {
         return;
       }
+      resetSelectedPosition();
       onNavigate(previousNavigableVerse);
     };
   }, [previousNavigableVerse, onNavigate]);
@@ -198,6 +176,7 @@ const BCVNavigation = ({
       if (!nextNavigableVerse || !onNavigate) {
         return;
       }
+      resetSelectedPosition();
       onNavigate(nextNavigableVerse);
     };
   }, [nextNavigableVerse, onNavigate]);
@@ -235,18 +214,14 @@ const BCVNavigation = ({
         size="small"
         sx={{
           display: 'inline-flex',
-          width: horizontal ? '6em' : '100%',
+          width: horizontal ? '6em' : '100%'
         }}
         getOptionLabel={(option) =>
           option?.reference ? String(option.reference) : ''
         }
         options={availableVerses ?? []}
         typeof={'select'}
-        value={
-          selectedVerse && availableVerses?.includes(selectedVerse)
-            ? selectedVerse
-            : null
-        }
+        value={selectedVerse}
         onChange={(_, value) => setSelectedVerse(value)}
         renderInput={(params) => (
           <TextField label={'Verse'} {...params} variant={'standard'} />
@@ -256,8 +231,8 @@ const BCVNavigation = ({
     [disabled, availableVerses, selectedVerse, setSelectedVerse, horizontal]
   );
 
-  const handleNavigation = useMemo(
-    () => () =>
+  const handleNavigation = useCallback(
+    () =>
       onNavigate &&
       selectedBook &&
       selectedChapter &&
@@ -281,12 +256,12 @@ const BCVNavigation = ({
           flexFlow: horizontal ? 'row' : 'column',
           ...(horizontal
             ? {
-                flexWrap: 'wrap',
-                gap: '.50em',
-              }
+              flexWrap: 'wrap',
+              gap: '.50em'
+            }
             : {
-                alignItems: 'center',
-              }),
+              alignItems: 'center'
+            })
         } as unknown as undefined /*cast to avoid material-ui bug*/
       }
       className={BCVNavigation.name}
@@ -299,7 +274,7 @@ const BCVNavigation = ({
         size="small"
         sx={{
           width: horizontal ? '12em' : '100%',
-          display: 'inline-flex',
+          display: 'inline-flex'
         }}
         options={availableBooks ?? ([] as NavigableBook[])}
         typeof={'select'}
@@ -310,11 +285,7 @@ const BCVNavigation = ({
           return 'Apocrypha';
         }}
         getOptionLabel={(option) => option.EnglishBookName}
-        value={
-          selectedBook && availableBooks?.includes(selectedBook)
-            ? selectedBook
-            : null
-        }
+        value={selectedBook}
         onChange={(_, value) => handleSetBook(value)}
         renderInput={(params) => (
           <TextField {...params} label={'Book'} variant={'standard'} />
@@ -326,16 +297,12 @@ const BCVNavigation = ({
         size="small"
         sx={{
           width: horizontal ? '6em' : '100%',
-          display: 'inline-flex',
+          display: 'inline-flex'
         }}
         options={availableChapters}
         typeof={'select'}
         getOptionLabel={(option) => String(option.reference)}
-        value={
-          selectedChapter && availableChapters?.includes(selectedChapter)
-            ? selectedChapter
-            : null
-        }
+        value={selectedChapter}
         onChange={(_, value) => handleSetChapter(value)}
         renderInput={(params) => (
           <TextField label={'Chapter'} {...params} variant={'standard'} />
@@ -351,7 +318,7 @@ const BCVNavigation = ({
           sx={{
             display: 'flex',
             flexDirection: 'row',
-            width: '100%',
+            width: '100%'
           }}
         >
           {backButton}
@@ -361,7 +328,7 @@ const BCVNavigation = ({
       )}
       <Button
         sx={{
-          ...(horizontal ? { marginTop: '.85em' } : {}),
+          ...(horizontal ? { marginTop: '.85em' } : {})
         }}
         variant={'text'}
         color={'primary'}

@@ -1,29 +1,16 @@
-import { ReactElement, useContext, useMemo, useRef, useState, useCallback } from 'react';
+import { ReactElement, useCallback, useContext, useMemo, useState } from 'react';
 import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
-import {
-  AddLink,
-  FileDownload,
-  FileUpload,
-  LinkOff,
-  RestartAlt,
-  SwapHoriz,
-  SwapVert,
-  Translate
-} from '@mui/icons-material';
+import { AddLink, LinkOff, RestartAlt, SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { resetTextSegments } from 'state/alignment.slice';
 import { CorpusContainer, Link } from '../../structs';
-import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
-import { VirtualTableLinks } from '../../state/links/tableManager';
-import _ from 'lodash';
+import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
-import { ProjectState } from '../../state/databaseManagement';
+import { ControlPanelFormat, UserPreference } from '../../state/preferences/tableManager';
 
-import { WordsIndex } from '../../state/links/wordsIndex';
-import { usePivotWords } from '../concordanceView/usePivotWords';
+import uuid from 'uuid-random';
+import { resetTextSegments } from '../../state/alignment.slice';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -33,14 +20,15 @@ interface ControlPanelProps {
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _initializeTargetPivotWords = usePivotWords('targets');
-
-  const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
-
-  // File input reference to support file loading via a button click
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [linkSaveState, setLinkSaveState] = useState<{
+    link?: Link,
+    saveKey?: string,
+  }>();
+  const [linkRemoveState, setLinkRemoveState] = useState<{
+    linkId?: string,
+    removeKey?: string,
+  }>();
+  const { projectState, preferences, setPreferences } = useContext(AppContext);
 
   const [formats, setFormats] = useState([] as string[]);
 
@@ -49,9 +37,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
+  useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
+  useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
-
   const linkHasBothSides = useMemo(
     () => {
       return (
@@ -60,46 +49,24 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      inProgressLink,
-      inProgressLink?.sources.length,
-      inProgressLink?.targets.length,
-    ]
+    [inProgressLink?.sources.length, inProgressLink?.targets.length]
   );
 
-  const saveControlPanelFormat = useCallback(() => {
-    const updatedUserPreference = projectState.userPreferences?.save({
-      name: PreferenceKey.CONTROL_PANEL_FORMAT,
-      value: (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
-        ? ControlPanelFormat.VERTICAL
-        : ControlPanelFormat.HORIZONTAL
-    });
-    if(updatedUserPreference) {
-      setPreferences(p => ({
-        ...p,
-        [updatedUserPreference.name]: updatedUserPreference
-      }));
-    }
-  }, [preferences, projectState.userPreferences, setPreferences]);
+  const saveControlPanelFormat = useCallback(async () => {
+    const alignmentDirection = preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
+      ? ControlPanelFormat[ControlPanelFormat.HORIZONTAL]
+      : ControlPanelFormat[ControlPanelFormat.VERTICAL];
+    const updatedPreferences = {
+      ...preferences,
+      alignmentDirection
+    } as UserPreference;
+    projectState.userPreferenceTable?.saveOrUpdate(updatedPreferences);
+    setPreferences(updatedPreferences);
+  }, [preferences, projectState.userPreferenceTable, setPreferences]);
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
   }
-
-  const controlPanelFormat = useMemo(() => (
-    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
-  )?.value, [preferences]);
-
-
-  const createLink = useCallback(() => {
-    if (!projectState.linksTable || !inProgressLink) {
-      return;
-    }
-
-    projectState.linksTable.save(inProgressLink);
-
-    dispatch(resetTextSegments());
-  }, [projectState, inProgressLink, dispatch]);
 
   return (
     <Stack
@@ -107,33 +74,38 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       spacing={2}
       justifyContent="center"
       alignItems="baseline"
-      style={{marginTop: '16px', marginBottom: '16px'}}
+      style={{ marginTop: '16px', marginBottom: '16px' }}
     >
       <ButtonGroup>
         <Tooltip title="Toggle Glosses" arrow describeChild>
           <span>
             <Button
-              variant={preferences.showGloss ? 'contained' : 'outlined'}
-              disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position?.toReferenceString?.() ?? "")?.hasGloss)}
-              onClick={() => setPreferences(p => ({
-                ...p,
-                showGloss: !p.showGloss
-              }))}
+              variant={preferences?.showGloss ? 'contained' : 'outlined'}
+              disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position?.toReferenceString?.() ?? '')?.hasGloss)}
+              onClick={() => {
+                const updatedPreferences = {
+                  ...((preferences ?? {}) as UserPreference),
+                  showGloss: !preferences?.showGloss
+                };
+                setPreferences(updatedPreferences);
+              }}
             >
-              <Translate/>
+              <Translate />
             </Button>
           </span>
         </Tooltip>
-        <Tooltip title={`Swap to ${controlPanelFormat === ControlPanelFormat.VERTICAL ? 'horizontal' : 'vertical'} view mode`} arrow describeChild>
+        <Tooltip
+          title={`Swap to ${preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'horizontal' : 'vertical'} view mode`}
+          arrow describeChild>
           <span>
             <Button
               variant="contained"
-              onClick={saveControlPanelFormat}
+              onClick={() => void saveControlPanelFormat()}
             >
               {
-                controlPanelFormat === ControlPanelFormat.HORIZONTAL
-                  ? <SwapVert/>
-                  : <SwapHoriz/>
+                preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
+                  ? <SwapHoriz />
+                  : <SwapVert />
               }
             </Button>
           </span>
@@ -146,9 +118,15 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             <Button
               variant="contained"
               disabled={!linkHasBothSides}
-              onClick={() => createLink()}
+              onClick={() => {
+                setLinkSaveState({
+                  link: inProgressLink ?? undefined,
+                  saveKey: uuid()
+                });
+                dispatch(resetTextSegments());
+              }}
             >
-              <AddLink/>
+              <AddLink />
             </Button>
           </span>
         </Tooltip>
@@ -158,17 +136,16 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               variant="contained"
               disabled={!inProgressLink?.id}
               onClick={() => {
-                if (!projectState.linksTable || !inProgressLink) {
-                  return;
-                }
                 if (inProgressLink?.id) {
-                  const linksTable = projectState.linksTable;
-                  linksTable.remove(inProgressLink.id);
+                  setLinkRemoveState({
+                    linkId: inProgressLink.id,
+                    removeKey: uuid()
+                  });
                   dispatch(resetTextSegments());
                 }
               }}
             >
-              <LinkOff/>
+              <LinkOff />
             </Button>
           </span>
         </Tooltip>
@@ -181,177 +158,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 dispatch(resetTextSegments());
               }}
             >
-              <RestartAlt/>
-            </Button>
-          </span>
-        </Tooltip>
-      </ButtonGroup>
-
-      <ButtonGroup>
-        <Tooltip title="Load Alignment Data" arrow describeChild>
-          <span>
-            <input
-              type="file"
-              hidden
-              ref={fileInputRef}
-              multiple={false}
-              onClick={(event) => {
-                // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
-                // event isn't thrown.
-
-                // @ts-ignore
-                event.currentTarget.value = null;
-              }}
-              onChange={async (event) => {
-                // grab file content
-                const file = event!.target!.files![0];
-                const content = await file.text();
-                const linksTable: VirtualTableLinks = new VirtualTableLinks();
-
-                const sourceContainer = props.containers.find((container) => container.id === 'source')!;
-                const targetContainer = props.containers.find((container) => container.id === 'target')!;
-
-                const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, 'sources');
-                const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, 'targets');
-
-                const linksIndexes = {
-                  sourcesIndex,
-                  targetsIndex
-                };
-
-                linksIndexes.sourcesIndex.indexingTasks.enqueue(linksIndexes.sourcesIndex.initialize);
-                linksIndexes.targetsIndex.indexingTasks.enqueue(linksIndexes.targetsIndex.initialize);
-
-                setProjectState((ps: ProjectState) => ({
-                  ...ps,
-                  linksTable,
-                  linksIndexes
-                }));
-
-                // convert into an appropriate object
-                const alignmentFile = JSON.parse(content) as AlignmentFile;
-
-                const chunkSize = 10_000;
-                // override the alignments from alignment file
-                _.chunk(alignmentFile.records, chunkSize).forEach(
-                  (chunk, chunkIdx) => {
-                    const links = chunk.map((record, recordIdx): Link => {
-                      return {
-                        // @ts-ignore
-                        id: record.id ?? record?.meta?.id ?? `record-${chunkIdx * chunkSize + (recordIdx + 1)}`,
-                        sources: record.source,
-                        targets: record.target,
-                      };
-                    });
-                    try {
-                      linksTable.saveAll(links, true);
-                    } catch (e) {
-                      console.error('e', e);
-                    }
-                  }
-                );
-
-                sourcesIndex.indexingTasks.enqueue(async () => {
-                  await linksTable.registerSecondaryIndex(sourcesIndex);
-                });
-
-                targetsIndex.indexingTasks.enqueue(async () => {
-                  await linksTable.registerSecondaryIndex(targetsIndex);
-                });
-
-                linksTable._onUpdate(); // modify variable to indicate that an update has occurred
-              }}
-            />
-            <Button
-              disabled={props.containers.length === 0}
-              variant="contained"
-              onClick={() => {
-                // delegate file loading to regular file input
-                fileInputRef?.current?.click();
-              }}
-            >
-              <FileUpload/>
-            </Button>
-          </span>
-        </Tooltip>
-
-        <Tooltip title="Save Alignment Data" arrow describeChild>
-          <span>
-            <Button
-              disabled={props.containers.length === 0}
-              variant="contained"
-              onClick={() => {
-                // create starting instance
-                const alignmentExport: AlignmentFile = {
-                  type: 'translation',
-                  meta: {
-                    creator: 'ClearAligner',
-                  },
-                  records: [],
-                };
-
-                if (!projectState.linksTable) {
-                  return;
-                }
-
-                projectState.linksTable
-                  .getAll()
-                  .map(
-                    (link) =>
-                      ({
-                        id: link.id,
-                        source: link.sources,
-                        target: link.targets,
-                      } as AlignmentRecord)
-                  )
-                  .forEach((record) => alignmentExport.records.push(record));
-
-                // Create alignment file content
-                const fileContent = JSON.stringify(
-                  alignmentExport,
-                  undefined,
-                  2
-                );
-
-                // Create a Blob from the data
-                const blob = new Blob([fileContent], {
-                  type: 'application/json',
-                });
-
-                // Create a URL for the Blob
-                const url = URL.createObjectURL(blob);
-
-                // Create a link element
-                const link = document.createElement('a');
-                const currentDate = new Date();
-
-                // Set the download attribute and file name
-                link.download = `alignment_data_${currentDate.getFullYear()}-${String(
-                  currentDate.getMonth() + 1
-                ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
-                  2,
-                  '0'
-                )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
-                  currentDate.getMinutes()
-                ).padStart(2, '0')}.json`;
-
-                // Set the href attribute to the generated URL
-                link.href = url;
-
-                // Append the link to the document
-                document.body.appendChild(link);
-
-                // Trigger a click event on the link
-                link.click();
-
-                // Remove the link from the document
-                document.body.removeChild(link);
-
-                // Revoke the URL to free up resources
-                URL.revokeObjectURL(url);
-              }}
-            >
-              <FileDownload/>
+              <RestartAlt />
             </Button>
           </span>
         </Tooltip>

@@ -3,7 +3,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
 
-import { CorpusContainer, Word } from 'structs';
+import { AlignmentSide, CorpusContainer, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
@@ -20,13 +20,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
   useDebug('LinkBuilderComponent');
 
   const sourceContainer = useMemo(
-    () => containers.find(({ id }) => id === 'source')!,
+    () => containers.find(({ id }) => id === AlignmentSide.SOURCE)!,
     // reference to `containers` doesn't change, but the length does
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]
   );
   const targetContainer = useMemo(
-    () => containers.find(({ id }) => id === 'target')!,
+    () => containers.find(({ id }) => id === AlignmentSide.TARGET)!,
     // reference to `containers` doesn't change, but the length does
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]
@@ -46,7 +46,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             BCVWP.parseFromString(sourceId)
           );
         })
-        .filter((x): x is Word => x !== null);
+        .filter((x): x is Word => !!x);
 
       const targetWords: Word[] = inProgressLink.targets
         .map((targetId) => {
@@ -58,11 +58,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             BCVWP.parseFromString(targetId)
           );
         })
-        .filter((x): x is Word => x !== null);
+        .filter((x): x is Word => !!x);
 
       return {
-        source: sourceWords ?? [],
-        target: targetWords ?? [],
+        sources: sourceWords ?? [],
+        targets: targetWords ?? [],
       } as Record<string, Word[]>;
     }
     return {};
@@ -72,7 +72,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
     return state.app.theme;
   });
 
-  if (!Object.keys(selectedWords).length) {
+  if (!selectedWords?.sources?.length && !selectedWords?.targets?.length) {
     return (
       <>
         <div
@@ -107,108 +107,115 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
         height: '100%',
       }}
     >
-      {Object.keys(selectedWords).map((textId: string, index:number): ReactElement => {
-        const container = containers.find(
-          (corpusContainer: CorpusContainer) => {
-            return corpusContainer.id === textId;
-          }
-        );
-        if (!container) return <div key={index}/>;
-
-        const selectedPartsForText = selectedWords[textId];
-        const sortedSelectedPartsForText = selectedPartsForText.sort(
-          (a: Word, b: Word) => {
-            if (a.position === b.position) {
-              return a.id > b.id ? 1 : -1;
+      {Object.keys(selectedWords).map(
+        (textId: string, index: number): ReactElement => {
+          const container = containers.find(
+            (corpusContainer: CorpusContainer) => {
+              return corpusContainer.id === textId;
             }
-            return a.position > b.position ? 1 : -1;
-          }
-        );
-        const partsAsWords: Word[][] = [];
-        sortedSelectedPartsForText.forEach((part) => {
-          const lastIndex = partsAsWords.length - 1;
-          const currentValueRef: BCVWP = BCVWP.parseFromString(part.id);
+          );
+          if (!container) return <div key={index} />;
 
-          if (
-            partsAsWords[lastIndex]?.length === 0 ||
-            (lastIndex >= 0 &&
-              BCVWP.parseFromString(
-                partsAsWords[lastIndex].at(-1)!.id
-              ).matchesTruncated(currentValueRef, BCVWPField.Word))
-          ) {
-            // if text should be grouped in the last word
-            partsAsWords[lastIndex].push(part);
-          } else {
-            // new word
-            partsAsWords.push([part]);
-          }
-        });
+          const selectedPartsForText = selectedWords[textId];
+          const sortedSelectedPartsForText = selectedPartsForText.sort(
+            (a: Word, b: Word) => {
+              if (a.position === b.position) {
+                return a.id > b.id ? 1 : -1;
+              }
+              return a.position > b.position ? 1 : -1;
+            }
+          );
+          const partsAsWords: Word[][] = [];
+          sortedSelectedPartsForText.forEach((part) => {
+            const lastIndex = partsAsWords.length - 1;
+            const currentValueRef: BCVWP = BCVWP.parseFromString(part.id);
 
-        const wordInDisplayGroup = partsAsWords
-          .find(({ length }) => length > 0)
-          ?.find((word) => word.id);
-        const corpusAtRef = wordInDisplayGroup
-          ? container?.corpusAtReferenceString(wordInDisplayGroup.id)
-          : undefined;
+            if (
+              partsAsWords[lastIndex]?.length === 0 ||
+              (lastIndex >= 0 &&
+                BCVWP.parseFromString(
+                  partsAsWords[lastIndex].at(-1)!.id
+                ).matchesTruncated(currentValueRef, BCVWPField.Word))
+            ) {
+              // if text should be grouped in the last word
+              partsAsWords[lastIndex].push(part);
+            } else {
+              // new word
+              partsAsWords.push([part]);
+            }
+          });
 
-        return (
-          <div
-            key={`linkBuilder_${corpusAtRef?.name}`}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              paddingLeft: '1rem',
-              paddingRight: '1rem',
-              paddingTop: '0.5rem',
-              paddingBottom: '0.5rem',
-              color: cssVar('font-color', theme),
-            }}
-          >
-            <Typography variant="h6" style={{ textAlign: 'right' }}>
-              {corpusAtRef?.name}
-            </Typography>
-            <div style={{ marginBottom: '8px' }}>
-              <Divider />
-            </div>
-            <div>
-              <span>&nbsp;</span>
-              {partsAsWords
-                .filter((word) => word.length > 0)
-                .map((selectedWord, index: number): ReactElement => {
-                  const wordId = BCVWP.parseFromString(
-                    selectedWord.at(0)!.id
-                  ).toTruncatedReferenceString(BCVWPField.Word);
-                  let nextIsSequential: boolean = true;
-                  const next = partsAsWords[index + 1];
-                  if (next) {
-                    const sequenceDiff =
-                      next.at(0)!.position - selectedWord.at(0)!.position;
-                    if (sequenceDiff > 1) {
-                      nextIsSequential = false;
+          const wordInDisplayGroup = partsAsWords
+            .find(({ length }) => length > 0)
+            ?.find((word) => word.id);
+          const refInWords = wordInDisplayGroup
+            ? BCVWP.parseFromString(wordInDisplayGroup.id)
+            : undefined;
+          const corpusAtRef = refInWords
+            ? container?.corpusAtReference(refInWords)
+            : undefined;
+
+          const corpus = (container.corpora || [])[0];
+
+          return (
+            <div
+              key={`linkBuilder_${corpus?.name}`}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                paddingLeft: '1rem',
+                paddingRight: '1rem',
+                paddingTop: '0.5rem',
+                paddingBottom: '0.5rem',
+                color: cssVar('font-color', theme),
+              }}
+            >
+              <Typography variant="h6" style={{ textAlign: 'right' }}>
+                {corpus?.name}
+              </Typography>
+              <div style={{ marginBottom: '8px' }}>
+                <Divider />
+              </div>
+              <div>
+                <span>&nbsp;</span>
+                {partsAsWords
+                  .filter((word) => word.length > 0)
+                  .map((selectedWord, index: number): ReactElement => {
+                    const wordId = BCVWP.parseFromString(
+                      selectedWord.at(0)!.id
+                    ).toTruncatedReferenceString(BCVWPField.Word);
+                    let nextIsSequential: boolean = true;
+                    const next = partsAsWords[index + 1];
+                    if (next) {
+                      const sequenceDiff =
+                        next.at(0)!.position - selectedWord.at(0)!.position;
+                      if (sequenceDiff > 1) {
+                        nextIsSequential = false;
+                      }
                     }
-                  }
-                  return (
-                    <span key={`selected_${wordId}`}>
-                      <WordDisplay
-                        readonly={true}
-                        key={wordId}
-                        parts={selectedWord}
-                        corpus={corpusAtRef}
-                      />
+                    return (
+                      <span key={`selected_${wordId}`}>
+                        <WordDisplay
+                          readonly={true}
+                          key={wordId}
+                          parts={selectedWord}
+                          languageInfo={corpusAtRef?.language}
+                        />
 
-                      {!nextIsSequential ? (
-                        <span key={`selected_${wordId}_ellipsis`}>... </span>
-                      ) : null}
-                    </span>
-                  );
-                })}
+                        {!nextIsSequential ? (
+                          <span key={`selected_${wordId}_ellipsis`}>... </span>
+                        ) : null}
+                      </span>
+                    );
+                  })}
+              </div>
+              <div style={{ marginTop: '8px' }}>
+                <Divider />
+              </div>
             </div>
-            <div style={{ marginTop: '8px' }}>
-              <Divider />
-            </div>
-          </div>
-        );
-      })}
+          );
+        }
+      )}
     </div>
   );
 };
