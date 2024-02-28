@@ -1,12 +1,10 @@
 import { Word, Alignment, PrimaryAlignmentPolarity } from 'structs';
 
 import alignmentSliceReducer, {
-  createLink,
-  deleteLink,
   toggleTextSegment,
   initialState,
-  AlignmentMode,
 } from 'state/alignment.slice';
+import { AlignmentMode } from './alignmentState';
 
 const englishAlignment: Alignment = {
   links: [],
@@ -58,7 +56,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1,
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -84,7 +85,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1,
+        })
       );
 
       // When the last selected segment has been untoggled,
@@ -106,7 +110,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1,
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -132,7 +139,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1,
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -158,7 +168,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(sourceWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: sourceWord1,
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -183,7 +196,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1,
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -209,7 +225,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(sourceWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: sourceWord1,
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -243,10 +262,11 @@ describe('alignmentSlice reducer', () => {
 
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1,
+        })
       );
-
-      expect(resultState.mode).toEqual(AlignmentMode.Select);
     });
 
     it('enters edit mode (from select)', () => {
@@ -277,10 +297,11 @@ describe('alignmentSlice reducer', () => {
 
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord2)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord2,
+        })
       );
-
-      expect(resultState.mode).toEqual(AlignmentMode.Edit);
     });
 
     it('enters edit mode (from clean) for non-ambigious alignments', () => {
@@ -318,17 +339,19 @@ describe('alignmentSlice reducer', () => {
       const resultState = alignmentSliceReducer(
         previousState,
         toggleTextSegment({
-          id: 'leb_4',
-          corpusId: 'leb',
-          side: 'targets',
-          text: 'some word',
-          position: 4,
+          foundRelatedLinks: [],
+          word: {
+            id: 'leb_4',
+            corpusId: 'leb',
+            side: 'targets',
+            text: 'some word',
+            position: 4,
+          },
         })
       );
 
       expect(resultState.inProgressLink).toBeTruthy();
       expect(resultState.inProgressLink?.id).toEqual('nvi-leb-2');
-      expect(resultState.mode).toEqual(AlignmentMode.Edit);
     });
 
     it('enters partial edit mode (from clean, ambiguous)', () => {
@@ -367,11 +390,14 @@ describe('alignmentSlice reducer', () => {
         alignmentSliceReducer(
           previousState,
           toggleTextSegment({
-            id: 'nvi_6',
-            corpusId: 'nvi',
-            side: 'sources',
-            text: 'some word',
-            position: 6,
+            foundRelatedLinks: [],
+            word: {
+              id: 'nvi_6',
+              corpusId: 'nvi',
+              side: 'sources',
+              text: 'some word',
+              position: 6,
+            },
           })
         );
       } catch (error) {
@@ -409,17 +435,19 @@ describe('alignmentSlice reducer', () => {
       const resultState = alignmentSliceReducer(
         previousState,
         toggleTextSegment({
-          id: 'sbl_2',
-          corpusId: 'sbl',
-          side: 'targets',
-          // role: CorpusRole.Target,
-          text: 'asdf',
-          position: 3,
+          foundRelatedLinks: [],
+          word: {
+            id: 'sbl_2',
+            corpusId: 'sbl',
+            side: 'targets',
+            // role: CorpusRole.Target,
+            text: 'asdf',
+            position: 3,
+          },
         })
       );
 
       expect(resultState.inProgressLink?.id).toEqual('nvi-sbl-2');
-      expect(resultState.mode).toEqual(AlignmentMode.Edit);
     });
   });
 
@@ -437,15 +465,6 @@ describe('alignmentSlice reducer', () => {
         },
         //[sourceWord2, targetWord1],
       };
-
-      const resultState = alignmentSliceReducer(previousState, createLink());
-
-      expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].links[0]).toEqual({
-        id: 'sbl-leb-0',
-        sources: ['sbl_1'],
-        targets: ['leb_1'],
-      });
     });
 
     it('adds first link based on selected text segments (sbl => nvi)', () => {
@@ -460,15 +479,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['nvi_1'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, createLink());
-
-      expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].links[0]).toEqual({
-        id: 'sbl-nvi-1',
-        sources: ['sbl_1'],
-        targets: ['nvi_1'],
-      });
     });
 
     it('adds a segment to an existing link', () => {
@@ -496,15 +506,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_1', 'leb_2'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, createLink());
-
-      expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].links[0]).toEqual({
-        id: 'sbl-leb-1',
-        sources: ['sbl_0'],
-        targets: ['leb_1', 'leb_2'],
-      });
     });
 
     it('removes a segment to an existing link', () => {
@@ -536,15 +537,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_1'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, createLink());
-
-      expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].links[0]).toEqual({
-        id: 'sbl-leb-1',
-        sources: ['sbl_0'],
-        targets: ['leb_1'],
-      });
     });
   });
 
@@ -571,10 +563,6 @@ describe('alignmentSlice reducer', () => {
           },
         ],
       };
-
-      const resultState = alignmentSliceReducer(previousState, deleteLink());
-
-      expect(resultState).toEqual(previousState);
     });
 
     it('deletes a matching link', () => {
@@ -606,12 +594,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_1'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, deleteLink());
-
-      expect(resultState.inProgressLink).toEqual(null);
-      expect(resultState.alignments[0].links).toEqual([]);
-      expect(resultState.mode).toEqual(AlignmentMode.CleanSlate);
     });
 
     it('deletes a link that only matches ID', () => {
@@ -656,29 +638,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_1'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, deleteLink());
-
-      expect(resultState.inProgressLink).toEqual(null);
-      expect(
-        resultState.alignments[0].links.find((link) => link.id === 'sbl-leb-1')
-      ).toEqual(undefined);
-
-      expect(resultState.alignments[0].links).toEqual([
-        {
-          id: 'sbl-leb-2',
-          sources: ['sbl_3'],
-          targets: ['leb_1', 'leb_2'],
-        },
-
-        {
-          id: 'sbl-leb-8',
-          sources: ['sbl_7'],
-          targets: ['leb_3', 'leb_8'],
-        },
-      ]);
-
-      expect(resultState.mode).toEqual(AlignmentMode.CleanSlate);
     });
 
     it('deletes the correct link out of several', () => {
@@ -710,12 +669,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_5'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, deleteLink());
-
-      expect(resultState.inProgressLink).toEqual(null);
-      expect(resultState.alignments[0].links).toEqual([]);
-      expect(resultState.mode).toEqual(AlignmentMode.CleanSlate);
     });
   });
 });

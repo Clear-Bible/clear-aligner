@@ -22,12 +22,13 @@ export const LocalizedTextDisplay = ({
   return (
     <Typography
       component={'span'}
-      sx={{
+      {...typographyProps}
+      sx={theme => ({
         ...(languageInfo?.fontFamily
           ? { fontFamily: languageInfo?.fontFamily }
           : {}),
-      }}
-      {...typographyProps}
+        ...((typographyProps.sx as CallableFunction | undefined)?.(theme) ?? {})
+      })}
     >
       {children}
     </Typography>

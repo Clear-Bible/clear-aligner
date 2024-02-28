@@ -1,58 +1,54 @@
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-  GridRowParams,
-  GridSortItem,
-} from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
 import { AlignedWord, LocalizedWordEntry } from './structs';
 import { TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import {
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
-  DataGridSetMinRowHeightToDefault,
+  DataGridSetMinRowHeightToDefault
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
+import { groupLocalizedPartsByWord } from '../../helpers/groupPartsIntoWords';
+import BCVWP from '../bcvwp/BCVWPSupport';
+import { TextDirection } from '../../structs';
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
  * @param words words to be rendered
  */
 const renderWords = (words: LocalizedWordEntry[]) => {
-  switch (words.length) {
-    case 0:
-      return <></>;
-    case 1:
-      return (
-        <LocalizedTextDisplay
-          key={words[0].text}
-          languageInfo={words[0].languageInfo}
-        >
-          {words[0].text}
-        </LocalizedTextDisplay>
-      );
-    default:
-      const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
-      return (
-        <span
-          style={{
-            ...(languageInfo?.textDirection === 'rtl'
-              ? { direction: languageInfo.textDirection! }
-              : {}),
-          }}
-        >
-          {words.map((word, idx) => (
-            <React.Fragment key={`${word.text}/${idx}`}>
-              <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
-                {word.text}
-              </LocalizedTextDisplay>
-              {words.length - 1 !== idx && ', '}
-            </React.Fragment>
+  const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
+  const partsByWord = groupLocalizedPartsByWord(
+    words.sort((a, b) =>
+      BCVWP.compare(
+        BCVWP.parseFromString(a.position),
+        BCVWP.parseFromString(b.position)
+      )
+    )
+  );
+  return (
+    <span
+      style={{
+        ...(languageInfo?.textDirection === TextDirection.RTL
+          ? { direction: languageInfo.textDirection! }
+          : {}),
+      }}
+    >
+      {partsByWord?.map((word, idx) => (
+        <React.Fragment key={idx}>
+          {word.map((wordPart, wordPartIndex) => (
+            <LocalizedTextDisplay
+              key={wordPartIndex}
+              languageInfo={wordPart.languageInfo}
+            >
+              {wordPart.text}
+            </LocalizedTextDisplay>
           ))}
-        </span>
-      );
-  }
+          {words.length - 1 !== idx && ' '}
+        </React.Fragment>
+      ))}
+    </span>
+  );
 };
 
 const columns: GridColDef[] = [

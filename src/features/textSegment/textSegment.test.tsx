@@ -1,29 +1,17 @@
 import { renderWithProvider, RootState } from 'test/harness';
 import preloadedState from 'test/preloadedState';
-import { AlignmentMode } from 'state/alignment.slice';
 import TextSegment from 'features/textSegment';
+import { AlignmentMode } from '../../state/alignmentState';
 
 const testState: RootState = {
   ...preloadedState,
   alignment: {
     ...preloadedState.alignment,
     present: {
-      alignments: [
-        {
-          links: [],
-          polarity: {
-            type: 'primary',
-            syntaxSide: 'sources',
-            nonSyntaxSide: 'targets',
-          },
-        },
-      ],
-      corpora: [],
       inProgressLink: {
         sources: ['sbl_0'],
         targets: [],
       },
-      mode: AlignmentMode.CleanSlate,
     },
   },
 };

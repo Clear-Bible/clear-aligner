@@ -15,6 +15,7 @@ export interface PivotWord {
  */
 export interface LocalizedWordEntry {
   text: string;
+  position: string;
   languageInfo?: LanguageInfo;
 }
 
@@ -55,6 +56,7 @@ export interface NormalizedTextToPivotWord {
  */
 export interface NormalizedWordsToFrequencyAndLocalization {
   [key: string]: {
+    // key is pivot word text
     count: number;
     languageInfo: LanguageInfo;
   };

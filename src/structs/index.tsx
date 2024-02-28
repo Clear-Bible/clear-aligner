@@ -29,6 +29,7 @@ export interface Word {
   // character[s] following the text. i.e. punctuation.
   after?: string;
   position: number;
+  gloss?: string;
 }
 
 export interface CorpusViewport {
@@ -41,7 +42,10 @@ export interface Verse {
   words: Word[];
 }
 
-export type TextDirection = 'ltr' | 'rtl';
+export enum TextDirection {
+  LTR = 'ltr',
+  RTL = 'rtl'
+}
 
 /**
  * contains display information about a language
@@ -72,6 +76,7 @@ export interface Corpus {
   fullText?: string;
   viewType?: CorpusViewType;
   syntax?: SyntaxRoot;
+  hasGloss?: boolean;
 }
 
 /**

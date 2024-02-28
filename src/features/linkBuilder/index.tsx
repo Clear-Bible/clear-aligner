@@ -107,13 +107,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
         height: '100%',
       }}
     >
-      {Object.keys(selectedWords).map((textId: string): ReactElement => {
+      {Object.keys(selectedWords).map((textId: string, index:number): ReactElement => {
         const container = containers.find(
           (corpusContainer: CorpusContainer) => {
             return corpusContainer.id === textId;
           }
         );
-        if (!container) return <div />;
+        if (!container) return <div key={index}/>;
 
         const selectedPartsForText = selectedWords[textId];
         const sortedSelectedPartsForText = selectedPartsForText.sort(
@@ -196,7 +196,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                         readonly={true}
                         key={wordId}
                         parts={selectedWord}
-                        languageInfo={corpusAtRef?.language}
+                        corpus={corpusAtRef}
                       />
 
                       {!nextIsSequential ? (

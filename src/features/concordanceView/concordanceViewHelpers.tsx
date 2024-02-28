@@ -1,4 +1,4 @@
-import { Alignment, CorpusContainer, Link } from '../../structs';
+import { AlignmentSide, CorpusContainer, Link, Word } from '../../structs';
 import {
   AlignedWord,
   LocalizedWordEntry,
@@ -11,6 +11,7 @@ import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import findWord from '../../helpers/findWord';
 import { WordSource } from './concordanceView';
+import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 
 /**
  * generate words and frequencies from a word source
@@ -64,53 +65,78 @@ export const generatePivotWordsMap = (
     }, {} as NormalizedTextToPivotWord);
 
 /**
+ * generate list (alphabetical) of word texts from alignment link, container and side directive
+ * @param container corpora with data to reference strings from
+ * @param link link data to where word ids are listed
+ * @param side side to pull word ids from
+ */
+const generateWordListFromCorpusContainerAndLink = (
+  container: CorpusContainer,
+  link: Link,
+  side: AlignmentSide
+): string[] => {
+  const partsList = link[side]
+    .map(BCVWP.parseFromString)
+    .map((reference) => findWord(container.corpora, reference))
+    .filter((word) => !!word) as Word[];
+  return groupPartsIntoWords(partsList).map((parts) =>
+    parts.map(({ text }) => text.trim().toLowerCase()).join('')
+  );
+};
+
+/**
  * gnerate a map of normalized text to alignment links
  * @param alignmentState application state
  * @param sourceContainer corpus container for sources
  * @param targetContainer corpus container for targets
- * @param wordSource selected word source
  */
 export const generateAlignedWordsMap = (
-  alignmentState: Alignment[],
+  links: Link[],
   sourceContainer: CorpusContainer,
-  targetContainer: CorpusContainer,
-  wordSource: WordSource
-): NormalizedTextToAlignmentLink =>
-  alignmentState
-    ?.map((alignmentData: Alignment) => {
-      const src = wordSource === 'source' ? sourceContainer : targetContainer;
-      return alignmentData.links.reduce((accumulator, singleAlignment) => {
-        const uniqueAlignedWords = _.uniqWith(
-          singleAlignment[wordSource === 'source' ? 'sources' : 'targets']
-            .map(BCVWP.parseFromString) // get references to all words on selected side of the alignment
-            .map((wordReference: BCVWP) => findWord(src.corpora, wordReference))
-            .filter((word) => !!word)
-            .map((word) => word!.text.toLowerCase()),
-          _.isEqual
-        );
+  targetContainer: CorpusContainer
+): NormalizedTextToAlignmentLink => {
+  const linkMap = links.reduce((accumulator, singleAlignment) => {
+    const srcWordsList = _.uniqWith(
+      generateWordListFromCorpusContainerAndLink(
+        sourceContainer,
+        singleAlignment,
+        'sources'
+      ),
+      _.isEqual
+    ).sort();
+    const tgtWordsList = _.uniqWith(
+      generateWordListFromCorpusContainerAndLink(
+        targetContainer,
+        singleAlignment,
+        'targets'
+      ),
+      _.isEqual
+    ).sort();
+    const uniqueAlignedWords = [...srcWordsList, ...tgtWordsList];
 
-        const alignedWordsString = uniqueAlignedWords.sort().join(',');
+    const alignedWordsString = uniqueAlignedWords.sort().join(',');
 
-        if (!accumulator[alignedWordsString]) {
-          accumulator[alignedWordsString] = [];
-        }
+    if (!accumulator[alignedWordsString]) {
+      accumulator[alignedWordsString] = [];
+    }
 
-        accumulator[alignedWordsString].push(singleAlignment);
-        return accumulator;
-      }, {} as { [key: string]: Link[] });
-    })
-    ?.reduce((accumulator, linkMap) => {
-      Object.keys(linkMap)
-        .filter((key) => !!linkMap[key] && Array.isArray(linkMap[key]))
-        .forEach((key) => {
-          if (!accumulator[key]) {
-            accumulator[key] = linkMap[key];
-          } else {
-            linkMap[key].forEach((link) => accumulator[key].push(link));
-          }
-        });
-      return accumulator;
-    }, {} as NormalizedTextToAlignmentLink);
+    accumulator[alignedWordsString].push(singleAlignment);
+    return accumulator;
+  }, {} as { [key: string]: Link[] });
+
+  const accumulator = {} as NormalizedTextToAlignmentLink;
+
+  Object.keys(linkMap)
+    .filter((key) => !!linkMap[key] && Array.isArray(linkMap[key]))
+    .forEach((key) => {
+      if (!accumulator[key]) {
+        accumulator[key] = linkMap[key];
+      } else {
+        linkMap[key].forEach((link) => accumulator[key].push(link));
+      }
+    });
+  return accumulator;
+};
 
 /**
  * generates a list of pivot words with aligned words and alignment links
@@ -146,6 +172,7 @@ export const generateListOfNavigablePivotWords = (
               if (!wort) return undefined;
               return {
                 text: wort.text.toLowerCase(),
+                position: wort.id,
                 languageInfo,
               };
             })
@@ -159,6 +186,7 @@ export const generateListOfNavigablePivotWords = (
               if (!wort) return undefined;
               return {
                 text: wort.text.toLowerCase(),
+                position: wort.id,
                 languageInfo,
               };
             })
@@ -194,11 +222,11 @@ export const generateListOfNavigablePivotWords = (
         targetTextId,
         sourceWordTexts: _.uniqWith(
           sourceAndTargetWords.sourceWords,
-          _.isEqual
+          (a, b): boolean => a.text === b.text
         ).sort(),
         targetWordTexts: _.uniqWith(
           sourceAndTargetWords.targetWords,
-          _.isEqual
+          (a, b): boolean => a.text === b.text
         ).sort(),
         alignments: normalizedTextToAlignmentLinks[key],
       };

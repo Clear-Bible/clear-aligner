@@ -72,8 +72,8 @@ export const AlignmentEditor = () => {
       const newPosition = BCVWP.parseFromString(searchParams.get('ref')!);
       appCtx.setCurrentReference(newPosition);
       searchParams.delete('ref');
+      setSearchParams(searchParams);
     }
-    setSearchParams(searchParams);
   }, [searchParams, appCtx, appCtx.setCurrentReference, setSearchParams]);
 
   return (

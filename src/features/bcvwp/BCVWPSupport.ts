@@ -33,6 +33,8 @@ export default class BCVWP {
    */
   part?: number;
 
+  referenceString?: string;
+
   constructor(
     book?: number,
     chapter?: number,
@@ -47,22 +49,32 @@ export default class BCVWP {
     this.part = part;
   }
 
+  toHumanReadableString(): string {
+    return `${this.getBookInfo()?.EnglishBookName ?? ''} ${
+      this.chapter ?? 'NA'
+    }:${this.verse ?? 'NA'} ${this.word ?? ''}${
+      this.word && this.part ? `/${this.part}` : ''
+    }`.trim();
+  }
+
   toTruncatedReferenceString(truncation: BCVWPField): string {
     return this.toReferenceString().substring(0, truncation);
   }
 
   toReferenceString(): string {
+    if (this.referenceString) return this.referenceString;
     const bookFormet = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
     const chapterFormat = Intl.NumberFormat('en-US', {
       minimumIntegerDigits: 3,
     });
     const verseFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
     const wordFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
-    return `${this.book ? bookFormet.format(this.book) : '  '}${
+    this.referenceString = `${this.book ? bookFormet.format(this.book) : '  '}${
       this.chapter ? chapterFormat.format(this.chapter) : '   '
     }${this.verse ? verseFormat.format(this.verse) : '   '}${
       this.word ? wordFormat.format(this.word) : '   '
     }${this.word && this.part ? this.part ?? 1 : ''}`;
+    return this.referenceString;
   }
 
   getBookInfo(): BookInfo | undefined {
@@ -105,13 +117,16 @@ export default class BCVWP {
     );
   }
 
+  static sanitize(reference: string): string {
+    const trimmed = reference.trim();
+    return !!trimmed.match(/^[onON]\d/) ? trimmed.substring(1) : trimmed;
+  }
+
   static parseFromString(reference: string): BCVWP {
     if (!BCVWP.isValidString(reference)) {
       throw new Error(`Illegal reference string given to parser: ${reference}`);
     }
-    const sanitized = !!reference.trim().match(/^[onON]\d/)
-      ? reference.trim().substring(1)
-      : reference.trim();
+    const sanitized = BCVWP.sanitize(reference);
     const bookString = sanitized.substring(0, 2);
     const chapterString =
       sanitized.length >= 5 ? sanitized.substring(2, 5) : undefined;

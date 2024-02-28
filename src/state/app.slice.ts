@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { CorpusViewport } from 'structs';
 
-interface AppState {
+export interface AppState {
   debug: boolean;
   theme: 'night' | 'day';
   corpusViewports: CorpusViewport[];

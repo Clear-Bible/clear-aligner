@@ -1,10 +1,11 @@
 html {
   font-family: 'Roboto', sans-serif;
+  overflow-y: auto;
+  height: 100vh;
 }
 
 body {
   margin: 0;
-  overflow-y: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

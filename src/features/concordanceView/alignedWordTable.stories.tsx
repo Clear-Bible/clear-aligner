@@ -3,6 +3,7 @@ import { AlignedWordTable, AlignedWordTableProps } from './alignedWordTable';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useState } from 'react';
 import { AlignedWord } from './structs';
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 
 const meta: Meta<typeof AlignedWordTable> = {
   title: 'Concordance View/AlignedWordTable',
@@ -38,11 +39,17 @@ Default.args = {
       sourceWordTexts: [
         {
           text: 'the',
+          position: BCVWP.parseFromString(
+            '010010010011'
+          ).toTruncatedReferenceString(BCVWPField.Word),
         },
       ],
       targetWordTexts: [
         {
           text: 'der',
+          position: BCVWP.parseFromString(
+            '010010010011'
+          ).toTruncatedReferenceString(BCVWPField.Word),
         },
       ],
       alignments: [],
