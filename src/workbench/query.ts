@@ -7,7 +7,7 @@ import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // Arabic VD Target
 // @ts-ignore
-import ARB_VD_TSV from 'tsv/target_arb-vd.tsv';
+import ARB_VD_TSV from 'tsv/target_VanDyck_new.tsv';
 
 let isInitialized: boolean = false;
 
