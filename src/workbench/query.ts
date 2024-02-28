@@ -5,8 +5,9 @@ import BCVWP from '../features/bcvwp/BCVWPSupport';
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
 // @ts-ignore
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
+// Arabic VD Target
 // @ts-ignore
-import YLT from 'tsv/ylt-new.tsv';
+import ARB_VD_TSV from 'tsv/target_arb-vd.tsv';
 
 let isInitialized: boolean = false;
 
@@ -216,40 +217,35 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(sblGnt);
 
-    let yltCorp: Corpus = {
-      id: 'ylt',
-      name: 'YLT',
-      fullName: 'YLT',
+    let arbVd: Corpus = {
+      id: 'arb-vd',
+      name: 'AVD',
+      fullName: 'Arabic VD translation',
       language: {
-        code: 'eng',
-        textDirection: TextDirection.LTR,
+        code: 'arb',
+        textDirection: TextDirection.RTL,
       },
       words: [],
       wordsByVerse: {},
       books: {},
     };
-
-    const bsbWords = await parseTsvByFileType(
-      YLT,
-      yltCorp,
+    const arbVdWords = await parseTsvByFileType(
+      ARB_VD_TSV,
+      arbVd,
       'targets',
       CorpusFileFormat.TSV_TARGET
     );
-
-    yltCorp = {
-      ...yltCorp,
-      ...bsbWords,
+    arbVd = {
+      ...arbVd,
+      ...arbVdWords,
     };
-
-    putVersesInCorpus(yltCorp);
+    putVersesInCorpus(arbVd);
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       sblGnt,
       maculaHebOT,
     ]);
-    const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
-      yltCorp,
-    ]);
+    const targetContainer = CorpusContainer.fromIdAndCorpora('target', [arbVd]);
 
     availableCorpora.push(sourceContainer);
     availableCorpora.push(targetContainer);
