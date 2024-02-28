@@ -17,13 +17,14 @@ import {
   generateListOfNavigablePivotWords,
   generatePivotWordsMap,
 } from './concordanceViewHelpers';
-import { useAppSelector } from 'app/hooks';
+import { AppContext } from '../../App';
 
 export type WordSource = 'source' | 'target';
 export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
+  const { projectState } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
   const [sourceContainer, setSourceContainer] = useState(
     null as CorpusContainer | null
@@ -119,68 +120,64 @@ export const ConcordanceView = () => {
     void loadCorpora();
   }, [setSourceContainer, setTargetContainer]);
 
-  const alignmentState = useAppSelector((state) => {
-    return state.alignment.present.alignments;
-  });
-
   /**
    * create navigable tree structure of pivot words with alignment links as the leaf nodes
    */
-  useEffect(() => {
-    const loadPivotWordData = async () => {
-      if (!sourceContainer || !targetContainer) {
-        setLoading(false);
-        return;
-      }
+  useEffect(
+    () => {
+      const loadPivotWordData = async () => {
+        if (!sourceContainer || !targetContainer) {
+          setLoading(false);
+          return;
+        }
 
-      const allWordsAndFrequencies = generateAllWordsAndFrequencies(
-        wordSource === 'source' ? sourceContainer : targetContainer
-      );
+        const allWordsAndFrequencies = generateAllWordsAndFrequencies(
+          wordSource === 'source' ? sourceContainer : targetContainer
+        );
 
-      if (!allWordsAndFrequencies) {
-        setLoading(false);
-        return;
-      }
+        if (!allWordsAndFrequencies) {
+          setLoading(false);
+          return;
+        }
 
-      const pivotWordsMap: NormalizedTextToPivotWord = generatePivotWordsMap(
-        allWordsAndFrequencies
-      );
+        const pivotWordsMap: NormalizedTextToPivotWord = generatePivotWordsMap(
+          allWordsAndFrequencies
+        );
 
-      const normalizedTextToAlignmentLinks = generateAlignedWordsMap(
-        alignmentState,
-        sourceContainer,
-        targetContainer,
-        wordSource
-      );
-
-      setSrcPivotWords(
-        generateListOfNavigablePivotWords(
-          pivotWordsMap,
+        const normalizedTextToAlignmentLinks = generateAlignedWordsMap(
+          projectState?.linksTable?.getAll() ?? [],
           sourceContainer,
-          targetContainer,
-          normalizedTextToAlignmentLinks,
-          wordSource
-        )
-      );
-      setLoading(false);
-    };
+          targetContainer
+        );
 
-    if (!alignmentState || alignmentState.length < 1) {
-      setLoading(false);
-      return;
-    }
-    if (sourceContainer && targetContainer && wordSource) {
-      setLoading(true);
-      void loadPivotWordData();
-    }
-  }, [
-    alignmentState,
-    wordSource,
-    sourceContainer,
-    targetContainer,
-    setLoading,
-    setSrcPivotWords,
-  ]);
+        setSrcPivotWords(
+          generateListOfNavigablePivotWords(
+            pivotWordsMap,
+            sourceContainer,
+            targetContainer,
+            normalizedTextToAlignmentLinks,
+            wordSource
+          )
+        );
+        setLoading(false);
+      };
+
+      if (sourceContainer && targetContainer && wordSource) {
+        setLoading(true);
+        void loadPivotWordData();
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      projectState?.linksTable,
+      projectState?.linksTable?.lastUpdate,
+      wordSource,
+      sourceContainer,
+      targetContainer,
+      setLoading,
+      setSrcPivotWords,
+    ]
+  );
 
   const [searchParams, setSearchParams] = useSearchParams();
 

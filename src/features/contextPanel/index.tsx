@@ -18,7 +18,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
     <Stack
       direction="row"
       spacing={2}
-      style={{ height: '16rem' }}
+      style={{ height: '17rem' }}
       justifyContent="stretch"
       alignItems="stretch"
     >

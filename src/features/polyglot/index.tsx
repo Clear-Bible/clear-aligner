@@ -8,6 +8,8 @@ import { CorpusContainer, CorpusViewport } from 'structs';
 
 import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { AppContext } from '../../App';
+import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
 
 interface PolyglotProps {
   containers: CorpusContainer[];
@@ -16,101 +18,88 @@ interface PolyglotProps {
 
 export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
   useDebug('PolyglotComponent');
+  const {preferences} = React.useContext(AppContext);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const corpusViewports = useAppSelector((state) => {
-    return state.app.corpusViewports;
-  });
 
-  const containersWithoutViewport = useMemo(() => {
-    return containers.filter(
-      (container) =>
-        !corpusViewports
-          .map((viewport) => viewport.containerId)
-          .includes(container.id)
-    );
+  const corpusViewports: CorpusViewport[] | null = useMemo(
+    () =>
+      containers?.map(
+        (container): CorpusViewport => ({
+          containerId: container.id,
+        })
+      ) ?? null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    containers,
-    containers.length, // necessary in spite of warning
-    corpusViewports,
-  ]);
+    [containers, containers.length]
+  );
+
+  const controlPanelFormat = useMemo(() => (
+    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
+  )?.value, [preferences]);
 
   return (
     <Stack
-      direction="row"
+      direction={controlPanelFormat === ControlPanelFormat.HORIZONTAL ? "row" : "column"}
       spacing={2}
-      style={{ height: '16rem' }}
+      style={{ height: controlPanelFormat === ControlPanelFormat.HORIZONTAL ? "17rem" : '30rem' }}
       justifyContent="stretch"
       alignItems="stretch"
     >
-      {!corpusViewports.length ? (
-        containersWithoutViewport.length ? (
+      {(!corpusViewports || corpusViewports.length < 1) && (
+        <Grid container flexDirection="column" alignItems="center">
           <Typography variant="h6" style={{ margin: 'auto' }}>
-            To begin, add a corpus viewport.
+            Loading corpora.
           </Typography>
-        ) : (
-          <Grid container flexDirection="column" alignItems="center">
-            <Typography variant="h6" style={{ margin: 'auto' }}>
-              Loading corpora.
-            </Typography>
-            <CircularProgress variant="indeterminate" />
-          </Grid>
-        )
-      ) : (
-        ''
+          <CircularProgress variant="indeterminate" />
+        </Grid>
       )}
 
-      {containers.length
-        ? corpusViewports.map(
-            (corpusViewport: CorpusViewport, index: number) => {
-              const corpusId = corpusViewport.containerId;
-              const key = `text_${index}`;
-              const container = containers.find(
-                (c) => c.id === corpusViewport.containerId
-              );
-              if (!container) return <Grid />;
-              return (
-                <Card
-                  onScroll={(e) => {
-                    if (scrollLock) {
-                      const newScrollTop = (e.target as HTMLDivElement)
-                        .scrollTop;
-                      containerViewportRefs.current.forEach((ref) => {
-                        ref.scrollTop = newScrollTop;
-                      });
-                    }
-                  }}
-                  ref={(el) => {
-                    if (el) {
-                      containerViewportRefs.current[index] = el;
-                    }
-                  }}
-                  elevation={2}
-                  className="corpus-container corpus-scroll-container"
-                  key={key}
-                  style={{
-                    flexGrow: '1',
-                    flexBasis: '0',
-                    minWidth: '16rem',
-                    position: 'relative',
-                  }}
-                >
-                  <CorpusComponent
-                    key={corpusId}
-                    viewCorpora={container}
-                    viewportIndex={index}
-                    corpora={
-                      containers.flatMap((container) => container.corpora) ?? []
-                    }
-                    position={position}
-                  />
-                </Card>
-              );
-            }
-          )
-        : ''}
+      {corpusViewports &&
+        corpusViewports.map((corpusViewport: CorpusViewport, index: number) => {
+          const corpusId = corpusViewport.containerId;
+          const key = `text_${index}`;
+          const container = containers.find(
+            (c) => c.id === corpusViewport.containerId
+          );
+          if (!container) return <Grid key={key}/>;
+          return (
+            <Card
+              onScroll={(e) => {
+                if (scrollLock) {
+                  const newScrollTop = (e.target as HTMLDivElement).scrollTop;
+                  containerViewportRefs.current.forEach((ref) => {
+                    ref.scrollTop = newScrollTop;
+                  });
+                }
+              }}
+              ref={(el) => {
+                if (el) {
+                  containerViewportRefs.current[index] = el;
+                }
+              }}
+              elevation={2}
+              className="corpus-container corpus-scroll-container"
+              key={key}
+              style={{
+                flexGrow: '1',
+                flexBasis: '0',
+                minWidth: '16rem',
+                position: 'relative',
+              }}
+            >
+              <CorpusComponent
+                key={corpusId}
+                viewCorpora={container}
+                viewportIndex={index}
+                corpora={
+                  containers.flatMap((container) => container.corpora) ?? []
+                }
+                position={position}
+              />
+            </Card>
+          );
+        })}
     </Stack>
   );
 };

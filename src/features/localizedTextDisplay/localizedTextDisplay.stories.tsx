@@ -1,5 +1,6 @@
 import { Meta } from '@storybook/react';
 import { LocalizedTextDisplay, LocalizedTextDisplayProps } from './index';
+import { TextDirection } from '../../structs';
 
 const meta: Meta<typeof LocalizedTextDisplay> = {
   title: 'LocalizedTextDisplay',
@@ -22,7 +23,7 @@ Hebrew.args = {
   children: 'בְּ',
   languageInfo: {
     code: 'heb',
-    textDirection: 'rtl',
+    textDirection: TextDirection.RTL,
     fontFamily: 'sbl-hebrew',
   },
 } as LocalizedTextDisplayProps;

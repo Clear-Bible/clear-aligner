@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PivotWord } from './structs';
 import { Paper } from '@mui/material';
 import { GridSortItem } from '@mui/x-data-grid';
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 
 const meta: Meta<typeof PivotWordTable> = {
   title: 'Concordance View/PivotWordTable',
@@ -22,8 +23,22 @@ const pivotWords: PivotWord[] = [
         frequency: 73_611,
         sourceTextId: 'srcId',
         targetTextId: 'tgtId',
-        sourceWordTexts: [{ text: 'the' }],
-        targetWordTexts: [{ text: 'der' }],
+        sourceWordTexts: [
+          {
+            text: 'the',
+            position: BCVWP.parseFromString(
+              '010010010011'
+            ).toTruncatedReferenceString(BCVWPField.Word),
+          },
+        ],
+        targetWordTexts: [
+          {
+            text: 'der',
+            position: BCVWP.parseFromString(
+              '010010010011'
+            ).toTruncatedReferenceString(BCVWPField.Word),
+          },
+        ],
         alignments: [],
       },
     ],
@@ -37,8 +52,22 @@ const pivotWords: PivotWord[] = [
         frequency: 60_382,
         sourceTextId: 'srcId',
         targetTextId: 'tgtId',
-        sourceWordTexts: [{ text: 'and' }],
-        targetWordTexts: [{ text: 'und' }],
+        sourceWordTexts: [
+          {
+            text: 'and',
+            position: BCVWP.parseFromString(
+              '010010010011'
+            ).toTruncatedReferenceString(BCVWPField.Word),
+          },
+        ],
+        targetWordTexts: [
+          {
+            text: 'und',
+            position: BCVWP.parseFromString(
+              '010010010011'
+            ).toTruncatedReferenceString(BCVWPField.Word),
+          },
+        ],
         alignments: [],
       },
     ],

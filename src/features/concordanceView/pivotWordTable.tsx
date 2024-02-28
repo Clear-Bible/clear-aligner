@@ -61,7 +61,7 @@ export const PivotWordTable = ({
 }: PivotWordTableProps) => {
   const initialPage = useMemo(() => {
     if (chosenWord && pivotWords) {
-      return pivotWords.indexOf(chosenWord) / 20;
+      return Math.floor(pivotWords.indexOf(chosenWord) / 20);
     }
     return 0;
   }, [chosenWord, pivotWords]);

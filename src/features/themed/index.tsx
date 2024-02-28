@@ -7,20 +7,25 @@ import { CssBaseline } from '@mui/material';
 // import '@fontsource/roboto/500.css';
 // import '@fontsource/roboto/700.css';
 
+export enum ThemeMode {
+  LIGHT = "light",
+  DARK = "dark"
+}
+
 const baseDarkTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: ThemeMode.DARK,
   },
 });
 const baseLightTheme = createTheme({
   palette: {
-    mode: 'light',
+    mode: ThemeMode.LIGHT,
   },
 });
 
 const darkTheme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: ThemeMode.DARK,
   },
   typography: {
     unlinked: {
@@ -37,7 +42,7 @@ const darkTheme = createTheme({
 
 const lightTheme = createTheme({
   palette: {
-    mode: 'light',
+    mode: ThemeMode.LIGHT,
   },
   typography: {
     unlinked: {

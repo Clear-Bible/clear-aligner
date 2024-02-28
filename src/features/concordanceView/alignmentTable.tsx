@@ -68,17 +68,15 @@ export const VerseCell = (
           : {}),
       }}
     >
-      {verses.map((verse: Verse) => {
-        const languageInfo = container?.languageAtReference(verse.bcvId);
-        return (
-          <VerseDisplay
-            key={verse?.bcvId?.toReferenceString() ?? ''}
-            readonly
-            verse={verse}
-            languageInfo={languageInfo}
-          />
-        );
-      })}
+      {verses.map((verse: Verse) => (
+        <VerseDisplay
+          key={verse?.bcvId?.toReferenceString() ?? ''}
+          onlyLinkIds={row.row.id ? [row.row.id] : []}
+          readonly
+          verse={verse}
+          corpus={container?.corpusAtReference(verse.bcvId)}
+        />
+      ))}
     </div>
   );
 };
