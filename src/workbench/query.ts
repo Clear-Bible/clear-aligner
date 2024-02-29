@@ -59,9 +59,10 @@ const parseTsvByFileType = async (
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
-        if (
-          punctuationFilter.includes(values[headerMap['token']]) ||
-          punctuationFilter.includes(values[headerMap['text']])
+        if ([
+          values[headerMap['token']],
+          values[headerMap['text']]
+        ].some(v => !!(v ?? "").match(/^\p{P}$/gu))
         ) {
           // skip punctuation
           return accumulator;
