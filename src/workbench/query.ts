@@ -4,14 +4,10 @@ import BCVWP from '../features/bcvwp/BCVWPSupport';
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
 // @ts-ignore
-import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
-// @ts-ignore
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
-// @ts-ignore
-import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
 // Arabic VD Target
 // @ts-ignore
-import ARB_VD_TSV from 'tsv/target_arb-vd.tsv';
+import ARB_VD_TSV from 'tsv/target_VanDyck_new.tsv';
 
 let isInitialized: boolean = false;
 
@@ -33,6 +29,9 @@ const punctuationFilter = [
   '(',
   ')',
   'TRUE',
+  '"',
+  '“',
+  '”',
 ];
 
 const parseTsvByFileType = async (
@@ -48,6 +47,7 @@ const parseTsvByFileType = async (
   const wordsByVerse: Record<string, Verse> = {};
 
   header.split('\t').forEach((header, idx) => {
+    header = header === 'identifier' ? 'id' : header; //Standard for header in files will be id
     headerMap[header] = idx;
   });
   const hasGloss = !!(headerMap["english"] ?? headerMap["gloss"]);
@@ -56,17 +56,20 @@ const parseTsvByFileType = async (
     const values = row.split('\t');
 
     let id, pos, word: Word, verse;
-
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
-        if (punctuationFilter.includes(values[headerMap['text']])) {
+        if ([
+          values[headerMap['token']],
+          values[headerMap['text']]
+        ].some(v => !!(v ?? "").match(/^\p{P}$/gu))
+        ) {
           // skip punctuation
           return accumulator;
         }
 
         // remove redundant 'o'/'n' qualifier
-        id = values[headerMap['identifier']];
+        id = values[headerMap['id']];
         if (!BCVWP.isValidString(id)) {
           return accumulator;
         }
@@ -78,10 +81,10 @@ const parseTsvByFileType = async (
           text: values[headerMap['text']] || values[headerMap['lemma']] || '',
           position: pos
         };
-
         verse = wordsByVerse[id.substring(0, 8)] || {};
         wordsByVerse[id.substring(0, 8)] = {
           ...verse,
+          sourceVerse: values[headerMap['source_verse']],
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
@@ -179,36 +182,12 @@ export const getAvailableCorporaContainers = async (): Promise<
       'sources',
       CorpusFileFormat.TSV_MACULA
     );
+
     maculaHebOT = {
       ...maculaHebOT,
       ...maculaHebOTWords,
     };
     putVersesInCorpus(maculaHebOT);
-
-    // YLT Old Testament
-    let wlcYltOt: Corpus = {
-      id: 'wlc-ylt',
-      name: 'YLT',
-      fullName: 'YLT Old Testament',
-      language: {
-        code: 'en',
-        textDirection: TextDirection.LTR,
-      },
-      words: [],
-      wordsByVerse: {},
-      books: {},
-    };
-    const wlcYltOtWords = await parseTsvByFileType(
-      WLC_OT_YLT_TSV,
-      wlcYltOt,
-      'targets',
-      CorpusFileFormat.TSV_TARGET
-    );
-    wlcYltOt = {
-      ...wlcYltOt,
-      ...wlcYltOtWords,
-    };
-    putVersesInCorpus(wlcYltOt);
 
     // SBL GNT
     let sblGnt: Corpus = {
@@ -236,38 +215,13 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(sblGnt);
 
-    let na27Ylt: Corpus = {
-      id: 'na27-YLT',
-      name: 'YLT',
-      fullName: "Young's Literal Translation text New Testament",
-      language: {
-        code: 'eng',
-        textDirection: TextDirection.LTR,
-      },
-      words: [],
-      wordsByVerse: {},
-      books: {},
-    };
-
-    const na27Words = await parseTsvByFileType(
-      NA27_YLT,
-      na27Ylt,
-      'targets',
-      CorpusFileFormat.TSV_TARGET
-    );
-    na27Ylt = {
-      ...na27Ylt,
-      ...na27Words,
-    };
-    putVersesInCorpus(na27Ylt);
-
     let arbVd: Corpus = {
       id: 'arb-vd',
       name: 'AVD',
       fullName: 'Arabic VD translation',
       language: {
         code: 'arb',
-        textDirection: 'rtl',
+        textDirection: TextDirection.RTL,
       },
       words: [],
       wordsByVerse: {},
@@ -286,8 +240,8 @@ export const getAvailableCorporaContainers = async (): Promise<
     putVersesInCorpus(arbVd);
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
-      maculaHebOT,
       sblGnt,
+      maculaHebOT,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [arbVd]);
 

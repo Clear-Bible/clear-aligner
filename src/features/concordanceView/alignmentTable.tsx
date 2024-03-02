@@ -1,11 +1,5 @@
-import { Link, DisplayableLink, Verse, CorpusContainer } from '../../structs';
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-  GridRowParams,
-  GridSortItem,
-} from '@mui/x-data-grid';
+import { CorpusContainer, DisplayableLink, Link, Verse } from '../../structs';
+import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
 import { IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
 import { VerseDisplay } from '../corpus/verseDisplay';
@@ -18,10 +12,7 @@ import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 import findWord from '../../helpers/findWord';
-import {
-  DataGridResizeAnimationFixes,
-  DataGridScrollbarDisplayFix,
-} from '../../styles/dataGridFixes';
+import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../../styles/dataGridFixes';
 
 export interface AlignmentTableContextProps {
   wordSource: WordSource;
@@ -40,11 +31,11 @@ export const VerseCell = (
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const container =
-    tableCtx.wordSource === 'source'
+    tableCtx.wordSource === WordSource.SOURCE
       ? row.row?.sourceContainer
       : row.row?.targetContainer;
   const verses: Verse[] = _.uniqWith(
-    (tableCtx.wordSource === 'source' ? row.row?.sources : row.row?.targets)
+    (tableCtx.wordSource === WordSource.SOURCE ? row.row?.sources : row.row?.targets)
       ?.filter(BCVWP.isValidString)
       .map(BCVWP.parseFromString)
       .map((ref) => ref.toTruncatedReferenceString(BCVWPField.Verse)),
@@ -81,6 +72,12 @@ export const VerseCell = (
   );
 };
 
+export const RefCell = (
+  row: GridRenderCellParams<DisplayableLink, any, any>
+) => {
+  const tableCtx = useContext(AlignmentTableContext);
+  return <BCVDisplay currentPosition={findFirstRefFromLink(row.row, tableCtx.wordSource)} />;
+}
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
  * @param row rendering params for this DisplayableLink entry
@@ -97,7 +94,7 @@ export const LinkCell = (
           pathname: '/',
           search: createSearchParams({
             ref:
-              findFirstRefFromLink(row.row)?.toTruncatedReferenceString(
+              findFirstRefFromLink(row.row, WordSource.TARGET)?.toTruncatedReferenceString(
                 BCVWPField.Verse
               ) ?? '',
             pivotWord: tableCtx?.pivotWord?.normalizedText || '',
@@ -121,7 +118,7 @@ const columns: GridColDef[] = [
     field: 'sources',
     headerName: 'Ref',
     renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
-      <BCVDisplay currentPosition={findFirstRefFromLink(row.row)} />
+      <RefCell {...row} />
     ),
   },
   {

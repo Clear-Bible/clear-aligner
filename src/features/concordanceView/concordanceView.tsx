@@ -19,7 +19,10 @@ import {
 } from './concordanceViewHelpers';
 import { AppContext } from '../../App';
 
-export type WordSource = 'source' | 'target';
+export enum WordSource {
+  SOURCE='source',
+  TARGET='target'
+}
 export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
@@ -81,7 +84,7 @@ export const ConcordanceView = () => {
   const [pivotWordsPromise, setPivotWordsPromise] = useState(
     null as Promise<PivotWord[]> | null
   );
-  const [wordSource, setWordSource] = useState('target' as WordSource);
+  const [wordSource, setWordSource] = useState(WordSource.TARGET);
   const [wordFilter, setWordFilter] = useState('all' as WordFilter);
   const [srcPivotWords, setSrcPivotWords] = useState([] as PivotWord[]);
   const [pivotWords, setPivotWords] = useState([] as PivotWord[]);
@@ -132,7 +135,7 @@ export const ConcordanceView = () => {
         }
 
         const allWordsAndFrequencies = generateAllWordsAndFrequencies(
-          wordSource === 'source' ? sourceContainer : targetContainer
+          wordSource === WordSource.SOURCE ? sourceContainer : targetContainer
         );
 
         if (!allWordsAndFrequencies) {

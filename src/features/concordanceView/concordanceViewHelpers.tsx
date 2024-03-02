@@ -232,7 +232,7 @@ export const generateListOfNavigablePivotWords = (
       };
     })
     .forEach((alignedWord: AlignedWord) => {
-      (wordSource === 'source'
+      (wordSource === WordSource.SOURCE
         ? alignedWord.sourceWordTexts
         : alignedWord.targetWordTexts
       ).forEach((wordEntry: LocalizedWordEntry) => {
