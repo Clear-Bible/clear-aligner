@@ -6,6 +6,8 @@ import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { AppContext } from '../../App';
+import { resetTextSegments } from '../../state/alignment.slice';
+import { useAppDispatch } from '../../app';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -21,6 +23,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
   );
 
   const appCtx = useContext(AppContext);
+  const dispatch = useAppDispatch();
 
   // set current reference to default if none set
   useEffect(() => {
@@ -52,6 +55,11 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
       <BCVDisplay currentPosition={appCtx.currentReference} />
     );
   }, [layoutCtx, appCtx.currentReference]);
+
+  // reset selected tokens when the book, chapter or verse changes
+  useEffect(() => {
+    dispatch(resetTextSegments())
+  }, [appCtx.currentReference?.book, appCtx.currentReference?.chapter, appCtx.currentReference?.verse]);
 
   return (
     <>
