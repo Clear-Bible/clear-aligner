@@ -15,6 +15,7 @@
     "@rgrove/parse-xml": "^3.0.0",
     "electron-is-dev": "^2.0.0",
     "queue-promise": "^2.2.1",
+    "react-hotkeys-hook": "^4.5.0",
     "react-redux": "^7.2.8",
     "react-router-dom": "^6.20.0",
     "react-scripts": "5.0.0",

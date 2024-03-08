@@ -18,6 +18,7 @@ import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/p
 
 import { usePivotWords } from '../concordanceView/usePivotWords';
 import UploadAlignmentGroup from './uploadAlignmentGroup';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -92,6 +93,17 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     dispatch(resetTextSegments());
   }, [appState.currentProject, inProgressLink, dispatch]);
 
+  const deleteLink = useCallback(() => {
+    if (!appState.currentProject?.linksTable || !inProgressLink) {
+      return;
+    }
+    if (inProgressLink?.id) {
+      const linksTable = appState.currentProject?.linksTable;
+      linksTable.remove(inProgressLink.id);
+      dispatch(resetTextSegments());
+    }
+  },[appState.currentProject, inProgressLink, dispatch])
+
 
   const enableToggle = useMemo(() => {
     const positions = props.containers.map(viewCorpora => {
@@ -108,6 +120,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     });
     return positions.some(p => p);
   }, [props]);
+
+  // keyboard shortcuts
+  useHotkeys('space', () => createLink())
+  useHotkeys('backspace', () => deleteLink())
+  useHotkeys('shift+esc', () => dispatch(resetTextSegments()))
 
   return (
     <Stack
@@ -165,16 +182,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             <Button
               variant="contained"
               disabled={!inProgressLink?.id}
-              onClick={() => {
-                if (!appState.currentProject?.linksTable || !inProgressLink) {
-                  return;
-                }
-                if (inProgressLink?.id) {
-                  const linksTable = appState.currentProject?.linksTable;
-                  linksTable.remove(inProgressLink.id);
-                  dispatch(resetTextSegments());
-                }
-              }}
+              onClick={() => deleteLink() }
             >
               <LinkOff/>
             </Button>
