@@ -13,7 +13,7 @@ import { useSearchParams } from 'react-router-dom';
 import _ from 'lodash';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
-import { useAppDispatch } from '../../app';
+import { useAppDispatch } from '../../app/index';
 
 export type WordFilter = 'aligned' | 'all';
 

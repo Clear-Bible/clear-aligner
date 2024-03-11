@@ -26,7 +26,7 @@ import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../
 import { parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppState } from '../../state/databaseManagement';
-import { useAppDispatch } from '../../app';
+import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 
 
