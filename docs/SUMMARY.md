@@ -3,6 +3,7 @@
 * [Overview](README.md)
 * [Features](features.md)
 * [Roadmap](roadmap.md)
+* [Open Issues](open-issues.md)
 
 ## File Formats
 
