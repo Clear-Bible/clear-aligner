@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Overview](README.md)
+* [Getting Started](getting-started.md)
 * [Features](features.md)
 * [Roadmap](roadmap.md)
 * [Open Issues](open-issues.md)

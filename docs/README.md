@@ -10,6 +10,8 @@ ClearAligner is:
 * **local-first** Be productive without an active internet connection. [Target texts](file-formats/target-text.md) are loaded from `TSV` files created with a simple, pre-defined format. [Alignment data](file-formats/alignment-data.md) can be imported and exported as `json`.&#x20;
 * **open-source** Stewarded by Biblica's Clear team and developed in partnership with OSI, ClearAligner's source code is released with an MIT license.[ View it on Github](https://github.com/clear-bible/clear-aligner).
 
+To learn about how ClearAligner works, watch the overview video for the [latest build](releases/0.0.27.md). After that, [get started](getting-started.md).
+
 ### System Requirements
 
 ClearAligner is designed to work well on systems with:
