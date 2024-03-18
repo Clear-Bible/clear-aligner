@@ -4,8 +4,9 @@ description: How to try ClearAligner for yourself.
 
 # Getting Started
 
-1. Download and install the [latest build](releases/0.0.27.md) for your operating system.
-2. Start ClearAligner.
+1. Download and install the [latest build](releases/0.0.28.md) for your operating system.
+2. Follow and OS-specific installation notes on the build page.
+3. Start ClearAligner.
 
 ## Use the default project for testing
 
