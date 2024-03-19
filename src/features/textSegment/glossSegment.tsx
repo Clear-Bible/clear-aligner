@@ -72,8 +72,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                   idx !== ((parts || []).length - 1) && (
                     <Divider flexItem orientation="vertical" sx={theme => ({
                       borderStyle: 'dashed',
-                      borderWidth: '2px',
-                      width: '2px',
+                      borderWidth: '1px',
                       mx: .5,
                       borderColor: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)'
                     })} />
