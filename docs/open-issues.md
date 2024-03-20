@@ -4,6 +4,8 @@ description: Known issues that may or may not have planned solutions at this tim
 
 # Open Issues
 
-1. A method for modeling punctuation in [target text](file-formats/target-text.md) files.
-2. Support for multi-user projects with automatic synchronization.
-3. A _Guided Alignment_ user experience that focuses alignment work on the highest priority tokens.
+1. Punctuation is not correctly displayed for target texts.
+2. Source/target text readability (contrast, font size, etc...)
+3. Lack of sub-word tokenization for target texts
+4. No ability to track project progress
+5. Some UI elements are not arranged appropriately for RTL language speakers
