@@ -24,6 +24,7 @@ Pilot testing and gathering user feedback.
 
 _Prioritized based on user feedback_
 
+* Keyboard shortcuts
 * Multi-user projects with synchronization
 * UX redesign w/more responsive layout
 * Sub-word target text tokenization
