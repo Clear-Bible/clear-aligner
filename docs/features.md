@@ -20,4 +20,5 @@ ClearAligner is designed to work with Alignment data for Biblical texts. Alignme
 
 ## Align across verse boundaries
 
-\<gif here>
+<figure><img src=".gitbook/assets/2024-03-20 09.34.57.gif" alt=""><figcaption><p>Align across verse boundaries when versification schemes differ</p></figcaption></figure>
+
