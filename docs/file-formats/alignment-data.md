@@ -10,7 +10,6 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
 
 ## Example
 
-````
 ```json
 {
   "type": "translation",
@@ -41,7 +40,6 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
   ]
 }
 ```
-````
 
 ## Details
 
