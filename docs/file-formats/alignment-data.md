@@ -43,8 +43,6 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
 
 ## Details
 
-The `id` field on alignment records is a `GUID` used for internal change tracking.
-
-Values for `source` arrays match the IDs in the canonical source text TSVs used by ClearAligner.
-
-Values for `target` arrays match the IDs provided in [target text](target-text.md) files.&#x20;
+* The `id` field on alignment records is a GUID used for internal change tracking.
+* Values for `source` arrays match the IDs in the canonical source text TSVs used by ClearAligner.
+* Values for `target` arrays match the IDs provided in [target text](target-text.md) files.&#x20;
