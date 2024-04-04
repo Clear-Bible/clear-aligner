@@ -250,6 +250,7 @@ export const TextSegment = ({
                             sourceCorpus?.words ?? [],
                             targetCorpus?.words ?? [],
                             // The following array should be a running denormalized history of alignments.
+                            // Currently this is hard coded for Matt 1:1 test case.
                             [
                               {
                                 sourceWords: ['ἐγέννησεν'],
