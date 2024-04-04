@@ -103,9 +103,11 @@ const alignmentSlice = createSlice({
     resetTextSegments: (state) => {
       state.inProgressLink = null;
     },
-    suggestTokens: (state, action: PayloadAction<Word[]>) => {
+    suggestTokens: (state, action: PayloadAction<Word[] | undefined>) => {
       console.log('suggestTokens', action.payload);
-      state.suggestedTokens = action.payload;
+      if (action.payload) {
+        state.suggestedTokens = action.payload;
+      }
     },
     clearSuggestions: (state) => {
       state.suggestedTokens = [];

@@ -1,5 +1,7 @@
 import React, { ReactElement, useMemo } from 'react';
 import { Typography } from '@mui/material';
+import _ from 'lodash';
+
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import {
@@ -9,13 +11,13 @@ import {
   clearSuggestions,
 } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { AlignmentSide, LanguageInfo, Link, Word } from 'structs';
+import { AlignmentSide, LanguageInfo, Link, Word, Corpus } from 'structs';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AlignmentMode } from '../../state/alignmentState';
-import _ from 'lodash';
+import generateSuggestions from '../suggestions/generateSuggestions';
 import BCVWP from '../bcvwp/BCVWPSupport';
 
 export interface TextSegmentProps extends LimitedToLinks {
@@ -25,6 +27,8 @@ export interface TextSegmentProps extends LimitedToLinks {
   showAfter?: boolean;
   alignment?: 'flex-end' | 'flex-start' | 'center';
   links?: Map<string, Link>;
+  sourceCorpus?: Corpus;
+  targetCorpus?: Corpus;
 }
 
 const computeVariant = (
@@ -97,6 +101,8 @@ export const TextSegment = ({
   alignment,
   links,
   showAfter = false,
+  sourceCorpus,
+  targetCorpus,
 }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
@@ -236,19 +242,24 @@ export const TextSegment = ({
                         word,
                       })
                     );
-                    console.log('dispatching suggestTokens...');
+                    // console.log('dispatching suggestTokens...');
                     if (!areSuggestions) {
                       dispatch(
-                        suggestTokens([
-                          {
-                            id: '01001001003',
-                            corpusId: 'ylt-new',
-                            side: AlignmentSide.TARGET,
-                            text: 'beginning',
-                            position: 3,
-                            normalizedText: 'beginning',
-                          },
-                        ])
+                        suggestTokens(
+                          generateSuggestions(
+                            word,
+                            sourceCorpus?.words ?? [],
+                            targetCorpus?.words ?? [],
+                            [
+                              {
+                                sourceWords: ['ἐγέννησεν'],
+                                targetWords: ['begat'],
+                                frequency: 1,
+                              },
+                            ],
+                            [] // use `links`?
+                          )
+                        )
                       );
                     }
                   }

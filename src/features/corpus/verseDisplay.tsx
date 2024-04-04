@@ -2,7 +2,11 @@ import { AlignmentSide, Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
+import {
+  useDataLastUpdated,
+  useFindLinksByBCV,
+  useGetLink,
+} from '../../state/links/tableManager';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -16,6 +20,8 @@ export interface VerseDisplayProps extends LimitedToLinks {
   corpus?: Corpus;
   verse: Verse;
   allowGloss?: boolean;
+  sourceCorpus?: Corpus;
+  targetCorpus?: Corpus;
 }
 
 /**
@@ -29,18 +35,23 @@ export interface VerseDisplayProps extends LimitedToLinks {
  * @constructor
  */
 export const VerseDisplay = ({
-                               readonly,
-                               corpus,
-                               verse,
-                               onlyLinkIds,
-                               allowGloss = false
-                             }: VerseDisplayProps) => {
+  readonly,
+  corpus,
+  verse,
+  onlyLinkIds,
+  allowGloss = false,
+  sourceCorpus,
+  targetCorpus,
+}: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
     [verse?.words]
   );
-  const alignmentSide = useMemo(() => corpus?.side as AlignmentSide, [corpus?.side]);
+  const alignmentSide = useMemo(
+    () => corpus?.side as AlignmentSide,
+    [corpus?.side]
+  );
   const { result: onlyLink } = useGetLink(
     (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
     `${verse.bcvId?.toReferenceString()}-${dataLastUpdated}`
@@ -55,17 +66,19 @@ export const VerseDisplay = ({
   );
 
   const linkMap = useMemo(() => {
-    if ((!allLinks || allLinks.length < 1)
-      && !onlyLink) {
+    if ((!allLinks || allLinks.length < 1) && !onlyLink) {
       return;
     }
     const result = new Map<string, Link>();
     (allLinks ?? [onlyLink as Link])
-      .filter(link => onlyLinkIds?.includes(link!.id!) ?? true)
-      .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
-        ? link!.sources
-        : link!.targets) ?? [])
-        .forEach(wordId => result.set(wordId, link!)));
+      .filter((link) => onlyLinkIds?.includes(link!.id!) ?? true)
+      .forEach((link) =>
+        (
+          (alignmentSide === AlignmentSide.SOURCE
+            ? link!.sources
+            : link!.targets) ?? []
+        ).forEach((wordId) => result.set(wordId, link!))
+      );
     return result;
   }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 
@@ -79,6 +92,8 @@ export const VerseDisplay = ({
             readonly={readonly}
             onlyLinkIds={onlyLinkIds}
             corpus={corpus}
+            sourceCorpus={sourceCorpus}
+            targetCorpus={targetCorpus}
             parts={token}
             allowGloss={allowGloss}
           />

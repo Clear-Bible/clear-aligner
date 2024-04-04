@@ -14,10 +14,11 @@ export interface WordDisplayProps extends LimitedToLinks {
   suppressAfter?: boolean;
   parts?: Word[];
   corpus?: Corpus;
+  sourceCorpus?: Corpus;
+  targetCorpus?: Corpus;
   allowGloss?: boolean;
   links?: Map<string, Link>;
 }
-
 /**
  * Display a word made up of one or more parts with spacing after it
  * @param readonly whether the word should be displayed in read-only mode
@@ -27,15 +28,20 @@ export interface WordDisplayProps extends LimitedToLinks {
  * @param allowGloss boolean denoting whether to display gloss information if available.
  */
 export const WordDisplay = ({
-                              readonly,
-                              suppressAfter,
-                              onlyLinkIds,
-                              parts,
-                              corpus,
-                              links,
-                              allowGloss = false
-                            }: WordDisplayProps) => {
-  const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? { language: undefined, hasGloss: false }, [corpus]);
+  readonly,
+  suppressAfter,
+  onlyLinkIds,
+  parts,
+  corpus,
+  links,
+  allowGloss = false,
+  sourceCorpus,
+  targetCorpus,
+}: WordDisplayProps) => {
+  const { language: languageInfo, hasGloss } = useMemo(
+    () => corpus ?? { language: undefined, hasGloss: false },
+    [corpus]
+  );
   const { preferences } = React.useContext(AppContext);
   const ref = parts?.find((part) => part.id)?.id;
 
@@ -46,44 +52,44 @@ export const WordDisplay = ({
         key={`${
           ref
             ? BCVWP.parseFromString(ref).toTruncatedReferenceString(
-              BCVWPField.Word
-            )
+                BCVWPField.Word
+              )
             : uuid()
         }-${languageInfo?.code}`}
         style={{
-          padding: '1px'
+          padding: '1px',
         }}
       >
-        {
-          (hasGloss && preferences?.showGloss && allowGloss) ? (
-            <GlossSegment
-              readonly={readonly}
-              suppressAfter={suppressAfter}
-              links={links}
-              parts={parts}
-              corpus={corpus}
-              allowGloss={allowGloss}
-              languageInfo={languageInfo}
-            />
-          ) : (
-            <>
-              {parts?.map((part) => (
-                <React.Fragment key={part?.id}>
-                  <TextSegment
-                    key={part.id}
-                    readonly={readonly}
-                    onlyLinkIds={onlyLinkIds}
-                    word={part}
-                    links={links}
-                    languageInfo={languageInfo}
-                    showAfter={!suppressAfter}
-                  />
-                </React.Fragment>
-              ))}
-              <span> </span>
-            </>
-          )
-        }
+        {hasGloss && preferences?.showGloss && allowGloss ? (
+          <GlossSegment
+            readonly={readonly}
+            suppressAfter={suppressAfter}
+            links={links}
+            parts={parts}
+            corpus={corpus}
+            allowGloss={allowGloss}
+            languageInfo={languageInfo}
+          />
+        ) : (
+          <>
+            {parts?.map((part) => (
+              <React.Fragment key={part?.id}>
+                <TextSegment
+                  key={part.id}
+                  readonly={readonly}
+                  onlyLinkIds={onlyLinkIds}
+                  word={part}
+                  links={links}
+                  languageInfo={languageInfo}
+                  showAfter={!suppressAfter}
+                  sourceCorpus={sourceCorpus}
+                  targetCorpus={targetCorpus}
+                />
+              </React.Fragment>
+            ))}
+            <span> </span>
+          </>
+        )}
       </Typography>
     </>
   );

@@ -1,4 +1,12 @@
-import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
@@ -9,7 +17,7 @@ import {
   computeAvailableChaptersAndVersesFromNavigableBooksAndPosition,
   findNextNavigableVerse,
   findPreviousNavigableVerse,
-  getReferenceListFromWords
+  getReferenceListFromWords,
 } from '../bcvNavigation/structs';
 import { AppContext } from '../../App';
 
@@ -18,22 +26,30 @@ export interface CorpusProps {
   viewportIndex: number;
   position: BCVWP | null;
   containers: {
-    sources?: CorpusContainer,
-    targets?: CorpusContainer
+    sources?: CorpusContainer;
+    targets?: CorpusContainer;
   };
 }
 
 const determineCorpusView = async (
   viewCorpora: CorpusContainer,
   verses: Verse[],
-  bcvId: BCVWP | null
+  bcvId: BCVWP | null,
+  containers: {
+    sources?: CorpusContainer;
+    targets?: CorpusContainer;
+  }
 ) => {
-  const corpus = bcvId ? viewCorpora.corpusAtReferenceString(bcvId.toReferenceString()) : undefined;
+  const corpus = bcvId
+    ? viewCorpora.corpusAtReferenceString(bcvId.toReferenceString())
+    : undefined;
   if (!corpus) {
     return <></>;
   }
   return verses.map((verse) => {
-    const languageInfo = viewCorpora.languageAtReferenceString(verse.bcvId.toReferenceString());
+    const languageInfo = viewCorpora.languageAtReferenceString(
+      verse.bcvId.toReferenceString()
+    );
     return (
       <Grid
         container
@@ -61,7 +77,7 @@ const determineCorpusView = async (
               overflow: 'auto',
               ...(languageInfo?.textDirection
                 ? { direction: languageInfo?.textDirection }
-                : {})
+                : {}),
             }}
           >
             <Typography
@@ -70,11 +86,38 @@ const determineCorpusView = async (
               style={{
                 paddingBottom: '0.5rem',
                 paddingLeft: '0.7rem',
-                paddingRight: '0.7rem'
+                paddingRight: '0.7rem',
               }}
             >
-              <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())} verse={verse}
-                            allowGloss />
+              <VerseDisplay
+                corpus={viewCorpora.corpusAtReferenceString(
+                  verse.bcvId.toReferenceString()
+                )}
+                sourceCorpus={
+                  containers.sources
+                    ? {
+                        ...containers.sources?.corpora[1],
+                        words:
+                          containers.sources?.corpora[1].wordsByVerse[
+                            verse.bcvId.toReferenceString().trim()
+                          ]?.words,
+                      }
+                    : undefined
+                }
+                targetCorpus={
+                  containers.targets
+                    ? {
+                        ...containers.targets?.corpora[0],
+                        words:
+                          containers.targets?.corpora[0].wordsByVerse[
+                            verse.bcvId.toReferenceString().trim()
+                          ]?.words,
+                      }
+                    : undefined
+                }
+                verse={verse}
+                allowGloss
+              />
             </Typography>
           </Grid>
         </Grid>
@@ -86,7 +129,9 @@ const determineCorpusView = async (
 export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const { viewCorpora, containers } = props;
-  const [verseElement, setVerseElement] = useState<JSX.Element | JSX.Element[]>();
+  const [verseElement, setVerseElement] = useState<
+    JSX.Element | JSX.Element[]
+  >();
   const appCtx = useContext(AppContext);
 
   useDebug('TextComponent');
@@ -97,8 +142,11 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     }
     // displaying source
     if (!props.position || !containers.targets) return null;
-    const verseString = containers.targets.verseByReference(props.position)?.sourceVerse;
-    if ((verseString ?? '').trim().length) return BCVWP.parseFromString(verseString!);
+    const verseString = containers.targets.verseByReference(
+      props.position
+    )?.sourceVerse;
+    if ((verseString ?? '').trim().length)
+      return BCVWP.parseFromString(verseString!);
     return props.position;
   }, [viewCorpora.id, props.position, containers.targets]);
 
@@ -166,42 +214,45 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     const updatedVerses = [
       newFirstVerse ? viewCorpora.verseByReference(newFirstVerse) : undefined,
       ...visibleVerses,
-      newLastVerse ? viewCorpora.verseByReference(newLastVerse) : undefined
+      newLastVerse ? viewCorpora.verseByReference(newLastVerse) : undefined,
     ].filter((v) => v) as Verse[];
     setVisibleVerses(updatedVerses);
   }, [visibleVerses, viewCorpora, computedPosition]);
 
-  const removeBcvId = useCallback(() =>
-    setVisibleVerses((verses) => {
-      if (verses.length < 1 || !computedPosition) {
-        return verses;
-      }
-      return verses.slice(
-        computedPosition?.matchesTruncated(verses[0]?.bcvId, BCVWPField.Verse)
-          ? 0
-          : 1,
-        verses.length === 1 ||
-        computedPosition?.matchesTruncated(
-          verses[verses.length - 1]?.bcvId,
-          BCVWPField.Verse
-        )
-          ? verses.length
-          : -1
-      );
-    }), [computedPosition]);
+  const removeBcvId = useCallback(
+    () =>
+      setVisibleVerses((verses) => {
+        if (verses.length < 1 || !computedPosition) {
+          return verses;
+        }
+        return verses.slice(
+          computedPosition?.matchesTruncated(verses[0]?.bcvId, BCVWPField.Verse)
+            ? 0
+            : 1,
+          verses.length === 1 ||
+            computedPosition?.matchesTruncated(
+              verses[verses.length - 1]?.bcvId,
+              BCVWPField.Verse
+            )
+            ? verses.length
+            : -1
+        );
+      }),
+    [computedPosition]
+  );
 
   const corpusActionEnableState = useMemo(() => {
     const firstBcvId = viewCorpora.verseByReferenceString(
       verseKeys[
-      verseKeys.indexOf(visibleVerses[0]?.bcvId.toReferenceString()) - 1
-        ]
+        verseKeys.indexOf(visibleVerses[0]?.bcvId.toReferenceString()) - 1
+      ]
     )?.bcvId;
     const lastBcvId = viewCorpora.verseByReferenceString(
       verseKeys[
-      verseKeys.indexOf(
-        visibleVerses[visibleVerses.length - 1]?.bcvId.toReferenceString()
-      ) + 1
-        ]
+        verseKeys.indexOf(
+          visibleVerses[visibleVerses.length - 1]?.bcvId.toReferenceString()
+        ) + 1
+      ]
     )?.bcvId;
     const showAdd = !firstBcvId && !lastBcvId ? 'add' : null;
     return visibleVerses.length <= 1 ? 'remove' : showAdd;
@@ -209,17 +260,22 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
 
   useEffect(() => {
     const linksTable = appCtx?.projectState?.linksTable;
-    if (!linksTable
-      || !verseAtPosition
-      || visibleVerses.length < 1) {
+    if (!linksTable || !verseAtPosition || visibleVerses.length < 1) {
       return;
     }
     determineCorpusView(
       viewCorpora,
       visibleVerses,
-      computedPosition)
-      .then(verseElement => setVerseElement(verseElement));
-  }, [appCtx?.projectState?.linksTable, computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
+      computedPosition,
+      containers
+    ).then((verseElement) => setVerseElement(verseElement));
+  }, [
+    appCtx?.projectState?.linksTable,
+    computedPosition,
+    viewCorpora,
+    visibleVerses,
+    verseAtPosition,
+  ]);
 
   if (!viewCorpora) {
     return <Typography>Empty State</Typography>;
@@ -252,7 +308,11 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           sx={{ flex: 1 }}
         >
           <Typography variant="h6" sx={{ mr: 1 }}>
-            {computedPosition ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name : ''}
+            {computedPosition
+              ? viewCorpora.corpusAtReferenceString(
+                  computedPosition.toReferenceString()
+                )?.name
+              : ''}
           </Typography>
 
           <Tooltip
@@ -260,18 +320,24 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
               <>
                 <Typography variant="h6">
                   {computedPosition
-                    ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.fullName
+                    ? viewCorpora.corpusAtReferenceString(
+                        computedPosition.toReferenceString()
+                      )?.fullName
                     : ''}
                 </Typography>
                 <Typography>
                   {computedPosition
-                    ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name
+                    ? viewCorpora.corpusAtReferenceString(
+                        computedPosition.toReferenceString()
+                      )?.name
                     : ''}
                 </Typography>
                 <Typography>
                   Language:{' '}
                   {computedPosition
-                    ? viewCorpora.languageAtReferenceString(computedPosition.toReferenceString())?.code
+                    ? viewCorpora.languageAtReferenceString(
+                        computedPosition.toReferenceString()
+                      )?.code
                     : ''}
                 </Typography>
               </>
@@ -287,11 +353,15 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         container
         sx={{ pl: 4, flex: 8, overflow: 'auto' }}
       >
-        {
-          verseElement && computedPosition && viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())
-            ? verseElement
-            : <Typography>No verse data for this reference.</Typography>
-        }
+        {verseElement &&
+        computedPosition &&
+        viewCorpora.corpusAtReferenceString(
+          computedPosition.toReferenceString()
+        ) ? (
+          verseElement
+        ) : (
+          <Typography>No verse data for this reference.</Typography>
+        )}
       </Grid>
     </Grid>
   );
@@ -304,27 +374,26 @@ interface CorpusActionProps {
 }
 
 const CorpusAction: React.FC<CorpusActionProps> = ({
-                                                     add,
-                                                     remove,
-                                                     disabled
-                                                   }) =>
-  (
-    <Grid container>
-      <Tooltip title="Show the next verses">
-        <span>
-          <IconButton onClick={add} disabled={disabled === 'add'}>
-            <Add sx={{ fontSize: 18 }} />
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title="Remove the outer verses">
-        <span>
-          <IconButton onClick={remove} disabled={disabled === 'remove'}>
-            <Remove sx={{ fontSize: 18 }} />
-          </IconButton>
-        </span>
-      </Tooltip>
-    </Grid>
-  );
+  add,
+  remove,
+  disabled,
+}) => (
+  <Grid container>
+    <Tooltip title="Show the next verses">
+      <span>
+        <IconButton onClick={add} disabled={disabled === 'add'}>
+          <Add sx={{ fontSize: 18 }} />
+        </IconButton>
+      </span>
+    </Tooltip>
+    <Tooltip title="Remove the outer verses">
+      <span>
+        <IconButton onClick={remove} disabled={disabled === 'remove'}>
+          <Remove sx={{ fontSize: 18 }} />
+        </IconButton>
+      </span>
+    </Tooltip>
+  </Grid>
+);
 
 export default CorpusComponent;

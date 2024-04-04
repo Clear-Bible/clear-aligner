@@ -29,11 +29,11 @@ function linkExistsForWord(
 
 export default function generateSuggestions(
   selectedWord: Word,
-  sourceVerse: Verse,
-  targetVerse: Verse,
+  sourceVerse: Word[],
+  targetVerse: Word[],
   surfaceLinks: SurfaceLink[],
   existingLinks: Link[]
-): string | undefined {
+): Word[] | undefined {
   if (surfaceLinks.length === 0) {
     return undefined;
   }
@@ -51,11 +51,9 @@ export default function generateSuggestions(
 
   for (const matchedPair of matchingPairsSortedByFrequency) {
     if (selectedWord.side == AlignmentSide.SOURCE) {
-      const matchedWords = targetVerse.words.filter(
-        (targetWord: Word): boolean => {
-          return targetWord.text === matchedPair.targetWords[0];
-        }
-      );
+      const matchedWords = targetVerse.filter((targetWord: Word): boolean => {
+        return targetWord.text === matchedPair.targetWords[0];
+      });
 
       for (const matchedWord of matchedWords) {
         if (
@@ -66,13 +64,13 @@ export default function generateSuggestions(
             AlignmentSide.TARGET
           )
         ) {
-          return matchedWord.id;
+          return [matchedWord];
         }
       }
     }
 
     if (selectedWord.side == AlignmentSide.TARGET) {
-      const matchedWords = sourceVerse.words.filter((sourceWord: Word) => {
+      const matchedWords = sourceVerse.filter((sourceWord: Word) => {
         return sourceWord.text === matchedPair.sourceWords[0];
       });
 
@@ -85,7 +83,7 @@ export default function generateSuggestions(
             AlignmentSide.SOURCE
           )
         ) {
-          return matchedWord.id;
+          return [matchedWord];
         }
       }
     }

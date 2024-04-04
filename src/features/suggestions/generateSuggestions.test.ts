@@ -9,8 +9,8 @@ describe('Alignment Suggestions', () => {
     it('returns undefined when there is no link history (selected source)', () => {
       const result = generateSuggestions(
         testData.source.words[0],
-        testData.source,
-        testData.target,
+        testData.source.words,
+        testData.target.words,
         [],
         []
       );
@@ -21,8 +21,8 @@ describe('Alignment Suggestions', () => {
     it('returns undefined when there is no link history (selected target)', () => {
       const result = generateSuggestions(
         testData.target.words[0],
-        testData.source,
-        testData.target,
+        testData.source.words,
+        testData.target.words,
         [],
         []
       );
@@ -32,46 +32,47 @@ describe('Alignment Suggestions', () => {
     it('correctly handles first word with simple history (selected source)', () => {
       const result = generateSuggestions(
         testData.source.words[0],
-        testData.source,
-        testData.target,
+        testData.source.words,
+        testData.target.words,
         [{ sourceWords: ['Ἀβραὰμ'], targetWords: ['Abraham'], frequency: 1 }],
         []
       );
 
-      expect(result).toEqual('40001002001');
+      expect(result).toEqual([testData.target.words[0]]);
     });
     it('correctly handles first word with simple history (selected target)', () => {
       const result = generateSuggestions(
         testData.target.words[0],
-        testData.source,
-        testData.target,
+        testData.source.words,
+        testData.target.words,
         [{ sourceWords: ['Ἀβραὰμ'], targetWords: ['Abraham'], frequency: 1 }],
         []
       );
 
-      expect(result).toEqual('40001002001');
+      expect(result).toEqual([testData.source.words[0]]);
     });
     it('correctly handles first unlinked word with simple history (selected source)', () => {
       const result = generateSuggestions(
         testData.source.words[6],
-        testData.source,
-        testData.target,
+        testData.source.words,
+        testData.target.words,
         [{ sourceWords: ['ἐγέννησεν'], targetWords: ['begat'], frequency: 5 }],
         [{ sources: ['40001002002'], targets: ['40001002002'] }]
       );
 
-      expect(result).toEqual('40001002006');
+      expect(result).toEqual([testData.target.words[5]]);
     });
+
     it('correctly handles first unlinked word with simple history (selected target)', () => {
       const result = generateSuggestions(
         testData.target.words[5],
-        testData.source,
-        testData.target,
+        testData.source.words,
+        testData.target.words,
         [{ sourceWords: ['ἐγέννησεν'], targetWords: ['begat'], frequency: 5 }],
         [{ sources: ['40001002002'], targets: ['40001002002'] }]
       );
 
-      expect(result).toEqual('40001002007');
+      expect(result).toEqual([testData.source.words[6]]);
     });
   });
 });
