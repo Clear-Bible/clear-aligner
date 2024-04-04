@@ -1,16 +1,35 @@
-import { ReactElement, useCallback, useContext, useMemo, useState } from 'react';
+import {
+  ReactElement,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
-import { AddLink, LinkOff, RestartAlt, SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
+import {
+  AddLink,
+  LinkOff,
+  RestartAlt,
+  SwapHoriz,
+  SwapVert,
+  Translate,
+} from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer, Link } from '../../structs';
+import { CorpusContainer, Link, AlignmentSide } from '../../structs';
 import { AppContext } from '../../App';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { ControlPanelFormat, UserPreference } from '../../state/preferences/tableManager';
+import {
+  ControlPanelFormat,
+  UserPreference,
+} from '../../state/preferences/tableManager';
 
 import uuid from 'uuid-random';
-import { resetTextSegments } from '../../state/alignment.slice';
+import {
+  resetTextSegments,
+  clearSuggestions,
+} from '../../state/alignment.slice';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -21,12 +40,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
   const [linkSaveState, setLinkSaveState] = useState<{
-    link?: Link,
-    saveKey?: string,
+    link?: Link;
+    saveKey?: string;
   }>();
   const [linkRemoveState, setLinkRemoveState] = useState<{
-    linkId?: string,
-    removeKey?: string,
+    linkId?: string;
+    removeKey?: string;
   }>();
   const { projectState, preferences, setPreferences } = useContext(AppContext);
 
@@ -34,6 +53,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
   const inProgressLink = useAppSelector(
     (state) => state.alignment.present.inProgressLink
+  );
+
+  const suggestions = useAppSelector(
+    (state) => state.alignment.present.suggestedTokens
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
@@ -52,13 +75,33 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     [inProgressLink?.sources.length, inProgressLink?.targets.length]
   );
 
+  const isLinkSuggested = useAppSelector((state) => {
+    const hasSource =
+      Number(state.alignment.present.inProgressLink?.sources.length) > 0 ||
+      state.alignment.present.suggestedTokens.some((word) => {
+        return word.side === AlignmentSide.SOURCE;
+      });
+
+    const hasTarget =
+      Number(state.alignment.present.inProgressLink?.targets.length) > 0 ||
+      state.alignment.present.suggestedTokens.some((word) => {
+        return word.side === AlignmentSide.TARGET;
+      });
+
+    const hasSuggestion = state.alignment.present.suggestedTokens.length > 0;
+
+    return hasSource && hasTarget && hasSuggestion;
+  });
+
   const saveControlPanelFormat = useCallback(async () => {
-    const alignmentDirection = preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
-      ? ControlPanelFormat[ControlPanelFormat.HORIZONTAL]
-      : ControlPanelFormat[ControlPanelFormat.VERTICAL];
+    const alignmentDirection =
+      preferences?.alignmentDirection ===
+      ControlPanelFormat[ControlPanelFormat.VERTICAL]
+        ? ControlPanelFormat[ControlPanelFormat.HORIZONTAL]
+        : ControlPanelFormat[ControlPanelFormat.VERTICAL];
     const updatedPreferences = {
       ...preferences,
-      alignmentDirection
+      alignmentDirection,
     } as UserPreference;
     projectState.userPreferenceTable?.saveOrUpdate(updatedPreferences);
     setPreferences(updatedPreferences);
@@ -81,11 +124,18 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant={preferences?.showGloss ? 'contained' : 'outlined'}
-              disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position?.toReferenceString?.() ?? '')?.hasGloss)}
+              disabled={
+                !props.containers.some(
+                  (container) =>
+                    container.corpusAtReferenceString(
+                      props.position?.toReferenceString?.() ?? ''
+                    )?.hasGloss
+                )
+              }
               onClick={() => {
                 const updatedPreferences = {
                   ...((preferences ?? {}) as UserPreference),
-                  showGloss: !preferences?.showGloss
+                  showGloss: !preferences?.showGloss,
                 };
                 setPreferences(updatedPreferences);
               }}
@@ -95,18 +145,26 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           </span>
         </Tooltip>
         <Tooltip
-          title={`Swap to ${preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'horizontal' : 'vertical'} view mode`}
-          arrow describeChild>
+          title={`Swap to ${
+            preferences?.alignmentDirection ===
+            ControlPanelFormat[ControlPanelFormat.VERTICAL]
+              ? 'horizontal'
+              : 'vertical'
+          } view mode`}
+          arrow
+          describeChild
+        >
           <span>
             <Button
               variant="contained"
               onClick={() => void saveControlPanelFormat()}
             >
-              {
-                preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
-                  ? <SwapHoriz />
-                  : <SwapVert />
-              }
+              {preferences?.alignmentDirection ===
+              ControlPanelFormat[ControlPanelFormat.VERTICAL] ? (
+                <SwapHoriz />
+              ) : (
+                <SwapVert />
+              )}
             </Button>
           </span>
         </Tooltip>
@@ -117,13 +175,42 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant="contained"
-              disabled={!linkHasBothSides}
+              disabled={isLinkSuggested ? false : !linkHasBothSides}
               onClick={() => {
-                setLinkSaveState({
-                  link: inProgressLink ?? undefined,
-                  saveKey: uuid()
-                });
+                if (isLinkSuggested) {
+                  const selectedSources = inProgressLink?.sources ?? [];
+                  const selectedTargets = inProgressLink?.targets ?? [];
+                  const link: Link = {
+                    sources: selectedSources.concat(
+                      suggestions
+                        .filter(
+                          (suggestion) =>
+                            suggestion.side === AlignmentSide.SOURCE
+                        )
+                        .map((suggestion) => suggestion.id)
+                    ),
+
+                    targets: selectedTargets.concat(
+                      suggestions
+                        .filter(
+                          (suggestion) =>
+                            suggestion.side === AlignmentSide.TARGET
+                        )
+                        .map((suggestion) => suggestion.id)
+                    ),
+                  };
+                  setLinkSaveState({
+                    link,
+                    saveKey: uuid(),
+                  });
+                } else {
+                  setLinkSaveState({
+                    link: inProgressLink ?? undefined,
+                    saveKey: uuid(),
+                  });
+                }
                 dispatch(resetTextSegments());
+                dispatch(clearSuggestions());
               }}
             >
               <AddLink />
@@ -139,9 +226,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 if (inProgressLink?.id) {
                   setLinkRemoveState({
                     linkId: inProgressLink.id,
-                    removeKey: uuid()
+                    removeKey: uuid(),
                   });
                   dispatch(resetTextSegments());
+                  dispatch(clearSuggestions());
                 }
               }}
             >
@@ -156,6 +244,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               disabled={!anySegmentsSelected}
               onClick={() => {
                 dispatch(resetTextSegments());
+                dispatch(clearSuggestions());
               }}
             >
               <RestartAlt />

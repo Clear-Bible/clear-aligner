@@ -12,6 +12,11 @@
   text-decoration: underline;
 }
 
+.text-segment.suggested {
+  background-color: lightcoral;
+  color: white;
+}
+
 .text-segment.locked {
   cursor: not-allowed;
 }

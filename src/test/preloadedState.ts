@@ -6,11 +6,13 @@ const preloadedState: RootState = {
     past: [],
     present: {
       inProgressLink: null,
+      suggestedTokens: [],
     },
     future: [],
     group: null,
     _latestUnfiltered: {
       inProgressLink: null,
+      suggestedTokens: [],
     },
     index: 0,
     limit: 1,

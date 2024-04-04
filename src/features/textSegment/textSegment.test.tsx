@@ -8,6 +8,7 @@ const testState: RootState = {
   alignment: {
     ...preloadedState.alignment,
     present: {
+      suggestedTokens: [],
       inProgressLink: {
         sources: ['sbl_0'],
         targets: [],
@@ -25,7 +26,7 @@ describe('TextSegment', () => {
           side: AlignmentSide.TARGET,
           text: 'mikey',
           position: 0,
-          normalizedText: 'mikey'
+          normalizedText: 'mikey',
         }}
       />,
       null
@@ -41,7 +42,7 @@ describe('TextSegment', () => {
           side: AlignmentSide.SOURCE,
           text: 'mikey',
           position: 0,
-          normalizedText: 'mikey'
+          normalizedText: 'mikey',
         }}
       />,
       testState

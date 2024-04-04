@@ -8,10 +8,12 @@ import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 export interface AlignmentState {
   inProgressLink: Link | null;
+  suggestedTokens: Word[];
 }
 
 export const initialState: AlignmentState = {
   inProgressLink: null,
+  suggestedTokens: [],
 };
 
 export const selectAlignmentMode = (state: {
@@ -101,10 +103,22 @@ const alignmentSlice = createSlice({
     resetTextSegments: (state) => {
       state.inProgressLink = null;
     },
+    suggestTokens: (state, action: PayloadAction<Word[]>) => {
+      console.log('suggestTokens', action.payload);
+      state.suggestedTokens = action.payload;
+    },
+    clearSuggestions: (state) => {
+      state.suggestedTokens = [];
+    },
   },
 });
 
-export const { loadInProgressLink, toggleTextSegment, resetTextSegments } =
-  alignmentSlice.actions;
+export const {
+  loadInProgressLink,
+  toggleTextSegment,
+  resetTextSegments,
+  suggestTokens,
+  clearSuggestions,
+} = alignmentSlice.actions;
 
 export default alignmentSlice.reducer;
