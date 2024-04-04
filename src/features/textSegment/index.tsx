@@ -242,7 +242,6 @@ export const TextSegment = ({
                         word,
                       })
                     );
-                    // console.log('dispatching suggestTokens...');
                     if (!areSuggestions) {
                       dispatch(
                         suggestTokens(
@@ -250,6 +249,7 @@ export const TextSegment = ({
                             word,
                             sourceCorpus?.words ?? [],
                             targetCorpus?.words ?? [],
+                            // The following array should be a running denormalized history of alignments.
                             [
                               {
                                 sourceWords: ['ἐγέννησεν'],
@@ -257,7 +257,7 @@ export const TextSegment = ({
                                 frequency: 1,
                               },
                             ],
-                            [] // use `links`?
+                            [] // Need list of `Link` for current BCV
                           )
                         )
                       );

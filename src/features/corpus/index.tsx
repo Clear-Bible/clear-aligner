@@ -93,6 +93,9 @@ const determineCorpusView = async (
                 corpus={viewCorpora.corpusAtReferenceString(
                   verse.bcvId.toReferenceString()
                 )}
+                // I almost died making all these sacrices to the typescript altar/compiler.
+                // Thus begins a chain of prop drilling.
+                // Surely there's a better way.
                 sourceCorpus={
                   containers.sources
                     ? {

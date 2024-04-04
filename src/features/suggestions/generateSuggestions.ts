@@ -1,5 +1,19 @@
+/*
+ * Implements a recoomendation algorithm outlined by Steve Runge.
+ *
+ * Whenever a source or target token is clicked,
+ * the existing aligment history is filtered on that selection.
+ * The results are sorted by frequency.
+ *
+ * Potential suggestions are then projected onto the first
+ * unlinked instance found on the opposite side.
+ *
+ * This iteration focuses on single word suggestions.
+ */
+
 import { Word, Verse, Link, AlignmentSide } from 'structs';
 
+// Models a denormalized alignment history.
 interface SurfaceLink {
   sourceWords: string[];
   targetWords: string[];
@@ -28,11 +42,11 @@ function linkExistsForWord(
 }
 
 export default function generateSuggestions(
-  selectedWord: Word,
-  sourceVerse: Word[],
-  targetVerse: Word[],
-  surfaceLinks: SurfaceLink[],
-  existingLinks: Link[]
+  selectedWord: Word, // The selected word
+  sourceVerse: Word[], // The words in the source context
+  targetVerse: Word[], // The words in the target context
+  surfaceLinks: SurfaceLink[], // Denormalized  alignment history
+  existingLinks: Link[] // Existing links in the alignment context
 ): Word[] | undefined {
   if (surfaceLinks.length === 0) {
     return undefined;
