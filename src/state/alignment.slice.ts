@@ -98,6 +98,12 @@ const alignmentSlice = createSlice({
           }
           break;
       }
+
+      // If a token is selected while suggestions
+      // are active, all suggestions are cancelled.
+      if (state.suggestedTokens.length > 0) {
+        state.suggestedTokens = [];
+      }
     },
 
     resetTextSegments: (state) => {
