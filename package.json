@@ -124,6 +124,7 @@
   "build": {
     "appId": "com.biblica.clearaligner",
     "productName": "ClearAligner",
+    "extends": null,
     "directories": {
       "buildResources": "build/",
       "app": "."
