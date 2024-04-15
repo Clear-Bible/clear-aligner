@@ -38,7 +38,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build && electron-builder",
+    "build": "craco build && tsc && electron-builder",
     "build:mac": "sql/scripts/create-db.sh && yarn build -m",
     "build:linux": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
     "build:win": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
