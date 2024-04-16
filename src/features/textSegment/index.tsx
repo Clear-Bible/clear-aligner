@@ -1,9 +1,10 @@
-import React, { ReactElement, useMemo } from 'react';
+import React, { ReactElement, useContext, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import _ from 'lodash';
 
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
+import { AppContext } from 'App';
 import {
   selectAlignmentMode,
   toggleTextSegment,
@@ -11,7 +12,14 @@ import {
   clearSuggestions,
 } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { AlignmentSide, LanguageInfo, Link, Word, Corpus } from 'structs';
+import {
+  AlignmentSide,
+  LanguageInfo,
+  Link,
+  Word,
+  Corpus,
+  TextDirection,
+} from 'structs';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -19,6 +27,13 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AlignmentMode } from '../../state/alignmentState';
 import generateSuggestions from '../suggestions/generateSuggestions';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import {
+  DefaultProjectName,
+  useFindLinksByBCV,
+  useDataLastUpdated,
+} from '../../state/links/tableManager';
+// import { useAlignedWordsFromPivotWord } from '../concordanceView/useAlignedWordsFromPivotWord';
+import { useDatabase } from '../../hooks/useDatabase';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -107,6 +122,7 @@ export const TextSegment = ({
   useDebug('TextSegmentComponent');
 
   const dispatch = useAppDispatch();
+  const { preferences } = useContext(AppContext);
   const mode = useAppSelector(selectAlignmentMode); // get alignment mode
   const isHoveredWord = useAppSelector(
     (state) =>
@@ -178,6 +194,37 @@ export const TextSegment = ({
     (state) => !!state.alignment.present.inProgressLink
   );
 
+  const db = useDatabase();
+
+  const bcvwp = BCVWP.parseFromString(word.id);
+
+  const dataLastUpdated = useDataLastUpdated();
+  // either stale or infinite loop
+  const relatedLinks = useFindLinksByBCV(
+    word.side,
+    bcvwp.book ?? undefined,
+    bcvwp.chapter ?? undefined,
+    bcvwp.verse ?? undefined,
+    false,
+    `${bcvwp.toReferenceString()}-${dataLastUpdated}`
+  );
+
+  // const alignedWords = useAlignedWordsFromPivotWord({
+  //   normalizedText: word.normalizedText,
+  //   side: word.side,
+  //   frequency: 0,
+  //   languageInfo: {
+  //     code: 'en',
+  //     textDirection: TextDirection.LTR,
+  //   },
+  // });
+
+  // const { projectState } = React.useContext(AppContext);
+
+  // const memoizedLinks = useMemo(() => {
+  //   return relatedLinks;
+  // }, [projectState?.linksTable]);
+
   if (!word) {
     return <span>{'ERROR'}</span>;
   }
@@ -243,6 +290,21 @@ export const TextSegment = ({
                       })
                     );
                     if (!areSuggestions) {
+                      // const alignedWords =
+                      // await db.corporaGetAlignedWordsByPivotWord();
+                      // console.log(
+                      //   'searchByPivot',
+                      //   word.text,
+                      //   word.normalizedText,
+                      //   word.text.toLowerCase().normalize()
+                      // );
+                      // const alignedWords = db.corporaGetAlignedWordsByPivotWord(
+                      //   preferences?.currentProject ?? DefaultProjectName,
+                      //   word.side,
+                      //   word.text.toLowerCase().normalize()
+                      // );
+
+                      // console.log(alignedWords);
                       dispatch(
                         suggestTokens(
                           generateSuggestions(
@@ -257,8 +319,14 @@ export const TextSegment = ({
                                 targetWords: ['begat'],
                                 frequency: 1,
                               },
+
+                              {
+                                sourceWords: ['Ἀβραὰμ'],
+                                targetWords: ['Abraham'],
+                                frequency: 1,
+                              },
                             ],
-                            [] // Need list of `Link` for current BCV
+                            relatedLinks.result ?? [] // Need list of `Link` for current BCV
                           )
                         )
                       );
