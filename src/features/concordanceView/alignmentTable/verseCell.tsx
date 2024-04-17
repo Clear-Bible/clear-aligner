@@ -16,6 +16,7 @@ export const VerseCell = (
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
+
   const container =
     tableCtx.wordSource === AlignmentSide.SOURCE
       ? sourceContainer

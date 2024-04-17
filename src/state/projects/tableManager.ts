@@ -3,6 +3,9 @@ import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
+import { DatabaseApi } from '../../hooks/useDatabase';
+
+const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
 export interface Project {
   id: string;
@@ -118,8 +121,7 @@ export class ProjectTable extends VirtualTable {
 
   getDataSourcesAsProjects = async (): Promise<Project[] | undefined> => {
     try {
-      // @ts-ignore
-      const projects: { id: string; corpora: Corpus[] }[] | undefined = await window.databaseApi.getDataSources();
+      const projects = await dbApi.getDataSources();
       while (!projects) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }

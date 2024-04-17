@@ -30,6 +30,7 @@ import {
   resetTextSegments,
   clearSuggestions,
 } from '../../state/alignment.slice';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -111,6 +112,58 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     setFormats(formats.concat(['scroll-lock']));
   }
 
+  const deleteLink = () => {
+    if (inProgressLink?.id) {
+      setLinkRemoveState({
+        linkId: inProgressLink.id,
+        removeKey: uuid(),
+      });
+      dispatch(resetTextSegments());
+      dispatch(clearSuggestions());
+    }
+  };
+
+  const createLink = () => {
+    if (isLinkSuggested) {
+      const selectedSources = inProgressLink?.sources ?? [];
+      const selectedTargets = inProgressLink?.targets ?? [];
+      const link: Link = {
+        sources: selectedSources.concat(
+          suggestions
+            .filter((suggestion) => suggestion.side === AlignmentSide.SOURCE)
+            .map((suggestion) => suggestion.id)
+        ),
+
+        targets: selectedTargets.concat(
+          suggestions
+            .filter((suggestion) => suggestion.side === AlignmentSide.TARGET)
+            .map((suggestion) => suggestion.id)
+        ),
+      };
+      setLinkSaveState({
+        link,
+        saveKey: uuid(),
+      });
+    } else {
+      setLinkSaveState({
+        link: inProgressLink ?? undefined,
+        saveKey: uuid(),
+      });
+    }
+    dispatch(resetTextSegments());
+    dispatch(clearSuggestions());
+  };
+
+  const resetLink = () => {
+    dispatch(resetTextSegments());
+    dispatch(clearSuggestions());
+  };
+
+  // keyboard shortcuts
+  useHotkeys('space', () => createLink());
+  useHotkeys('backspace', () => deleteLink());
+  useHotkeys('shift+esc', () => resetLink());
+
   return (
     <Stack
       direction="row"
@@ -176,42 +229,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             <Button
               variant="contained"
               disabled={isLinkSuggested ? false : !linkHasBothSides}
-              onClick={() => {
-                if (isLinkSuggested) {
-                  const selectedSources = inProgressLink?.sources ?? [];
-                  const selectedTargets = inProgressLink?.targets ?? [];
-                  const link: Link = {
-                    sources: selectedSources.concat(
-                      suggestions
-                        .filter(
-                          (suggestion) =>
-                            suggestion.side === AlignmentSide.SOURCE
-                        )
-                        .map((suggestion) => suggestion.id)
-                    ),
-
-                    targets: selectedTargets.concat(
-                      suggestions
-                        .filter(
-                          (suggestion) =>
-                            suggestion.side === AlignmentSide.TARGET
-                        )
-                        .map((suggestion) => suggestion.id)
-                    ),
-                  };
-                  setLinkSaveState({
-                    link,
-                    saveKey: uuid(),
-                  });
-                } else {
-                  setLinkSaveState({
-                    link: inProgressLink ?? undefined,
-                    saveKey: uuid(),
-                  });
-                }
-                dispatch(resetTextSegments());
-                dispatch(clearSuggestions());
-              }}
+              onClick={() => createLink()}
             >
               <AddLink />
             </Button>
@@ -222,16 +240,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             <Button
               variant="contained"
               disabled={!inProgressLink?.id}
-              onClick={() => {
-                if (inProgressLink?.id) {
-                  setLinkRemoveState({
-                    linkId: inProgressLink.id,
-                    removeKey: uuid(),
-                  });
-                  dispatch(resetTextSegments());
-                  dispatch(clearSuggestions());
-                }
-              }}
+              onClick={() => deleteLink()}
             >
               <LinkOff />
             </Button>

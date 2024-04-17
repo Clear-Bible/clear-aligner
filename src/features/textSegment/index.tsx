@@ -4,6 +4,7 @@ import _ from 'lodash';
 
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { AppContext } from 'App';
 import {
   selectAlignmentMode,
@@ -26,7 +27,7 @@ import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AlignmentMode } from '../../state/alignmentState';
 import generateSuggestions from '../suggestions/generateSuggestions';
-import BCVWP from '../bcvwp/BCVWPSupport';
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import {
   DefaultProjectName,
   useFindLinksByBCV,
@@ -42,8 +43,6 @@ export interface TextSegmentProps extends LimitedToLinks {
   showAfter?: boolean;
   alignment?: 'flex-end' | 'flex-start' | 'center';
   links?: Map<string, Link>;
-  sourceCorpus?: Corpus;
-  targetCorpus?: Corpus;
 }
 
 const computeVariant = (
@@ -113,11 +112,10 @@ export const TextSegment = ({
   readonly,
   word,
   languageInfo,
+  disableHighlighting,
   alignment,
   links,
   showAfter = false,
-  sourceCorpus,
-  targetCorpus,
 }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
@@ -171,6 +169,14 @@ export const TextSegment = ({
     [wordLinks]
   );
 
+  const wasMemberOfCurrentlyEditedLink = useAppSelector(
+    (state) =>
+      state.alignment.present.inProgressLink?.id &&
+      wordLinks
+        .map((link) => link.id)
+        .includes(state.alignment.present.inProgressLink?.id)
+  );
+
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (word.side) {
       case AlignmentSide.SOURCE:
@@ -190,11 +196,12 @@ export const TextSegment = ({
 
   const isLinked = useMemo(() => (wordLinks ?? []).length > 0, [wordLinks]);
 
-  const isInvolved = useAppSelector(
+  const hasInProgressLink = useAppSelector(
     (state) => !!state.alignment.present.inProgressLink
   );
 
   const db = useDatabase();
+  const { sourceContainer, targetContainer } = useCorpusContainers();
 
   const bcvwp = BCVWP.parseFromString(word.id);
 
@@ -245,20 +252,26 @@ export const TextSegment = ({
           <Typography
             paragraph={false}
             component="span"
-            variant={computeVariant(isSelectedInEditedLink, isLinked)}
+            variant={
+              disableHighlighting
+                ? undefined
+                : computeVariant(isSelectedInEditedLink, isLinked)
+            }
             sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
-            className={`text-segment${
-              readonly ? '.readonly' : ''
-            } ${computeDecoration(
-              !!readonly,
-              isHoveredWord,
-              isRelatedToCurrentlyHovered,
-              mode,
-              isLinked,
-              isInvolved,
-              isMemberOfMultipleAlignments,
-              isSuggested
-            )}`}
+            className={`text-segment${readonly ? '.readonly' : ''} ${
+              disableHighlighting
+                ? ' locked '
+                : computeDecoration(
+                    !!readonly,
+                    isHoveredWord,
+                    isRelatedToCurrentlyHovered,
+                    mode,
+                    isLinked,
+                    hasInProgressLink,
+                    isMemberOfMultipleAlignments,
+                    isSuggested
+                  )
+            }`}
             style={{
               ...(languageInfo?.fontFamily
                 ? { fontFamily: languageInfo.fontFamily }
@@ -268,6 +281,7 @@ export const TextSegment = ({
               readonly
                 ? undefined
                 : () => {
+                    // >>>>>>> main
                     dispatch(hover(word));
                   }
             }
@@ -279,58 +293,46 @@ export const TextSegment = ({
                   }
             }
             onClick={
-              readonly
+              readonly ||
+              (isLinked && hasInProgressLink && !wasMemberOfCurrentlyEditedLink)
                 ? undefined
                 : () => {
-                    console.log(word);
                     dispatch(
                       toggleTextSegment({
                         foundRelatedLinks: wordLinks ?? [],
                         word,
                       })
                     );
-                    if (!areSuggestions) {
-                      // const alignedWords =
-                      // await db.corporaGetAlignedWordsByPivotWord();
-                      // console.log(
-                      //   'searchByPivot',
-                      //   word.text,
-                      //   word.normalizedText,
-                      //   word.text.toLowerCase().normalize()
-                      // );
-                      // const alignedWords = db.corporaGetAlignedWordsByPivotWord(
-                      //   preferences?.currentProject ?? DefaultProjectName,
-                      //   word.side,
-                      //   word.text.toLowerCase().normalize()
-                      // );
+                    dispatch(
+                      suggestTokens(
+                        generateSuggestions(
+                          word,
+                          // HARDCODED to NT
+                          sourceContainer?.corpora[1]?.wordsByVerse[
+                            bcvwp.toTruncatedReferenceString(8).trim()
+                          ]?.words ?? [],
+                          targetContainer?.corpora[0]?.wordsByVerse[
+                            bcvwp.toTruncatedReferenceString(8).trim()
+                          ]?.words ?? [],
+                          // The following array should be a running denormalized history of alignments.
+                          // Currently this is hard coded for Matt 1:1 test case.
+                          [
+                            {
+                              sourceWords: ['ἐγέννησεν'],
+                              targetWords: ['begat'],
+                              frequency: 1,
+                            },
 
-                      // console.log(alignedWords);
-                      dispatch(
-                        suggestTokens(
-                          generateSuggestions(
-                            word,
-                            sourceCorpus?.words ?? [],
-                            targetCorpus?.words ?? [],
-                            // The following array should be a running denormalized history of alignments.
-                            // Currently this is hard coded for Matt 1:1 test case.
-                            [
-                              {
-                                sourceWords: ['ἐγέννησεν'],
-                                targetWords: ['begat'],
-                                frequency: 1,
-                              },
-
-                              {
-                                sourceWords: ['Ἀβραὰμ'],
-                                targetWords: ['Abraham'],
-                                frequency: 1,
-                              },
-                            ],
-                            relatedLinks.result ?? [] // Need list of `Link` for current BCV
-                          )
+                            {
+                              sourceWords: ['Ἀβραὰμ'],
+                              targetWords: ['Abraham'],
+                              frequency: 1,
+                            },
+                          ],
+                          relatedLinks.result ?? []
                         )
-                      );
-                    }
+                      )
+                    );
                   }
             }
           >

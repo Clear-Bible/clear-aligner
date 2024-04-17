@@ -52,7 +52,8 @@ const useInitialization = () => {
     }
   }, [preferences?.bcv, containers.targetContainer, setPreferences]);
 
-  useEffect(() => checkIfBCVIsOkay(), [containers.targetContainer]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => checkIfBCVIsOkay(), [containers.targetContainer, checkIfBCVIsOkay]);
 
   useEffect(() => {
     const loadContainers = async () => {

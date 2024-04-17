@@ -108,7 +108,32 @@ export class CorpusContainer {
 
   corpusAtReferenceString(refString: string): Corpus | undefined {
     const verseString = BCVWP.truncateTo(refString, BCVWPField.Verse);
-    return this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
+    const foundCorpus =  this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
+    if (foundCorpus) return foundCorpus;
+    const ref = BCVWP.parseFromString(verseString);
+    return this.corpora.find((corpus) => {
+      if (ref.book) {
+        if (!corpus.books[ref.book]) return false;
+        if (ref.chapter) {
+          if (!corpus.books[ref.book][ref.chapter]) return false;
+          if (ref.verse) {
+            const verse: Verse = corpus.books[ref.book][ref.chapter][ref.verse];
+            if (!verse) return false;
+            if (ref.word && ref.part) {
+              if (!verse.words.some((word) => {
+                const wordRef = BCVWP.parseFromString(word.id);
+                return wordRef.word === ref.word && wordRef.part === ref.part;
+              })) return false;
+            } else if (ref.word) {
+              if (!verse.words.some((word) =>
+                BCVWP.parseFromString(word.id).word === ref.word)
+              ) return false;
+            }
+          }
+        }
+      }
+      return true;
+    });
   }
 
   languageAtReferenceString(refString: string): LanguageInfo | undefined {
@@ -136,6 +161,110 @@ export class CorpusContainer {
       return undefined;
     }
     return this.verseByReference(BCVWP.parseFromString(refString));
+  }
+
+  refExists(ref: BCVWP): boolean {
+    return !!this.corpusAtReferenceString(ref.toReferenceString());
+  }
+
+  private mapCorpusBookToRef(book: { [key: number]: { [key: number]: Verse } }): BCVWP {
+    const ref = Object.values(book)
+      .map((chapter) => Object.values(chapter).find((verse) => !!verse.bcvId))
+      .map((verse) => verse?.bcvId.toTruncatedReferenceString(BCVWPField.Book))
+      .find((ref) => !!ref)!;
+    return BCVWP.parseFromString(ref);
+  }
+
+  private mapCorpusChapterToRef(chapter: { [key: number]: Verse }): BCVWP {
+    const ref = Object.values(chapter)
+      .find((verse) => !!verse.bcvId)!
+      .bcvId.toTruncatedReferenceString(BCVWPField.Chapter);
+    return BCVWP.parseFromString(ref);
+  }
+
+  findNext(ref: BCVWP, truncation: BCVWPField): BCVWP|undefined {
+    if (!ref.hasUpToField(truncation) || !this.refExists(ref)) return undefined;
+    const corpus = this.corpusAtReferenceString(ref.toReferenceString());
+    if (!corpus) return undefined;
+    switch (truncation) {
+      case BCVWPField.Book:
+        // try to find next book in current corpus
+        const matchingBooks = Object.values(corpus.books)
+          .map(this.mapCorpusBookToRef)
+          .filter((bookRef) => bookRef.book! > ref.book!);
+        if (matchingBooks.length > 0) return matchingBooks.at(0);
+        // otherwise, look at all corpora
+        const nextCorpus = this.corpora.find((corpus) => Object.values(corpus.books).some((book) => this.mapCorpusBookToRef(book).book! > ref.book!));
+        if (!nextCorpus) return undefined;
+        return Object.values(nextCorpus?.books)
+          .map(this.mapCorpusBookToRef)
+          .sort((a, b) => a.book! - b.book!)
+          .at(0);
+      case BCVWPField.Chapter:
+        // try to find next chapter in current book
+        const matchingChapters = Object.values(corpus.books[ref.book!])
+          .map(this.mapCorpusChapterToRef)
+          .filter((chapterRef) => chapterRef.chapter! > ref.chapter!);
+        if (matchingChapters.length > 0) return matchingChapters.at(0);
+        // otherwise, grab first available chapter in next book
+        const nextBookRef = this.findNext(ref, BCVWPField.Book);
+        if (!nextBookRef) return undefined;
+        const nextBook = this.corpusAtReferenceString(nextBookRef.toReferenceString())!
+          .books[nextBookRef.book!];
+        return Object.values(nextBook)
+          .map(this.mapCorpusChapterToRef)
+          .sort((a, b) => a.chapter! - b.chapter!)
+          .at(0);
+      case BCVWPField.Verse:
+        // try to find next verse in current chapter
+        const matchingVerses = Object.values(corpus.books[ref.book!][ref.chapter!])
+          .map((verse) => verse.bcvId)
+          .filter((verseRef) => verseRef.verse! > ref.verse!);
+        if (matchingVerses.length > 0) return matchingVerses.at(0); // first matching
+        // otherwise, grab first available verse in next chapter
+        const nextChapterRef = this.findNext(ref, BCVWPField.Chapter);
+        if (!nextChapterRef) return undefined;
+        const nextChapterCorpus = this.corpusAtReferenceString(nextChapterRef.toReferenceString());
+        const nextChapter = nextChapterCorpus!
+          .books[nextChapterRef.book!][nextChapterRef.chapter!];
+        return Object.values(nextChapter)
+          .sort((a, b) => a.bcvId.chapter! - b.bcvId.chapter!)
+          .map((v) => v.bcvId)
+          .at(0);
+      case BCVWPField.Word:
+        // try to find next word in current verse
+        const matchingWords = this.verseByReference(ref)!
+          .words
+          .map((word) => BCVWP.parseFromString(word.id))
+          .filter((wordRef) => wordRef.word! > ref.word!);
+        if (matchingWords.length > 0) return matchingWords.at(0); // first matching
+        // otherwise, grab first available word in next verse
+        const nextVerseRef = this.findNext(ref, BCVWPField.Verse);
+        if (!nextVerseRef) return undefined;
+        const nextVerse = this.verseByReference(nextVerseRef)!;
+        return nextVerse.words
+          .map((word) => BCVWP.parseFromString(word.id))
+          .filter((wordRef) => wordRef.verse! === nextVerseRef.verse!)
+          .at(0);
+      case BCVWPField.Part:
+        // try to find next part in word
+        const matchingWordParts = this.verseByReference(ref)!
+          .words
+          .map((word) => BCVWP.parseFromString(word.id))
+          .filter((wordRef) =>
+            wordRef.word === ref.word && wordRef.part! > ref.part!);
+        if (matchingWordParts.length > 0) return matchingWordParts.at(0); // first matching
+        // otherwise, grab first available part in next word
+        const nextWordRef = this.findNext(ref, BCVWPField.Word);
+        if (!nextWordRef) return undefined;
+        const nextWordVerse = this.verseByReference(nextWordRef)!;
+        return nextWordVerse.words
+          .map((word) => BCVWP.parseFromString(word.id))
+          .filter((wordRef) => wordRef.word === nextWordRef.word)
+          .at(0);
+      default:
+        return undefined;
+    }
   }
 
   static fromIdAndCorpora = (

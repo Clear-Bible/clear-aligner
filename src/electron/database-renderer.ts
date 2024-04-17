@@ -1,7 +1,9 @@
+//@ts-nocheck
 // All of the Node.js APIs are available in the preload process.
 // It has the same sandbox as a Chrome extension.
-const { contextBridge, ipcRenderer } = require('electron');
-const { ChannelPrefix } = require('./database-shared.js');
+import { contextBridge, ipcRenderer } from 'electron';
+import { ChannelPrefix } from './database-shared';
+import { DatabaseApi } from '../hooks/useDatabase';
 
 contextBridge.exposeInMainWorld('databaseApi', {
   // User
@@ -9,7 +11,7 @@ contextBridge.exposeInMainWorld('databaseApi', {
   createOrUpdatePreferences: (preferences) => ipcRenderer.invoke(`${ChannelPrefix}:createOrUpdatePreferences`, preferences),
   // Projects
   getDataSources: () => ipcRenderer.invoke(`${ChannelPrefix}:getDataSources`),
-  getDataSource: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:getDataSource`, sourceName),
+  getDataSource: (sourceName: string) => ipcRenderer.invoke(`${ChannelPrefix}:getDataSource`, sourceName),
   createSourceFromProject: (project) => ipcRenderer.invoke(`${ChannelPrefix}:createSourceFromProject`, project),
   updateSourceFromProject: (project) => ipcRenderer.invoke(`${ChannelPrefix}:updateSourceFromProject`, project),
   removeSource: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:removeSource`, sourceName),
@@ -39,4 +41,4 @@ contextBridge.exposeInMainWorld('databaseApi', {
   findWordsByBCV: (database, side, bookNum, chapterNum, verseNum) => ipcRenderer.invoke(`${ChannelPrefix}:findWordsByBCV`, database, side, bookNum, chapterNum, verseNum),
   getAllWordsByCorpus: (database, side, corpusId, wordLimit, wordSkip) => ipcRenderer.invoke(`${ChannelPrefix}:getAllWordsByCorpus`, database, side, corpusId, wordLimit, wordSkip),
   getAllCorpora: (database) => ipcRenderer.invoke(`${ChannelPrefix}:getAllCorpora`, database)
-});
+} as DatabaseApi);

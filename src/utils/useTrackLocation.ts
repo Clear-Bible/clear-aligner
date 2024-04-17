@@ -6,7 +6,7 @@ import { UserPreference } from '../state/preferences/tableManager';
 const useTrackLocation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { preferences, setPreferences, projectState } = React.useContext(AppContext);
+  const { preferences, setPreferences } = React.useContext(AppContext);
   const [redirected, setRedirected] = React.useState(false);
 
 

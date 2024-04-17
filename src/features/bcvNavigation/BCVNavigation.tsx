@@ -14,6 +14,7 @@ import {
   Verse
 } from './structs';
 import { useBooksWithNavigationInfo } from './useBooksWithNavigationInfo';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 export interface BCVNavigationProps {
   sx?: SxProps<Theme>;
@@ -246,6 +247,10 @@ const BCVNavigation = ({
       ),
     [selectedBook, selectedChapter, selectedVerse, onNavigate]
   );
+
+  // keyboard shortcuts
+  useHotkeys('shift+left', (e) => !e.repeat && navigateBack && navigateBack())
+  useHotkeys('shift+right', (e) => !e.repeat && navigateForward && navigateForward())
 
   return (
     <Box

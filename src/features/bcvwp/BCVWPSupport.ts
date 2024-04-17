@@ -11,6 +11,14 @@ export enum BCVWPField {
   Part = 12,
 }
 
+export interface BCVWPOverrides {
+  book?: number;
+  chapter?: number;
+  verse?: number;
+  word?: number;
+  part?: number;
+}
+
 export default class BCVWP {
   /**
    * 0-based index, from book list here: https://ubsicap.github.io/usfm/identification/books.html
@@ -65,7 +73,7 @@ export default class BCVWP {
     if (this.referenceString) return this.referenceString;
     const bookFormet = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
     const chapterFormat = Intl.NumberFormat('en-US', {
-      minimumIntegerDigits: 3
+      minimumIntegerDigits: 3,
     });
     const verseFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
     const wordFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
@@ -93,6 +101,16 @@ export default class BCVWP {
     );
   }
 
+  clone({ book, chapter, verse, word, part }: BCVWPOverrides): BCVWP {
+    return new BCVWP(
+      book ?? this.book,
+      chapter ?? this.chapter,
+      verse ?? this.verse,
+      word ?? this.word,
+      part ?? this.part
+    );
+  }
+
   hasFields(...fields: BCVWPField[]) {
     return fields.every((field): boolean => {
       switch (field) {
@@ -112,6 +130,25 @@ export default class BCVWP {
     });
   }
 
+  hasUpToField(field: BCVWPField): boolean {
+    const fields = [];
+    switch (field) {
+      case BCVWPField.Part:
+        fields.push(BCVWPField.Part);
+      case BCVWPField.Word:
+        fields.push(BCVWPField.Word);
+      case BCVWPField.Verse:
+        fields.push(BCVWPField.Verse);
+      case BCVWPField.Chapter:
+        fields.push(BCVWPField.Chapter);
+      case BCVWPField.Book:
+        fields.push(BCVWPField.Book);
+        return this.hasFields(...fields);
+      default:
+        return false;
+    }
+  }
+
   static isValidString(reference: string): boolean {
     return (
       !!reference && !!reference.match(/^[onON]?\d/) && reference.length > 1
@@ -120,8 +157,7 @@ export default class BCVWP {
 
   static sanitize(wordId: string): string {
     const wordId1 = wordId.trim();
-    return !!wordId1.match(/^[onON]\d/)
-      ? wordId1.substring(1) : wordId1;
+    return !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
   }
 
   static truncateTo(reference: string, field: BCVWPField): string {

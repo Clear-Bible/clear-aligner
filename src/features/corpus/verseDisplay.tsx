@@ -13,6 +13,7 @@ import {
  */
 export interface LimitedToLinks {
   onlyLinkIds?: string[]; // alignment link ids
+  disableHighlighting?: boolean; // whether highlighting should be disabled
 }
 
 export interface VerseDisplayProps extends LimitedToLinks {
@@ -20,8 +21,6 @@ export interface VerseDisplayProps extends LimitedToLinks {
   corpus?: Corpus;
   verse: Verse;
   allowGloss?: boolean;
-  sourceCorpus?: Corpus;
-  targetCorpus?: Corpus;
 }
 
 /**
@@ -40,8 +39,6 @@ export const VerseDisplay = ({
   verse,
   onlyLinkIds,
   allowGloss = false,
-  sourceCorpus,
-  targetCorpus,
 }: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
@@ -92,8 +89,6 @@ export const VerseDisplay = ({
             readonly={readonly}
             onlyLinkIds={onlyLinkIds}
             corpus={corpus}
-            sourceCorpus={sourceCorpus}
-            targetCorpus={targetCorpus}
             parts={token}
             allowGloss={allowGloss}
           />

@@ -36,6 +36,7 @@ const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({ alignment, setAlignme
     <Dialog maxWidth="lg"
             open={!!alignment}
             fullWidth
+            disableEscapeKeyDown={true}
     >
       <DialogTitle>
         <Grid container justifyContent="space-between" alignItems="center">

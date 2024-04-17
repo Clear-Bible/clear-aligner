@@ -11,6 +11,7 @@ import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import _ from 'lodash';
 import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
+import { Stack } from '@mui/material';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -70,7 +71,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   }, [appCtx.preferences?.bcv, dispatch])
 
   return (
-    <>
+    <Stack direction={'column'} minWidth={'100%'} height={'100%'}>
       {
         showNavigation && (
           <div style={{ display: 'grid', justifyContent: 'center' }}>
@@ -98,6 +99,6 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
         corpora={selectedCorporaContainers}
         currentPosition={currentPosition}
       />
-    </>
+    </Stack>
   );
 };

@@ -1,9 +1,11 @@
-const path = require('path');
-const { app, BrowserWindow, nativeTheme } = require('electron');
-const isDev = require('electron-is-dev');
-const { setUpIpcMain } = require(path.join(__dirname, '/database-main.js'));
+import path from 'path';
+import { app, screen, BrowserWindow, nativeTheme } from 'electron';
+import isDev from 'electron-is-dev';
+import { setUpIpcMain } from './database-main'
 
 function createWindow() {
+  const systemScaleFactor = screen.getPrimaryDisplay().scaleFactor;
+  const customScale = systemScaleFactor > 1 ? .75/systemScaleFactor : systemScaleFactor;
   // Create the browser window.
   const win = new BrowserWindow({
     ...(nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {}),
@@ -12,7 +14,9 @@ function createWindow() {
     height: 900,
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, '/database-renderer.js'), nodeIntegration: true
+      preload: path.join(__dirname, '/database-renderer.js'),
+      nodeIntegration: true,
+      zoomFactor: customScale
     }
   });
 

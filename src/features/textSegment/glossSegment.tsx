@@ -29,6 +29,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                         readonly,
                         suppressAfter,
                         onlyLinkIds,
+                        disableHighlighting,
                         links,
                         parts,
                         languageInfo
@@ -56,6 +57,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                     word={wordPart}
                     links={links}
                     languageInfo={languageInfo}
+                    disableHighlighting={disableHighlighting}
                     showAfter={!suppressAfter}
                     alignment={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'}
                   />

@@ -777,18 +777,22 @@ class ProjectRepository extends BaseRepository {
     }
   };
 
-  getAllLinks = async (dataSource, itemLimit, itemSkip) => this.createLinksFromRows((await dataSource.manager.query(`select l.id                                           link_id,
-                                                                                                                            json_group_array(
-                                                                                                                                    replace(lsw.word_id, 'sources:', ''))
-                                                                                                                                    filter (where lsw.word_id is not null) sources,
-                                                                                                                            json_group_array(
-                                                                                                                                    replace(ltw.word_id, 'targets:', ''))
-                                                                                                                                    filter (where ltw.word_id is not null) targets
-                                                                                                                     from links l
-                                                                                                                              left join links__source_words lsw on l.id = lsw.link_id
-                                                                                                                              left join links__target_words ltw on l.id = ltw.link_id
-                                                                                                                     group by l.id
-                                                                                                                     order by l.id
+  getAllLinks = async (dataSource, itemLimit, itemSkip) => this.createLinksFromRows((await dataSource.manager.query(`select q.link_id, MAX(q.sources) as sources, MAX(q.targets) as targets
+                                                                                                                                  from (select lsw.link_id                                             as link_id,
+                                                                                                                                               json_group_array(replace(lsw.word_id, 'sources:', ''))
+                                                                                                                                                                filter (where lsw.word_id is not null) as sources,
+                                                                                                                                               null as targets
+                                                                                                                                        from links__source_words lsw
+                                                                                                                                        group by lsw.link_id
+                                                                                                                                        union
+                                                                                                                                        select ltw.link_id                                             as link_id,
+                                                                                                                                               null as sources,
+                                                                                                                                               json_group_array(replace(ltw.word_id, 'targets:', ''))
+                                                                                                                                                                filter (where ltw.word_id is not null) as targets
+                                                                                                                                        from links__target_words ltw
+                                                                                                                                        group by ltw.link_id) q
+                                                                                                                                  group by link_id
+                                                                                                                                  order by q.link_id
                                                                                                                      limit ? offset ?;`, [itemLimit, itemSkip])));
 
   updateLinkText = async (sourceName, linkIdOrIds) => {

@@ -1,7 +1,6 @@
 import { Corpus, Link, Word } from '../../structs';
 import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
-import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import React, { useMemo } from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
@@ -14,8 +13,6 @@ export interface WordDisplayProps extends LimitedToLinks {
   suppressAfter?: boolean;
   parts?: Word[];
   corpus?: Corpus;
-  sourceCorpus?: Corpus;
-  targetCorpus?: Corpus;
   allowGloss?: boolean;
   links?: Map<string, Link>;
 }
@@ -31,12 +28,11 @@ export const WordDisplay = ({
   readonly,
   suppressAfter,
   onlyLinkIds,
+  disableHighlighting,
   parts,
   corpus,
   links,
   allowGloss = false,
-  sourceCorpus,
-  targetCorpus,
 }: WordDisplayProps) => {
   const { language: languageInfo, hasGloss } = useMemo(
     () => corpus ?? { language: undefined, hasGloss: false },
@@ -62,8 +58,10 @@ export const WordDisplay = ({
       >
         {hasGloss && preferences?.showGloss && allowGloss ? (
           <GlossSegment
+            disableHighlighting={disableHighlighting}
             readonly={readonly}
             suppressAfter={suppressAfter}
+            onlyLinkIds={onlyLinkIds}
             links={links}
             parts={parts}
             corpus={corpus}
@@ -77,13 +75,12 @@ export const WordDisplay = ({
                 <TextSegment
                   key={part.id}
                   readonly={readonly}
+                  disableHighlighting={disableHighlighting}
                   onlyLinkIds={onlyLinkIds}
                   word={part}
                   links={links}
                   languageInfo={languageInfo}
                   showAfter={!suppressAfter}
-                  sourceCorpus={sourceCorpus}
-                  targetCorpus={targetCorpus}
                 />
               </React.Fragment>
             ))}

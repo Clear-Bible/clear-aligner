@@ -33,16 +33,16 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
 
   return (
     <>
-      <Grid container flexDirection="column" sx={{ height: '100%', width: '100%', px: 5, pt: 2 }}>
-        <Grid container sx={{ mb: 5, ml: 2.5 }}>
-          <Typography variant="h4" sx={{ mr: 5, fontWeight: 'bold' }}>Projects</Typography>
+      <Grid container flexDirection="column" flexWrap={'nowrap'} sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+        <Grid container sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
+          <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
           <Button
             variant="contained"
             onClick={() => setOpenProjectDialog(true)}
             sx={{ textTransform: 'none', fontWeight: 'bold' }}
           >Create New</Button>
         </Grid>
-        <Grid container>
+        <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
           {projects.sort((p1: Project) => p1.id === DefaultProjectName ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
               <ProjectCard
@@ -86,6 +86,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
       currentProject: project.id,
       initialized: InitializationStates.UNINITIALIZED
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
 
   return (

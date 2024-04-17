@@ -88,7 +88,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     && projectUpdated
   ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated, (project.fileName || '').length, (project.name || '').length, (project.abbreviation || '').length, (project.languageCode || '').length]);
 
-  const handleSubmit = React.useCallback(async (e: any) => {
+  const handleSubmit = React.useCallback(async (type: 'create'|'update', e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
       while (!projectState.projectTable?.isDatabaseBusy()) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -139,10 +139,12 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
             await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
           }
-          setPreferences(p => ({
-            ...(p ?? {}) as UserPreference,
-            initialized: InitializationStates.UNINITIALIZED
-          }));
+          if (type == 'update') {
+            setPreferences(p => ({
+              ...(p ?? {}) as UserPreference,
+              initialized: InitializationStates.UNINITIALIZED
+            }));
+          }
           resolve(undefined);
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
@@ -312,7 +314,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               sx={{ textTransform: 'none' }}
               disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy()}
               onClick={e => {
-                handleSubmit(e).then(() => {
+                handleSubmit(projectId ? 'update' : 'create', e).then(() => {
                   // handleClose() in the .then() ensures dialog doesn't close prematurely
                   handleClose();
                 });
