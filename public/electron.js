@@ -18,9 +18,12 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, '/database-renderer.js'),
       nodeIntegration: true,
-      zoomFactor: customScale
     }
   });
+
+  const resetProperScale = () => {
+    win.webContents.setZoomFactor(customScale);
+  }
 
   // and load the index.html of the app.
   if (isDev) {
@@ -34,16 +37,25 @@ function createWindow() {
   }
 
   win.once('ready-to-show', () => {
+    resetProperScale();
     win.show();
   });
 
   win.on('focus', () => {
+    resetProperScale();
     win.webContents.send('focus');
   });
 
   win.on('blur', () => {
+    resetProperScale();
     win.webContents.send('blur');
   });
+
+  win.on('maximize', resetProperScale);
+  win.on('unmaximize', resetProperScale);
+  win.on('minimize', resetProperScale);
+  win.on('restore', resetProperScale);
+  win.on('resized', resetProperScale);
 }
 
 // This method will be called when Electron has finished
