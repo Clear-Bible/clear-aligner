@@ -16,7 +16,7 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, '/database-renderer.js'),
       nodeIntegration: true,
-      zoomFactor: customScale
+      // zoomFactor: customScale
     }
   });
 
