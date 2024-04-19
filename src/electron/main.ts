@@ -4,8 +4,6 @@ import isDev from 'electron-is-dev';
 import { setUpIpcMain } from './database-main'
 
 function createWindow() {
-  const systemScaleFactor = screen.getPrimaryDisplay().scaleFactor;
-  const customScale = systemScaleFactor > 1 ? .75/systemScaleFactor : systemScaleFactor;
   // Create the browser window.
   const win = new BrowserWindow({
     ...(nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {}),
@@ -15,8 +13,7 @@ function createWindow() {
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, '/database-renderer.js'),
-      nodeIntegration: true,
-      // zoomFactor: customScale
+      nodeIntegration: true
     }
   });
 
