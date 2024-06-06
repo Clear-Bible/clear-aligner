@@ -2,7 +2,7 @@
  * This file contains the UploadAlignment component which contains buttons used
  * in the Projects Mode for uploading and saving alignment data
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import {
   AlignmentFile,
@@ -11,14 +11,13 @@ import {
 } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
 import { Button, ButtonGroup } from '@mui/material';
-import { FileDownload, FileUpload, Sync } from '@mui/icons-material';
+import { FileDownload, FileUpload } from '@mui/icons-material';
 import uuid from 'uuid-random';
 import saveAlignmentFile from '../../helpers/alignmentFile';
 import { SafeParseReturnType, ZodError } from 'zod';
 import { ZodErrorDialog } from '../../components/zodErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
-import { SyncProgress, useSyncAlignments } from '../../state/links/useSyncAlignments';
-import { SyncProgressDialog } from './syncProgressDialog';
+import { useSyncAlignments } from '../../state/links/useSyncAlignments';
 
 
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
@@ -66,36 +65,36 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
       saveKey: uuid()
     });
   }, [ syncState.file, setAlignmentFileSaveState ]);
-  const showSyncProgressDialog = useMemo<boolean>(() => syncState.progress === SyncProgress.IN_PROGRESS, [ syncState.progress ]);
 
   return (
     <span>
-      <RemovableTooltip
-        removed={alignmentFileErrors?.showDialog}
-        title="Sync Alignments"
-        describeChild
-        arrow>
-        <span>
-          <SyncProgressDialog
-            showDialog={showSyncProgressDialog}
-            onCancel={() => setCancelSyncKey(uuid())}
-          />
-          <Button
-            size={size as 'medium' | 'small' | undefined}
-            disabled={containers.length === 0 || !allowImport}
-            variant="contained"
-            sx={{
-              minWidth: '100%',
-              marginBottom: '.2em'
-            }}
-            onClick={() => {
-              setSyncLinksKey(uuid());
-            }} >
-            <Sync />
-          </Button>
-        </span>
-      </RemovableTooltip>
-      <br/>
+      {/* TODO: Uncomment this Tooltip, Dialog and Sync Button for CA-115 */}
+      {/*<RemovableTooltip*/}
+      {/*  removed={alignmentFileErrors?.showDialog}*/}
+      {/*  title="Sync Alignments"*/}
+      {/*  describeChild*/}
+      {/*  arrow>*/}
+      {/*  <span>*/}
+      {/*    <SyncProgressDialog*/}
+      {/*      showDialog={showSyncProgressDialog}*/}
+      {/*      onCancel={() => setCancelSyncKey(uuid())}*/}
+      {/*    />*/}
+      {/*    <Button*/}
+      {/*      size={size as 'medium' | 'small' | undefined}*/}
+      {/*      disabled={containers.length === 0 || !allowImport}*/}
+      {/*      variant="contained"*/}
+      {/*      sx={{*/}
+      {/*        minWidth: '100%',*/}
+      {/*        marginBottom: '.2em'*/}
+      {/*      }}*/}
+      {/*      onClick={() => {*/}
+      {/*        setSyncLinksKey(uuid());*/}
+      {/*      }} >*/}
+      {/*      <Sync />*/}
+      {/*    </Button>*/}
+      {/*  </span>*/}
+      {/*</RemovableTooltip>*/}
+      {/*<br/>*/}
       <ButtonGroup>
         <RemovableTooltip
           removed={alignmentFileErrors?.showDialog}
