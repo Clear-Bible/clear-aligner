@@ -57,4 +57,4 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
 * The `origin` field describes the type of process the alignment record originated from. `manual` is used for human-created records. A variety of other strings can describe automated processes.
 * The `status` field describes the status of an alignment record. Supported statuses are `created`, `approved`, `rejected`, and `needsReview`. &#x20;
 
-Note: This JSON Schema document can be used to verify alignment data JSON supported by the current version of ClearAligner.
+Note: This [JSON Schema document](https://drive.google.com/file/d/1GHEh4Fg-2GLEck\_io96O4czrkxh8B4Dx/view?usp=drive\_link) can be used to verify alignment data JSON supported by the current version of ClearAligner.
