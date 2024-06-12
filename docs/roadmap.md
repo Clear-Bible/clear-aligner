@@ -12,23 +12,25 @@ _ClearAligner is developed iteratively. The roadmap plans are subject to change.
 * Align across verse boundaries
 * Navigate text by target versification
 * Gloss display for source texts
-* Alignment Concordance (read-only)
+* Flexible workflows via alignment statuses
+* Alignment Concordance&#x20;
+  * Browse aligned words and instances for a project
+  * Edit alignment record status individually or in batch
 * Create local projects
 * Switch between local projects
+* Keyboard shortcuts for repetitive actions
 
 ### Current Focus
 
-Pilot testing and gathering user feedback.
+1. Pilot testing and gathering user feedback.
+2. Multi-User Project Collaboration (aka ClearAligner **Sync)**
 
 ### Potential Upcoming Features
 
-_Prioritized based on user feedback_
+_To be prioritized based on user feedback_
 
-* Keyboard shortcuts
-* Multi-user projects with synchronization
 * UX redesign w/more responsive layout
 * Sub-word target text tokenization
 * Target text punctuation display
 * Guided alignment
-* Alignment workflow (with approvals)
 * Customizable font size

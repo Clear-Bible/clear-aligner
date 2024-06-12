@@ -18,16 +18,19 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
   },
   "records": [
     {
-      "id": "a2a39b94-2093-4ddf-a584-8780828ebf1d",
       "source": [
         "40005003001"
       ],
       "target": [
         "40005003001"
-      ]
+      ],
+      "meta": {
+        "id": "a2a39b94-2093-4ddf-a584-8780828ebf1d",
+        "origin": "manual",
+        "status": "created"
+      },
     },
     {
-      "id": "949db553-41cf-4137-ba17-dfeff7d43c6b",
       "source": [
         "40005003002",
         "40005003003"
@@ -35,7 +38,12 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
       "target": [
         "40005003002",
         "40005003003"
-      ]
+      ],
+      "meta": {
+        "id": "949db553-41cf-4137-ba17-dfeff7d43c6b",
+        "origin": "manual",
+        "status": "approved"
+      },
     }
   ]
 }
@@ -46,3 +54,7 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
 * The `id` field on alignment records is a GUID used for internal change tracking.
 * Values for `source` arrays match the IDs in the canonical source text TSVs used by ClearAligner.
 * Values for `target` arrays match the IDs provided in [target text](target-text.md) files.&#x20;
+* The `origin` field describes the type of process the alignment record originated from. `manual` is used for human-created records. A variety of other strings can describe automated processes.
+* The `status` field describes the status of an alignment record. Supported statuses are `created`, `approved`, `rejected`, and `needsReview`. &#x20;
+
+Note: This JSON Schema document can be used to verify alignment data JSON supported by the current version of ClearAligner.

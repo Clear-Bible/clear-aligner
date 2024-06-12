@@ -13,5 +13,6 @@
 
 ## Releases
 
+* [0.0.31](releases/0.0.31.md)
 * [0.0.29](releases/0.0.28.md)
 * [0.0.26](releases/0.0.26.md)
