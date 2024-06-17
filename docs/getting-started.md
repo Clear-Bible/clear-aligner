@@ -19,7 +19,7 @@ To test ClearAligner using this default project, navigate to the **Alignment Edi
 1. Select **Projects** from the hamburger menu
 2. Select **Create New**
 3. Enter name, abbreviation, language, and text direction for the project.
-4. Select **Upload File** and provide a [target text](file-formats/target-text.md) file. Samples are available [here](https://drive.google.com/drive/u/0/folders/1qxiHR6t6SEQAUM2gPhdxH64hVt22nn-F).
+4. Select **Upload File** and provide a [target text](file-formats/target-text.md) file. Samples are available [here](https://drive.google.com/drive/u/1/folders/14vVKUGHc05SQxVXMyQ5E813lv4qQeTeA).
 
 <figure><img src=".gitbook/assets/2024-03-20 11.05.11.gif" alt=""><figcaption></figcaption></figure>
 
