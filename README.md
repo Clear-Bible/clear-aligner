@@ -49,7 +49,7 @@ These files are created automatically when executing:
 
 These files may be manually recreated by executing the following shell script:
 ```
-sql/create-db.sh
+sql/scripts/create-db.sh
 ```
 
 This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
