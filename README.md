@@ -43,11 +43,11 @@ sql/projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite
 ...in the project directory during development and the application footprint after
 installation.
 
-These are created automatically when executing `yarn dev-electron` or any of the
-`yarn build*` commands, including the platform builds. These build steps will
-_only_ create these files when they're missing. These may be manually recreated at
-any time by executing the following shell script:
+These files are created automatically when executing:
+- `yarn dev-electron`, but _only_ when they're missing
+- `yarn build*` (the platform builds), every time
 
+These files may be manually recreated by executing the following shell script:
 ```
 sql/create-db.sh
 ```
