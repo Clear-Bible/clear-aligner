@@ -8,6 +8,7 @@ import { Card, Stack } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import LinkBuilderComponent from 'features/linkBuilder';
 import { CorpusContainer } from 'structs';
+import LiveInterlinear from '../liveInterlinear';
 
 interface ContextPanelProps {
   containers: CorpusContainer[];
@@ -40,7 +41,8 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
           backgroundImage: 'none'
         })}
       >
-        <LinkBuilderComponent containers={containers} />
+        <LiveInterlinear/>
+        {/*<LinkBuilderComponent containers={containers} />*/}
       </Card>
     </Stack>
   );
