@@ -39,7 +39,8 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
           flexGrow: '1',
           flexBasis: '0',
           backgroundColor: theme.palette.primary.contrastText,
-          backgroundImage: 'none'
+          backgroundImage: 'none',
+          overflow: 'auto',
         })}
       >
         <LiveInterlinear containers={containers} position={position}/>
