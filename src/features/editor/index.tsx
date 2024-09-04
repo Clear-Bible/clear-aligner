@@ -43,7 +43,7 @@ const Editor = ({containers, position, usePaddingForEditorContainer}: EditorProp
     }}>
             <Polyglot containers={containers} position={position} />
             <ControlPanel containers={containers} position={position} />
-            <ContextPanel containers={containers} />
+            <ContextPanel containers={containers} position={position}/>
     </Container>
   );
 };

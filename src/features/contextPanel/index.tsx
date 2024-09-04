@@ -6,16 +6,17 @@ import React, { ReactElement } from 'react';
 import { Card, Stack } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
-import LinkBuilderComponent from 'features/linkBuilder';
 import { CorpusContainer } from 'structs';
 import LiveInterlinear from '../liveInterlinear';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface ContextPanelProps {
   containers: CorpusContainer[];
+  position: BCVWP | null;
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({
-  containers,
+  containers, position
 }): ReactElement => {
   useDebug('ContextPanel');
 
@@ -41,8 +42,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
           backgroundImage: 'none'
         })}
       >
-        <LiveInterlinear/>
-        {/*<LinkBuilderComponent containers={containers} />*/}
+        <LiveInterlinear containers={containers} position={position}/>
       </Card>
     </Stack>
   );

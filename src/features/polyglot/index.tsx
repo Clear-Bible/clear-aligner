@@ -26,6 +26,9 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
   const { preferences } = React.useContext(AppContext);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
+
+
+  // Setting up an array of the corpus viewports. Currently, the UI has 2 - previously there were more
   const corpusViewports: CorpusViewport[] | null = useMemo(
     () =>
       containers?.map(
