@@ -81,8 +81,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         justifyContent="center"
         alignItems="baseline"
         style={{
-          marginTop: '16px',
-          marginBottom: '16px',
+          marginTop: '6px',
+          marginBottom: '6px',
           flexGrow: 0,
           flexShrink: 0
         }} >
