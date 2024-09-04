@@ -22,6 +22,13 @@ interface EditorProps {
   usePaddingForEditorContainer?: boolean,
 }
 
+/**
+ * Wrapper component that makes up the Alignment Editor page
+ *
+ * @param containers contains the full source and target corpora currently being used
+ * @param position the current Bible, Chapter and Verse that should be visible
+ * @param usePaddingForEditorContainer
+ */
 const Editor = ({containers, position, usePaddingForEditorContainer}: EditorProps): ReactElement => {
   useDebug('Editor');
 
