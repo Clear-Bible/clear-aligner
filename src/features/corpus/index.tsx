@@ -26,6 +26,7 @@ export interface CorpusProps {
     sources?: CorpusContainer,
     targets?: CorpusContainer
   };
+  isLiveInterLinear?: boolean
 }
 
 const determineCorpusView = async (
@@ -236,50 +237,53 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         alignItems="center"
         sx={{ py: 1, px: 2 }}
       >
-        <Grid container sx={{ flex: 1 }}>
-          <CorpusAction
-            add={addBcvId}
-            remove={removeBcvId}
-            disabled={corpusActionEnableState}
-          />
-        </Grid>
-        <Grid
-          container
-          justifyContent="flex-end"
-          alignItems="center"
-          sx={{ flex: 1 }}
-        >
-          <Typography variant="h6" sx={{ mr: 1 }}>
-            {computedPosition ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name : ''}
-          </Typography>
-
-          <Tooltip
-            title={
-              <>
-                <Typography variant="h6">
-                  {computedPosition
-                    ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.fullName
-                    : ''}
-                </Typography>
-                <Typography>
-                  {computedPosition
-                    ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name
-                    : ''}
-                </Typography>
-                <Typography>
-                  Language:{' '}
-                  {computedPosition
-                    ? viewCorpora.languageAtReferenceString(computedPosition.toReferenceString())?.code
-                    : ''}
-                </Typography>
-              </>
-            }
+        {!props.isLiveInterLinear &&
+        <>
+          <Grid container sx={{ flex: 1 }}>
+            <CorpusAction
+              add={addBcvId}
+              remove={removeBcvId}
+              disabled={corpusActionEnableState}
+            />
+          </Grid>
+          <Grid
+            container
+            justifyContent="flex-end"
+            alignItems="center"
+            sx={{ flex: 1 }}
           >
-            <InfoOutlined />
-          </Tooltip>
-        </Grid>
-      </Grid>
+            <Typography variant="h6" sx={{ mr: 1 }}>
+              {computedPosition ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name : ''}
+            </Typography>
 
+            <Tooltip
+              title={
+                <>
+                  <Typography variant="h6">
+                    {computedPosition
+                      ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.fullName
+                      : ''}
+                  </Typography>
+                  <Typography>
+                    {computedPosition
+                      ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name
+                      : ''}
+                  </Typography>
+                  <Typography>
+                    Language:{' '}
+                    {computedPosition
+                      ? viewCorpora.languageAtReferenceString(computedPosition.toReferenceString())?.code
+                      : ''}
+                  </Typography>
+                </>
+              }
+            >
+              <InfoOutlined />
+            </Tooltip>
+          </Grid>
+        </>
+      }
+      </Grid>
       <Grid
         ref={textContainerRef}
         container
