@@ -42,12 +42,16 @@ const determineCorpusView = async (
         container
         key={`${viewCorpora.id}/${verse.bcvId.toReferenceString()}`}
         sx={{ marginRight: '.7em' }}
+        flexDirection={languageInfo?.textDirection === 'ltr' ? 'row' : 'row-reverse'}  //direction set by languageInfo
       >
-        <Grid item xs={1} sx={{ p: '1px' }}>
+        <Grid
+          item xs={1}
+          sx={{ p: '1px', width: '53px', height: '16px'}}
+        >
           <Typography
             sx={
               bcvId?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
-                ? { fontStyle: 'italic' }
+                ? { fontWeight: '700', fontSize: '14px', paddingTop: '20px' }
                 : {}
             }
           >
@@ -58,8 +62,6 @@ const determineCorpusView = async (
           <Grid
             container
             sx={{
-              p: '1px',
-              pl: 4,
               flexGrow: 1,
               overflow: 'auto',
               ...(languageInfo?.textDirection
@@ -72,8 +74,6 @@ const determineCorpusView = async (
               lang={languageInfo?.code}
               style={{
                 paddingBottom: '0.5rem',
-                paddingLeft: '0.7rem',
-                paddingRight: '0.7rem'
               }}
             >
               <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())}
