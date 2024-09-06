@@ -22,7 +22,8 @@ export interface InterLinearComponent {
 const determineInterLinearView = async (
   viewCorpora: CorpusContainer,
   verses: Verse[],
-  bcvId: BCVWP | null
+  bcvId: BCVWP | null,
+  isCitationVisible: boolean,
 ) => {
 
   return verses.map((verse) => {
@@ -34,21 +35,22 @@ const determineInterLinearView = async (
         sx={{ marginRight: '.7em' }}
         flexDirection={languageInfo?.textDirection === 'ltr' ? 'row' : 'row-reverse'}  //direction set by languageInfo
       >
-        <Grid
-          item xs={1}
-          sx={{ p: '1px', width: '53px', height: '16px', justifyContent: 'center', marginTop: '20px'}}
-          display={'flex'}
-        >
-          <Typography
-            sx={
-              bcvId?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
-                ? { fontStyle : 'italic' }
-                : {}
-            }
+          <Grid
+            item xs={1}
+            sx={{ p: '1px', width: '53px', height: '16px', justifyContent: 'center', marginTop: '20px'}}
+            display={'flex'}
           >
-            {verse.citation}
-          </Typography>
-        </Grid>
+            <Typography
+              sx={
+                bcvId?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
+                  ? { fontStyle : 'italic' }
+                  : {}
+              }
+            >
+              {isCitationVisible? verse.citation : ""}
+            </Typography>
+          </Grid>
+
         <Grid item xs={11}>
           <Grid
             container
@@ -85,6 +87,7 @@ export const InterLinearComponent = ({viewCorpora,
                                        containers,}: InterLinearComponent): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
+  const [verseElementBottom, setVerseElementBottom] = useState<JSX.Element[]>();
 
   const computedPosition = useMemo(() => {
     if (viewCorpora.id === AlignmentSide.TARGET) {
@@ -124,16 +127,23 @@ export const InterLinearComponent = ({viewCorpora,
   useEffect(() => setVisibleVerses(initialVerses), [initialVerses]);
 
   useEffect(() => {
-
+    //top
     determineInterLinearView(
       viewCorpora,
       visibleVerses,
-      computedPosition)
+      computedPosition, true)
       .then(verseElement => setVerseElement(verseElement));
+    //bottom
+    determineInterLinearView(
+      viewCorpora,
+      visibleVerses,
+      computedPosition, false)
+      .then(verseElement => setVerseElementBottom(verseElement));
   }, [computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
 
   return (
     <Fragment>
+
       <Grid
         ref={textContainerRef}
         container
@@ -142,6 +152,16 @@ export const InterLinearComponent = ({viewCorpora,
         {
           (verseElement?.length ?? 0) > 0
             ? verseElement
+            : <Typography>No verse data for this reference.</Typography>
+        }
+      </Grid>
+      <Grid
+        container
+        sx={{ pl: 4, flex: 8, overflow: 'auto' }}
+      >
+        {
+          (verseElementBottom?.length ?? 0) > 0
+            ? verseElementBottom
             : <Typography>No verse data for this reference.</Typography>
         }
       </Grid>
