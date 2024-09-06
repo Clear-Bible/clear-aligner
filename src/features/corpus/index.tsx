@@ -26,7 +26,6 @@ export interface CorpusProps {
     sources?: CorpusContainer,
     targets?: CorpusContainer
   };
-  isLiveInterLinear?: boolean
 }
 
 const determineCorpusView = async (
@@ -237,8 +236,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         alignItems="center"
         sx={{ py: 1, px: 2 }}
       >
-        {!props.isLiveInterLinear &&
-        <>
           <Grid container sx={{ flex: 1 }}>
             <CorpusAction
               add={addBcvId}
@@ -281,8 +278,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
               <InfoOutlined />
             </Tooltip>
           </Grid>
-        </>
-      }
       </Grid>
       <Grid
         ref={textContainerRef}

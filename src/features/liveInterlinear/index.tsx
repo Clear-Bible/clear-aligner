@@ -79,7 +79,6 @@ export const LiveInterlinear = ({containers, position}: LiveInterLinearProps ): 
                   targets: containers?.find(c => c.id === AlignmentSide.TARGET)
                 }}
                 position={position}
-                isLiveInterLinear={true}
               />
             </Card>
           );
