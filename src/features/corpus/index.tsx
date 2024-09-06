@@ -45,17 +45,18 @@ const determineCorpusView = async (
       >
         <Grid
           item xs={1}
-          sx={{ p: '1px', width: '53px', height: '16px'}}
+          sx={{ p: '1px', width: '53px', height: '16px', justifyContent: 'center', marginTop: '20px'}}
+          display={'flex'}
         >
-          <Typography
-            sx={
-              bcvId?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
-                ? { fontWeight: '700', fontSize: '14px', paddingTop: '20px' }
-                : {}
-            }
-          >
-            {verse.citation}
-          </Typography>
+            <Typography
+              sx={
+                bcvId?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
+                  ? { fontStyle : 'italic' }
+                  : {}
+              }
+            >
+              {verse.citation}
+            </Typography>
         </Grid>
         <Grid item xs={11}>
           <Grid
