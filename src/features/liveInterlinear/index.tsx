@@ -33,59 +33,26 @@ export const LiveInterlinear = ({containers, position}: LiveInterLinearProps ): 
 
   console.log('*corpusViewports is: ', corpusViewports)
 
+  const corpusId = corpusViewports[0].containerId;
+  const key = `text_${corpusId}`;
+  const container = containers.find(
+    (c) => c.id === corpusViewports[0].containerId
+  );
+
+  if (!container) {
+    return <Grid key={key} />;
+  }
 
   return (
-    <Fragment>
-      {corpusViewports &&
-        corpusViewports.sort(c => c.containerId === AlignmentSide.SOURCE ? -1 : 1).map((corpusViewport: CorpusViewport, index: number) => {
-          const corpusId = corpusViewport.containerId;
-          const key = `text_${index}`;
-          const container = containers.find(
-            (c) => c.id === corpusViewport.containerId
-          );
-          if (!container) return <Grid key={key} />;
-          return (
-            <Card
-              onScroll={(e) => {
-                if (scrollLock) {
-                  const newScrollTop = (e.target as HTMLDivElement).scrollTop;
-                  containerViewportRefs.current.forEach((ref) => {
-                    ref.scrollTop = newScrollTop;
-                  });
-                }
+            <InterLinearComponent
+              viewCorpora={container}
+              viewportIndex={0}
+              position={position}
+              containers={{
+                sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
+                targets: containers?.find(c => c.id === AlignmentSide.TARGET)
               }}
-              ref={(el) => {
-                if (el) {
-                  containerViewportRefs.current[index] = el;
-                }
-              }}
-              elevation={2}
-              className="corpus-container corpus-scroll-container"
-              key={key}
-              sx={ (theme) => ({
-                flexGrow: '1',
-                flexBasis: '0',
-                minWidth: '16rem',
-                position: 'relative',
-                backgroundColor: theme.palette.primary.contrastText,
-                backgroundImage: 'none'
-              })}
-            >
-              <InterLinearComponent
-                viewCorpora={container}
-                viewportIndex={index}
-                position={position}
-                containers={{
-                  sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
-                  targets: containers?.find(c => c.id === AlignmentSide.TARGET)
-                }}
-              />
-            </Card>
-          );
-        })}
-
-
-    </Fragment>
+            />
   );
 };
 
