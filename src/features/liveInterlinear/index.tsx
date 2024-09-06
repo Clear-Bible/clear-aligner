@@ -14,10 +14,6 @@ interface LiveInterLinearProps {
   position: BCVWP | null;
 }
 
-
-
-
-
 export const LiveInterlinear = ({containers, position}: LiveInterLinearProps ): ReactElement => {
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);

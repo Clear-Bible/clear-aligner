@@ -94,7 +94,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const { viewCorpora, containers } = props;
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
 
-  useDebug('TextComponent');
+  useDebug('CorpusComponent');
 
   const [addBcvId, removeBcvId, corpusActionEnableState, computedPosition, visibleVerses, verseAtPosition] = useCorpusActionControls(viewCorpora, containers, props)
 
