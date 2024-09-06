@@ -8,6 +8,7 @@ import { AlignmentSide } from '../../common/data/project/corpus';
 import CorpusComponent from '../corpus';
 import { Card, Grid } from '@mui/material';
 import { useAppSelector } from '../../app';
+import InterLinearComponent from './interLinearComponent';
 
 interface LiveInterLinearProps {
   containers: CorpusContainer[];
@@ -70,15 +71,14 @@ export const LiveInterlinear = ({containers, position}: LiveInterLinearProps ): 
                 backgroundImage: 'none'
               })}
             >
-              <CorpusComponent
-                key={corpusId}
+              <InterLinearComponent
                 viewCorpora={container}
                 viewportIndex={index}
+                position={position}
                 containers={{
                   sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
                   targets: containers?.find(c => c.id === AlignmentSide.TARGET)
                 }}
-                position={position}
               />
             </Card>
           );
