@@ -17,6 +17,8 @@ export interface InterLinearComponent {
     sources?: CorpusContainer,
     targets?: CorpusContainer
   };
+  visibleVerses: Verse[];
+  setVisibleVerses: React.Dispatch<React.SetStateAction<Verse[]>>;
 }
 
 const determineInterLinearView = async (
@@ -84,7 +86,7 @@ const determineInterLinearView = async (
 export const InterLinearComponent = ({viewCorpora,
                                        viewportIndex,
                                        position,
-                                       containers,}: InterLinearComponent): ReactElement => {
+                                       containers, setVisibleVerses, visibleVerses}: InterLinearComponent): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
   const [verseElementBottom, setVerseElementBottom] = useState<JSX.Element[]>();
@@ -115,7 +117,6 @@ export const InterLinearComponent = ({viewCorpora,
     return [verse].filter((v) => v);
   }, [viewCorpora, computedPosition]);
 
-  const [visibleVerses, setVisibleVerses] = useState<Verse[]>(initialVerses);
   const verseKeys = useMemo(
     () =>
       viewCorpora.corpora

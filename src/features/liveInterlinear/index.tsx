@@ -2,20 +2,21 @@
  * This file contains the Live Interlinear Component.
  */
 import React, { ReactElement, Fragment, useMemo, useRef } from 'react';
-import { CorpusContainer, CorpusViewport } from '../../structs';
+import { CorpusContainer, CorpusViewport, Verse } from '../../structs';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import CorpusComponent from '../corpus';
-import { Card, Grid } from '@mui/material';
+import { Grid } from '@mui/material';
 import { useAppSelector } from '../../app';
 import InterLinearComponent from './interLinearComponent';
 
 interface LiveInterLinearProps {
   containers: CorpusContainer[];
   position: BCVWP | null;
+  visibleVerses: Verse[];
+  setVisibleVerses: React.Dispatch<React.SetStateAction<Verse[]>>;
 }
 
-export const LiveInterlinear = ({containers, position}: LiveInterLinearProps ): ReactElement => {
+export const LiveInterlinear = ({containers, position, visibleVerses, setVisibleVerses}: LiveInterLinearProps ): ReactElement => {
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
@@ -51,6 +52,8 @@ export const LiveInterlinear = ({containers, position}: LiveInterLinearProps ): 
           sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
           targets: containers?.find(c => c.id === AlignmentSide.TARGET)
         }}
+        visibleVerses={visibleVerses}
+        setVisibleVerses={setVisibleVerses}
       />
     );
   }

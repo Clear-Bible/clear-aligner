@@ -57,7 +57,8 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
       >
 
         {corpusViewports &&
-          corpusViewports.sort(c => c.containerId === AlignmentSide.SOURCE ? -1 : 1).map((corpusViewport: CorpusViewport, index: number) => {
+          corpusViewports.sort(c => c.containerId === AlignmentSide.SOURCE ? -1 : 1)
+            .map((corpusViewport: CorpusViewport, index: number) => {
             const corpusId = corpusViewport.containerId;
             const key = `text_${index}`;
             const container = containers.find(

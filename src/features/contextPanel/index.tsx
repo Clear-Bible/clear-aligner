@@ -6,17 +6,19 @@ import React, { ReactElement } from 'react';
 import { Card, Stack } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer } from 'structs';
+import { CorpusContainer, Verse } from 'structs';
 import LiveInterlinear from '../liveInterlinear';
 import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface ContextPanelProps {
   containers: CorpusContainer[];
   position: BCVWP | null;
+  visibleVerses: Verse[];
+  setVisibleVerses: React.Dispatch<React.SetStateAction<Verse[]>>;
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({
-  containers, position
+  containers, position, visibleVerses, setVisibleVerses
 }): ReactElement => {
   useDebug('ContextPanel');
 
@@ -44,7 +46,13 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
           paddingTop: '21px'
         })}
       >
-        <LiveInterlinear containers={containers} position={position}/>
+        <LiveInterlinear
+          containers={containers}
+          position={position}
+          visibleVerses={visibleVerses}
+          setVisibleVerses={setVisibleVerses}
+
+        />
       </Card>
     </Stack>
   );
