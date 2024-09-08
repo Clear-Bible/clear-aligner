@@ -31,29 +31,32 @@ export const LiveInterlinear = ({containers, position}: LiveInterLinearProps ): 
     [containers]
   );
 
-  console.log('*corpusViewports is: ', corpusViewports)
+  if (corpusViewports[0]) {
+    const corpusId = corpusViewports[0].containerId ?? "";
+    const key = `text_${corpusId}`;
+    const container = containers.find(
+      (c) => c.id === corpusViewports[0].containerId ?? ""
+    );
 
-  const corpusId = corpusViewports[0].containerId;
-  const key = `text_${corpusId}`;
-  const container = containers.find(
-    (c) => c.id === corpusViewports[0].containerId
-  );
+    if (!container) {
+      return <Grid key={key} />;
+    }
 
-  if (!container) {
-    return <Grid key={key} />;
+    return (
+      <InterLinearComponent
+        viewCorpora={container}
+        viewportIndex={0}
+        position={position}
+        containers={{
+          sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
+          targets: containers?.find(c => c.id === AlignmentSide.TARGET)
+        }}
+      />
+    );
   }
-
   return (
-            <InterLinearComponent
-              viewCorpora={container}
-              viewportIndex={0}
-              position={position}
-              containers={{
-                sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
-                targets: containers?.find(c => c.id === AlignmentSide.TARGET)
-              }}
-            />
-  );
+    <></>
+  )
 };
 
 export default LiveInterlinear;
