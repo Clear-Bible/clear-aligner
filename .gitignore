@@ -17,7 +17,6 @@
 /ui
 
 # Prevent the npm package lock files
-yarn.lock
 package-lock.json
 
 # misc

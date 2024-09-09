@@ -127,6 +127,7 @@ export const PerRowLinkStateSelector = ({
         gap: '12px',
         marginLeft: '-10px',
         backgroundColor: theme.palette.linkStateSelector.backgroundColor,
+        alignItems: 'center'
       }}
       direction={'row'}
     >

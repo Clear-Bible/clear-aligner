@@ -1,0 +1,105 @@
+name: Test and Build Windows and Mac
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "**"
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.16.0'
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
+      - run: yarn install --frozen-lockfile
+      - name: Add python packages
+        run: |
+          sudo apt-get install -y python3-pip
+          pip3 install regex
+      - name: Perform linting
+        run: |
+          yarn lint
+  build-mac:
+    needs: lint
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.16.0'
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: yarn install --frozen-lockfile
+      - name: Add python packages
+        run: |
+          pip3 install regex
+      - name: Configure environment
+        run: |
+          echo CA_AWS_ENDPOINT="${CA_AWS_ENDPOINT}">> .env
+          echo CA_AWS_COGNITO_USER_POOL_ID="${CA_AWS_COGNITO_USER_POOL_ID}">> .env
+          echo CA_AWS_COGNITO_USER_POOL_CLIENT_ID="${CA_AWS_COGNITO_USER_POOL_CLIENT_ID}">> .env
+          echo CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL="${CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}">> .env
+        env:
+          CA_AWS_ENDPOINT: ${{ secrets.CA_AWS_ENDPOINT }}
+          CA_AWS_COGNITO_USER_POOL_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_ID }}
+          CA_AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_CLIENT_ID }}
+          CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: ${{ secrets.CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL }}
+      - name: Run MacOS build
+        run: |
+          .ci/modify-build-num.sh
+          yarn build:mac
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'mac-os-x64'
+          path: dist/**.dmg
+          retention-days: 7
+  build-win:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.16.0'
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
+      - run: yarn install --frozen-lockfile
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Add python packages
+        run: |
+          sudo apt-get install -y python3-pip
+          pip3 install regex
+      - name: Configure environment
+        run: |
+          echo CA_AWS_ENDPOINT="${CA_AWS_ENDPOINT}">> .env
+          echo CA_AWS_COGNITO_USER_POOL_ID="${CA_AWS_COGNITO_USER_POOL_ID}">> .env
+          echo CA_AWS_COGNITO_USER_POOL_CLIENT_ID="${CA_AWS_COGNITO_USER_POOL_CLIENT_ID}">> .env
+          echo CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL="${CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}">> .env
+        env:
+          CA_AWS_ENDPOINT: ${{ secrets.CA_AWS_ENDPOINT }}
+          CA_AWS_COGNITO_USER_POOL_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_ID }}
+          CA_AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_CLIENT_ID }}
+          CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: ${{ secrets.CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL }}
+      - name: Run Windows build
+        run: |
+          .ci/modify-build-num.sh
+          yarn build:win
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'win'
+          path: dist/**.exe
+          retention-days: 7

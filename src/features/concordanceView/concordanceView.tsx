@@ -308,8 +308,8 @@ export const ConcordanceView = () => {
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
 
   const pivotWordTableColumns = 2.2;
-  const alignedWordTableColumns = 3.3;
-  const alignmentLinkTableColumns = 6.5;
+  const alignedWordTableColumns = 3.5;
+  const alignmentLinkTableColumns = 6.3;
 
   const handleUpdateSelectedAlignedWord = useCallback(async (alignedWord: AlignedWord | null) => {
       if (linksPendingUpdate.size > 0 && alignedWord !== null ) {
@@ -548,7 +548,7 @@ export const ConcordanceView = () => {
         <Grid
           container
           spacing={theme.spacing(.5)}
-          marginLeft={'4px'}
+          marginLeft={'8px'}
           marginRight={'12px'}
         >
           {/**
