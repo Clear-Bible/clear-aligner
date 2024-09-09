@@ -126,7 +126,7 @@ export const InterLinearComponent = ({viewCorpora,
     [viewCorpora.corpora]
   );
 
-  useEffect(() => setVisibleVerses(initialVerses), [initialVerses]);
+  useEffect(() => setVisibleVerses(initialVerses), [initialVerses, setVisibleVerses]);
 
   useEffect(() => {
     //top
