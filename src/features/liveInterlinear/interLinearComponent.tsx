@@ -9,7 +9,7 @@ import { CorpusContainer, Verse } from '../../structs';
 import { VerseDisplay } from '../corpus/verseDisplay';
 import { WordDisplayVariant } from '../wordDisplay';
 
-export interface InterLinearComponent {
+export interface InterLinearComponentProps {
   viewCorpora: CorpusContainer;
   viewportIndex: number;
   position: BCVWP | null;
@@ -86,10 +86,11 @@ const determineInterLinearView = async (
 export const InterLinearComponent = ({viewCorpora,
                                        viewportIndex,
                                        position,
-                                       containers, setVisibleVerses, visibleVerses}: InterLinearComponent): ReactElement => {
+                                       containers, setVisibleVerses, visibleVerses}: InterLinearComponentProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
   const [verseElementBottom, setVerseElementBottom] = useState<JSX.Element[]>();
+
 
   const computedPosition = useMemo(() => {
     if (viewCorpora.id === AlignmentSide.TARGET) {
