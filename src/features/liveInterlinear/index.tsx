@@ -33,10 +33,10 @@ export const LiveInterlinear = ({containers, position, visibleVersesInterlinear,
   );
 
   if (corpusViewports[0]) {
-    const corpusId = corpusViewports[0].containerId ?? "";
+    const corpusId = corpusViewports[0].containerId || "";
     const key = `text_${corpusId}`;
     const container = containers.find(
-      (c) => c.id === corpusViewports[0].containerId ?? ""
+      (c) => c.id === corpusViewports[0].containerId || ""
     );
 
     if (!container) {
