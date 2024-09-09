@@ -13,12 +13,12 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 interface ContextPanelProps {
   containers: CorpusContainer[];
   position: BCVWP | null;
-  visibleVerses: Verse[];
-  setVisibleVerses: React.Dispatch<React.SetStateAction<Verse[]>>;
+  visibleVersesInterlinear: Verse[];
+  setVisibleVersesInterlinear: React.Dispatch<React.SetStateAction<Verse[]>>;
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({
-  containers, position, visibleVerses, setVisibleVerses
+  containers, position, visibleVersesInterlinear, setVisibleVersesInterlinear
 }): ReactElement => {
   useDebug('ContextPanel');
 
@@ -49,9 +49,8 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
         <LiveInterlinear
           containers={containers}
           position={position}
-          visibleVerses={visibleVerses}
-          setVisibleVerses={setVisibleVerses}
-
+          visibleVersesInterlinear={visibleVersesInterlinear}
+          setVisibleVersesInterlinear={setVisibleVersesInterlinear}
         />
       </Card>
     </Stack>

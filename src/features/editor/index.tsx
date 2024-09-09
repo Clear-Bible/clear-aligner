@@ -32,7 +32,7 @@ interface EditorProps {
 const Editor = ({containers, position, usePaddingForEditorContainer}: EditorProps): ReactElement => {
   useDebug('Editor');
 
-  const [visibleVerses, setVisibleVerses] = useState<Verse[]>([]);
+  const [visibleVersesInterlinear, setVisibleVersesInterlinear] = useState<Verse[]>([]);
 
   return (
     <Container maxWidth={false} disableGutters sx={{
@@ -43,13 +43,17 @@ const Editor = ({containers, position, usePaddingForEditorContainer}: EditorProp
       marginBottom: '1rem',
       px: usePaddingForEditorContainer ? '12px' : '0px'
     }}>
-            <Polyglot containers={containers} position={position} />
+            <Polyglot
+              containers={containers}
+              position={position}
+              setVisibleVersesInterlinear={setVisibleVersesInterlinear}
+            />
             <ControlPanel containers={containers} position={position} />
             <ContextPanel
               containers={containers}
               position={position}
-              visibleVerses={visibleVerses}
-              setVisibleVerses={setVisibleVerses}
+              visibleVersesInterlinear={visibleVersesInterlinear}
+              setVisibleVersesInterlinear={setVisibleVersesInterlinear}
             />
     </Container>
   );

@@ -12,11 +12,11 @@ import InterLinearComponent from './interLinearComponent';
 interface LiveInterLinearProps {
   containers: CorpusContainer[];
   position: BCVWP | null;
-  visibleVerses: Verse[];
-  setVisibleVerses: React.Dispatch<React.SetStateAction<Verse[]>>;
+  visibleVersesInterlinear: Verse[];
+  setVisibleVersesInterlinear: React.Dispatch<React.SetStateAction<Verse[]>>;
 }
 
-export const LiveInterlinear = ({containers, position, visibleVerses, setVisibleVerses}: LiveInterLinearProps ): ReactElement => {
+export const LiveInterlinear = ({containers, position, visibleVersesInterlinear, setVisibleVersesInterlinear}: LiveInterLinearProps ): ReactElement => {
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
@@ -52,8 +52,8 @@ export const LiveInterlinear = ({containers, position, visibleVerses, setVisible
           sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
           targets: containers?.find(c => c.id === AlignmentSide.TARGET)
         }}
-        visibleVerses={visibleVerses}
-        setVisibleVerses={setVisibleVerses}
+        visibleVerses={visibleVersesInterlinear}
+        setVisibleVerses={setVisibleVersesInterlinear}
       />
     );
   }

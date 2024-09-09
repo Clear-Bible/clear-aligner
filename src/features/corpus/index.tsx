@@ -26,6 +26,7 @@ export interface CorpusProps {
     sources?: CorpusContainer,
     targets?: CorpusContainer
   };
+  setVisibleVersesInterlinear: React.Dispatch<React.SetStateAction<Verse[]>>;
 }
 
 const determineCorpusView = async (
@@ -90,7 +91,7 @@ const determineCorpusView = async (
 
 export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
-  const { viewCorpora, containers } = props;
+  const { viewCorpora, containers, setVisibleVersesInterlinear } = props;
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
 
   useDebug('CorpusComponent');
@@ -133,9 +134,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   useEffect(() => setVisibleVerses(initialVerses), [initialVerses]);
 
   const addBcvId = useCallback(() => {
-    if(viewCorpora.id === 'sources'){
-      console.log('we just added context to the source side, so we need to update the InterLinear component')
-    }
     const firstExistingRef = visibleVerses?.at(0)?.bcvId ?? computedPosition;
     const lastExistingRef = visibleVerses?.at(-1)?.bcvId ?? computedPosition;
     if (!firstExistingRef || !lastExistingRef) {
@@ -175,15 +173,17 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
       ...visibleVerses,
       newLastVerse ? viewCorpora.verseByReference(newLastVerse) : undefined
     ].filter((v) => v) as Verse[];
-    console.log('updatedVerses is: ', updatedVerses)
+
+    // keep the InterLinear in sync with the source side
+    if(viewCorpora.id === AlignmentSide.SOURCE){
+      setVisibleVersesInterlinear(updatedVerses)
+    }
     setVisibleVerses(updatedVerses);
+
   }, [visibleVerses, viewCorpora, computedPosition]);
 
   const removeBcvId = useCallback(() => {
-    if(viewCorpora.id === 'sources'){
-      console.log('we just removed context from the source side, so we need to update the InterLinear component')
-    }
-    setVisibleVerses((verses) => {
+    const updatedVerses = (verses: Verse[]) => {
       if (verses.length < 1 || !computedPosition) {
         return verses;
       }
@@ -199,7 +199,13 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           ? verses.length
           : -1
       );
-    })}, [computedPosition]);
+    }
+    // keep the InterLinear in sync with the source side
+    if(viewCorpora.id === AlignmentSide.SOURCE){
+      setVisibleVersesInterlinear(updatedVerses)
+    }
+    setVisibleVerses(updatedVerses)
+    }, [computedPosition]);
 
   const corpusActionEnableState = useMemo(() => {
     const firstBcvId = viewCorpora.verseByReferenceString(
