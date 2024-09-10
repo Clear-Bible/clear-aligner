@@ -731,7 +731,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
 };
 
 /**
- * Find links by word ID hook.
+ * Find links by BCV.
  *<p>
  * Key parameters are used to control operations that may be destructive or time-consuming
  * on re-render. A constant value will ensure an operation only happens once, and a UUID
