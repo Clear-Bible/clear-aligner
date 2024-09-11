@@ -212,11 +212,34 @@ export class CorpusContainer {
       ];
   }
 
+  wordByReference(reference: BCVWP): Word | undefined {
+    if (
+      !reference.hasFields(
+        BCVWPField.Book,
+        BCVWPField.Chapter,
+        BCVWPField.Verse,
+        BCVWPField.Word
+      )
+    ) {
+      return undefined;
+    }
+    const corpus = this.corpusAtReferenceString(reference.toReferenceString());
+    return corpus?.books[reference.book!]?.[reference.chapter!]?.[
+      reference.verse!]?.words?.find( word => word.id === reference.toReferenceString())
+  }
+
   verseByReferenceString(refString: string): Verse | undefined {
     if (!refString) {
       return undefined;
     }
     return this.verseByReference(BCVWP.parseFromString(refString));
+  }
+
+  wordByReferenceString(refString: string): Word | undefined {
+    if (!refString) {
+      return undefined;
+    }
+    return this.wordByReference(BCVWP.parseFromString(refString));
   }
 
   refExists(ref: BCVWP): boolean {

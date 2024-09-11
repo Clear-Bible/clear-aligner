@@ -1,13 +1,15 @@
 /**
  * This file contains the InterLinearComponent.
  */
-import React, { ReactElement, Fragment, useRef, useState, useMemo, useEffect } from 'react';
+import React, { Fragment, ReactElement, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Grid, Typography } from '@mui/material';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
-import { CorpusContainer, Verse } from '../../structs';
+import { CorpusContainer, Verse, Word } from '../../structs';
 import { VerseDisplay } from '../corpus/verseDisplay';
 import { WordDisplayVariant } from '../wordDisplay';
+import { LinksTable, useDataLastUpdated } from '../../state/links/tableManager';
+import { AppContext } from '../../App';
 
 export interface InterLinearComponentProps {
   viewCorpora: CorpusContainer;
@@ -19,6 +21,31 @@ export interface InterLinearComponentProps {
   };
   visibleVerses: Verse[];
   setVisibleVerses: React.Dispatch<React.SetStateAction<Verse[]>>;
+}
+
+const createInterLinearMap = async (linksTable: LinksTable, verses: Verse[], targetContainer: CorpusContainer): Promise<Map<string, Word[]>> => {
+  const result = new Map<string, Word[]>()
+
+  for(const verse of verses) {
+    const bcvId = verse.bcvId;
+    const links = await linksTable.findByBCV(AlignmentSide.SOURCE, bcvId.book!, bcvId.chapter!, bcvId.verse!); //database query
+    for(const link of links){
+      for(const sourceWordId of link.sources) {
+        const targetWords = result.get(sourceWordId) ?? [];
+        for (const targetWordId of link.targets) {
+          const targetWord = targetContainer.wordByReferenceString(targetWordId);
+          if (targetWord){
+            targetWords.push(targetWord)
+          }
+        }
+        if(targetWords.length > 0){
+          result.set(sourceWordId, targetWords);
+        }
+      }
+    }
+  }
+  console.log('result: ', result)
+  return result;
 }
 
 const determineInterLinearView = async (
@@ -83,14 +110,15 @@ const determineInterLinearView = async (
   });
 };
 
-export const InterLinearComponent = ({viewCorpora,
+const InterLinearComponent = ({viewCorpora,
                                        viewportIndex,
                                        position,
                                        containers, setVisibleVerses, visibleVerses}: InterLinearComponentProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
   const [verseElementBottom, setVerseElementBottom] = useState<JSX.Element[]>();
-
+  const { projectState } = useContext(AppContext);
+  const [wordMap, setWordMap] = useState<Map <string, Word[]> | undefined>();
 
   const computedPosition = useMemo(() => {
     if (viewCorpora.id === AlignmentSide.TARGET) {
@@ -143,6 +171,13 @@ export const InterLinearComponent = ({viewCorpora,
       .then(verseElement => setVerseElementBottom(verseElement));
   }, [computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
 
+  // get a Map of all the linked Words for the visible Verses
+  useEffect( () => {
+    createInterLinearMap(projectState.linksTable, visibleVerses, containers.targets!).then(
+      setWordMap
+    )
+  },[projectState.linksTable, visibleVerses, containers.targets]);
+
   return (
     <Fragment>
 
@@ -157,16 +192,16 @@ export const InterLinearComponent = ({viewCorpora,
             : <Typography>No verse data for this reference.</Typography>
         }
       </Grid>
-      <Grid
-        container
-        sx={{ pl: 4, flex: 8, overflow: 'auto' }}
-      >
-        {
-          (verseElementBottom?.length ?? 0) > 0
-            ? verseElementBottom
-            : <Typography>No verse data for this reference.</Typography>
-        }
-      </Grid>
+      {/*<Grid*/}
+      {/*  container*/}
+      {/*  sx={{ pl: 4, flex: 8, overflow: 'auto' }}*/}
+      {/*>*/}
+      {/*  {*/}
+      {/*    (verseElementBottom?.length ?? 0) > 0*/}
+      {/*      ? verseElementBottom*/}
+      {/*      : <Typography>No verse data for this reference.</Typography>*/}
+      {/*  }*/}
+      {/*</Grid>*/}
     </Fragment>
   );
 };
