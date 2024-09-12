@@ -8,7 +8,7 @@ import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { CorpusContainer, Verse, Word } from '../../structs';
 import { VerseDisplay } from '../corpus/verseDisplay';
 import { WordDisplayVariant } from '../wordDisplay';
-import { LinksTable, useDataLastUpdated } from '../../state/links/tableManager';
+import { LinksTable } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 
 export interface InterLinearComponentProps {
