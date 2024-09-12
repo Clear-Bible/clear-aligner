@@ -2,7 +2,7 @@
  * This file contains the InterLinearComponent.
  */
 import React, { Fragment, ReactElement, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Grid, Typography } from '@mui/material';
+import { Grid, Stack, Typography } from '@mui/material';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { CorpusContainer, Verse, Word } from '../../structs';
@@ -97,11 +97,16 @@ const determineInterLinearView = async (
               style={{
                 paddingBottom: '0.5rem',
               }}
+
             >
-              <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())}
-                            verse={verse}
-                            variant={WordDisplayVariant.BUTTON}
-                            allowGloss />
+              <Stack direction={'row'}>
+                <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())}
+                              verse={verse}
+                              variant={WordDisplayVariant.BUTTON}
+                              allowGloss
+                              isPartOfInterlinear={true}
+                />
+              </Stack>
             </Typography>
           </Grid>
         </Grid>

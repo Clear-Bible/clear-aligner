@@ -10,6 +10,7 @@ import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/l
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { compressAlignedWords } from '../../helpers/compressAlignedWords';
 import { GridApiCommunity } from '@mui/x-data-grid/internals';
+import { Stack, Box } from '@mui/material';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -26,6 +27,7 @@ export interface VerseDisplayProps extends LimitedToLinks {
   verse: Verse;
   allowGloss?: boolean;
   apiRef?: React.MutableRefObject<GridApiCommunity>;
+  isPartOfInterlinear?: boolean;
 }
 
 const VerseWidthAdjustmentFactor = 1.895;
@@ -40,6 +42,7 @@ const VerseWidthAdjustmentFactor = 1.895;
  * @param onlyLinkIds
  * @param allowGloss
  * @param apiRef optional api reference to the MUI datagrid
+ * @param isPartOfInterlinear flag to indicate if this verse will be displayed inside the InterLinear
  * @constructor
  */
 export const VerseDisplay = ({
@@ -48,7 +51,9 @@ export const VerseDisplay = ({
                                corpus,
                                verse,
                                onlyLinkIds,
-                               allowGloss = false, apiRef
+                               allowGloss = false,
+                               apiRef,
+                               isPartOfInterlinear = false,
                              }: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
@@ -131,16 +136,46 @@ export const VerseDisplay = ({
   // aligned word is visible in the table
   return <>
     {(displayTokens || []).map(
-      (token: Word[], index): ReactElement => <WordDisplay
-        key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
-        variant={variant}
-        links={linkMap}
-        readonly={readonly}
-        onlyLinkIds={onlyLinkIds}
-        corpus={corpus}
-        parts={token}
-        allowGloss={allowGloss}
-      />
+      (token: Word[], index): ReactElement =>
+      {
+        if(isPartOfInterlinear){
+          return(
+            <>
+              <Stack spacing={2}>
+                <Box>
+                  <WordDisplay
+                    key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+                    variant={variant}
+                    links={linkMap}
+                    readonly={readonly}
+                    onlyLinkIds={onlyLinkIds}
+                    corpus={corpus}
+                    parts={token}
+                    allowGloss={allowGloss}
+                  />
+                </Box>
+                <Box border={'solid'}>
+                  <>Slot</>
+                </Box>
+              </Stack>
+            </>
+          )
+        }
+        else{
+          return(
+              <WordDisplay
+                key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+                variant={variant}
+                links={linkMap}
+                readonly={readonly}
+                onlyLinkIds={onlyLinkIds}
+                corpus={corpus}
+                parts={token}
+                allowGloss={allowGloss}
+              />
+          )
+        }
+      }
     )}
   </>;
 
