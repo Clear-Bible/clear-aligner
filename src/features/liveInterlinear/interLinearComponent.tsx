@@ -197,16 +197,6 @@ const InterLinearComponent = ({viewCorpora,
             : <Typography>No verse data for this reference.</Typography>
         }
       </Grid>
-      {/*<Grid*/}
-      {/*  container*/}
-      {/*  sx={{ pl: 4, flex: 8, overflow: 'auto' }}*/}
-      {/*>*/}
-      {/*  {*/}
-      {/*    (verseElementBottom?.length ?? 0) > 0*/}
-      {/*      ? verseElementBottom*/}
-      {/*      : <Typography>No verse data for this reference.</Typography>*/}
-      {/*  }*/}
-      {/*</Grid>*/}
     </Fragment>
   );
 };
