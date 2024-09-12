@@ -44,7 +44,6 @@ const createInterLinearMap = async (linksTable: LinksTable, verses: Verse[], tar
       }
     }
   }
-  console.log('result: ', result)
   return result;
 }
 
@@ -53,6 +52,7 @@ const determineInterLinearView = async (
   verses: Verse[],
   bcvId: BCVWP | null,
   isCitationVisible: boolean,
+  wordMap:  Map<string, Word[]> | undefined
 ) => {
 
   return verses.map((verse) => {
@@ -105,6 +105,7 @@ const determineInterLinearView = async (
                               variant={WordDisplayVariant.BUTTON}
                               allowGloss
                               isPartOfInterlinear={true}
+                              wordMap={wordMap}
                 />
               </Stack>
             </Typography>
@@ -121,7 +122,6 @@ const InterLinearComponent = ({viewCorpora,
                                        containers, setVisibleVerses, visibleVerses}: InterLinearComponentProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
-  const [verseElementBottom, setVerseElementBottom] = useState<JSX.Element[]>();
   const { projectState } = useContext(AppContext);
   const [wordMap, setWordMap] = useState<Map <string, Word[]> | undefined>();
 
@@ -166,14 +166,12 @@ const InterLinearComponent = ({viewCorpora,
     determineInterLinearView(
       viewCorpora,
       visibleVerses,
-      computedPosition, true)
+      computedPosition,
+      true,
+      wordMap
+      )
       .then(verseElement => setVerseElement(verseElement));
-    //bottom
-    determineInterLinearView(
-      viewCorpora,
-      visibleVerses,
-      computedPosition, false)
-      .then(verseElement => setVerseElementBottom(verseElement));
+
   }, [computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
 
   // get a Map of all the linked Words for the visible Verses

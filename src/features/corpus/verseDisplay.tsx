@@ -28,9 +28,67 @@ export interface VerseDisplayProps extends LimitedToLinks {
   allowGloss?: boolean;
   apiRef?: React.MutableRefObject<GridApiCommunity>;
   isPartOfInterlinear?: boolean;
+  wordMap?:  Map<string, Word[]> | undefined
 }
 
 const VerseWidthAdjustmentFactor = 1.895;
+
+export interface InterLinearWordDisplayProps {
+  key: string;
+  readonly?: boolean;
+  variant?: WordDisplayVariant;
+  corpus?: Corpus;
+  allowGloss?: boolean;
+  wordMap?:  Map<string, Word[]> | undefined;
+  links?:  Map<string, Link[]> | undefined;
+  onlyLinkIds?: string[];
+  token: Word[] | undefined;
+  parts: Word[] | undefined
+}
+
+
+const InterLinearWordDisplay = ({key, variant, links, readonly, corpus, wordMap, allowGloss, onlyLinkIds, token, parts}: InterLinearWordDisplayProps) => {
+  console.log('****')
+  console.log('wordMap is: ', wordMap)
+  console.log('token is: ', token)
+  console.log('key is: ', key)
+  console.log('variant is: ', variant)
+  console.log('linkMap is: ', links)
+  console.log('readonly is: ', readonly)
+  console.log('onlyLinkIds is: ', onlyLinkIds)
+  console.log('corups is: ', corpus)
+  console.log('token is: ', token)
+  console.log('allowGloss is: ', allowGloss)
+  console.log('****')
+  console.log(' ')
+
+  console.log('wordMap is: ', wordMap)
+
+  // iterate through the token array
+  // check each token.id in there, and see if it exists as a key in the
+  // wordMap, if so, you've found a match
+
+  let matchedTokens;
+
+  token?.forEach(word => {
+    if ( wordMap?.has(word.id)){
+      console.log('found an alignment match with word.text : ', word.text, ' word.gloss: ' , word.gloss)
+      matchedTokens = (wordMap.get(word.id))
+    }
+  })
+
+  return <WordDisplay
+    key={key}
+    variant={variant}
+    links={links}
+    readonly={readonly}
+    onlyLinkIds={onlyLinkIds}
+    corpus={corpus}
+    // parts={token}
+    parts={matchedTokens}
+    allowGloss={allowGloss}
+  />
+}
 
 /**
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
@@ -43,6 +101,7 @@ const VerseWidthAdjustmentFactor = 1.895;
  * @param allowGloss
  * @param apiRef optional api reference to the MUI datagrid
  * @param isPartOfInterlinear flag to indicate if this verse will be displayed inside the InterLinear
+ * @param wordMap optional map of all the words with Links in the current context
  * @constructor
  */
 export const VerseDisplay = ({
@@ -54,6 +113,7 @@ export const VerseDisplay = ({
                                allowGloss = false,
                                apiRef,
                                isPartOfInterlinear = false,
+                               wordMap
                              }: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
@@ -133,6 +193,8 @@ export const VerseDisplay = ({
 
   }, [apiRef, linkMap, readonly, verseTokens]);
 
+
+
   // aligned word is visible in the table
   return <>
     {(displayTokens || []).map(
@@ -154,8 +216,19 @@ export const VerseDisplay = ({
                     allowGloss={allowGloss}
                   />
                 </Box>
-                <Box border={'solid'}>
-                  <>Slot</>
+                <Box >
+                  <InterLinearWordDisplay
+                    key={`${index}`}
+                    variant={variant}
+                    links={linkMap}
+                    readonly={readonly}
+                    onlyLinkIds={onlyLinkIds}
+                    corpus={corpus}
+                    parts={token}
+                    allowGloss={allowGloss}
+                    token={token}
+                    wordMap={wordMap}
+                  />
                 </Box>
               </Stack>
             </>
