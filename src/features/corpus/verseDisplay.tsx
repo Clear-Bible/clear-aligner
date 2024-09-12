@@ -2,8 +2,8 @@
  * This file contains the VerseDisplay component which is used inside the
  * CorpusComponent
  */
-import { Corpus, Link, Verse, Word } from '../../structs';
-import { ReactElement, useMemo } from 'react';
+import { Corpus, CorpusContainer, Link, Verse, Word } from '../../structs';
+import React, { ReactElement, useMemo } from 'react';
 import { WordDisplay, WordDisplayVariant } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
@@ -28,7 +28,8 @@ export interface VerseDisplayProps extends LimitedToLinks {
   allowGloss?: boolean;
   apiRef?: React.MutableRefObject<GridApiCommunity>;
   isPartOfInterlinear?: boolean;
-  wordMap?:  Map<string, Word[]> | undefined
+  wordMap?: Map<string, Word[]> | undefined;
+  containers?: { sources?: CorpusContainer; targets?: CorpusContainer }
 }
 
 const VerseWidthAdjustmentFactor = 1.895;
@@ -39,43 +40,59 @@ export interface InterLinearWordDisplayProps {
   variant?: WordDisplayVariant;
   corpus?: Corpus;
   allowGloss?: boolean;
-  wordMap?:  Map<string, Word[]> | undefined;
-  links?:  Map<string, Link[]> | undefined;
+  wordMap?: Map<string, Word[]> | undefined;
+  links?: Map<string, Link[]> | undefined;
   onlyLinkIds?: string[];
-  token: Word[] | undefined;
-  parts: Word[] | undefined
+  parts: Word[] | undefined;
+  containers?: { sources?: CorpusContainer; targets?: CorpusContainer } | undefined;
 }
 
 
-const InterLinearWordDisplay = ({key, variant, links, readonly, corpus, wordMap, allowGloss, onlyLinkIds, token, parts}: InterLinearWordDisplayProps) => {
-  console.log('****')
-  console.log('wordMap is: ', wordMap)
-  console.log('token is: ', token)
-  console.log('key is: ', key)
-  console.log('variant is: ', variant)
-  console.log('linkMap is: ', links)
-  console.log('readonly is: ', readonly)
-  console.log('onlyLinkIds is: ', onlyLinkIds)
-  console.log('corups is: ', corpus)
-  console.log('token is: ', token)
-  console.log('allowGloss is: ', allowGloss)
-  console.log('****')
-  console.log(' ')
+const InterLinearWordDisplay = ({
+                                  key,
+                                  variant,
+                                  links,
+                                  readonly,
+                                  corpus,
+                                  wordMap,
+                                  allowGloss,
+                                  onlyLinkIds,
+                                  parts,
+                                  containers
+                                }: InterLinearWordDisplayProps) => {
+  console.log('****');
+  console.log('wordMap is: ', wordMap);
+  console.log('key is: ', key);
+  console.log('variant is: ', variant);
+  console.log('links: ', links);
+  console.log('readonly is: ', readonly);
+  console.log('onlyLinkIds is: ', onlyLinkIds);
+  console.log('corpus is: ', corpus);
+  console.log('allowGloss is: ', allowGloss);
+  console.log('****');
+  console.log(' ');
 
-  console.log('wordMap is: ', wordMap)
+  console.log('wordMap is: ', wordMap);
 
   // iterate through the token array
   // check each token.id in there, and see if it exists as a key in the
   // wordMap, if so, you've found a match
 
-  let matchedTokens;
+  const [matchedTokens, firstCorpus] = useMemo(() => {
+      const matchedTokens = (parts?.map((part) => {
+        return wordMap?.get(part.id) ?? [];
 
-  token?.forEach(word => {
-    if ( wordMap?.has(word.id)){
-      console.log('found an alignment match with word.text : ', word.text, ' word.gloss: ' , word.gloss)
-      matchedTokens = (wordMap.get(word.id))
-    }
-  })
+      }).filter(Boolean) ?? []).flat();
+      const firstCorpus = matchedTokens.map((token)=> containers?.targets?.corpusAtReferenceString(token.id))
+        .find(() => true);
+      return [matchedTokens, firstCorpus ]
+    }, [parts, wordMap]
+  );
+
+  if(matchedTokens.length < 1 || !firstCorpus){
+    return <></>
+  }
+
 
   return <WordDisplay
     key={key}
@@ -83,12 +100,11 @@ const InterLinearWordDisplay = ({key, variant, links, readonly, corpus, wordMap,
     links={links}
     readonly={readonly}
     onlyLinkIds={onlyLinkIds}
-    corpus={corpus}
-    // parts={token}
+    corpus={firstCorpus}
     parts={matchedTokens}
     allowGloss={allowGloss}
-  />
-}
+  />;
+};
 
 /**
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
@@ -113,7 +129,8 @@ export const VerseDisplay = ({
                                allowGloss = false,
                                apiRef,
                                isPartOfInterlinear = false,
-                               wordMap
+                               wordMap,
+                               containers
                              }: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
@@ -194,14 +211,14 @@ export const VerseDisplay = ({
   }, [apiRef, linkMap, readonly, verseTokens]);
 
 
-
   // aligned word is visible in the table
   return <>
     {(displayTokens || []).map(
-      (token: Word[], index): ReactElement =>
-      {
-        if(isPartOfInterlinear){
-          return(
+
+      (token: Word[], index): ReactElement => {
+        if (isPartOfInterlinear) {
+
+          return (
             <>
               <Stack spacing={2}>
                 <Box>
@@ -216,7 +233,7 @@ export const VerseDisplay = ({
                     allowGloss={allowGloss}
                   />
                 </Box>
-                <Box >
+                <Box>
                   <InterLinearWordDisplay
                     key={`${index}`}
                     variant={variant}
@@ -226,27 +243,26 @@ export const VerseDisplay = ({
                     corpus={corpus}
                     parts={token}
                     allowGloss={allowGloss}
-                    token={token}
                     wordMap={wordMap}
+                    containers={containers}
                   />
                 </Box>
               </Stack>
             </>
-          )
-        }
-        else{
-          return(
-              <WordDisplay
-                key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
-                variant={variant}
-                links={linkMap}
-                readonly={readonly}
-                onlyLinkIds={onlyLinkIds}
-                corpus={corpus}
-                parts={token}
-                allowGloss={allowGloss}
-              />
-          )
+          );
+        } else {
+          return (
+            <WordDisplay
+              key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+              variant={variant}
+              links={linkMap}
+              readonly={readonly}
+              onlyLinkIds={onlyLinkIds}
+              corpus={corpus}
+              parts={token}
+              allowGloss={allowGloss}
+            />
+          );
         }
       }
     )}

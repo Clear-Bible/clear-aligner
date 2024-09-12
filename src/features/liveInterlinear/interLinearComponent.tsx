@@ -48,12 +48,10 @@ const createInterLinearMap = async (linksTable: LinksTable, verses: Verse[], tar
 }
 
 const determineInterLinearView = async (
-  viewCorpora: CorpusContainer,
-  verses: Verse[],
-  bcvId: BCVWP | null,
-  isCitationVisible: boolean,
-  wordMap:  Map<string, Word[]> | undefined
-) => {
+  viewCorpora: CorpusContainer, verses: Verse[], bcvId: BCVWP | null, isCitationVisible: boolean, wordMap: Map<string, Word[]> | undefined, containers: {
+    sources?: CorpusContainer;
+    targets?: CorpusContainer;
+  }) => {
 
   return verses.map((verse) => {
     const languageInfo = viewCorpora.languageAtReferenceString(verse.bcvId.toReferenceString());
@@ -101,11 +99,13 @@ const determineInterLinearView = async (
             >
               <Stack direction={'row'}>
                 <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())}
+                              containers={containers}
                               verse={verse}
                               variant={WordDisplayVariant.BUTTON}
                               allowGloss
                               isPartOfInterlinear={true}
                               wordMap={wordMap}
+
                 />
               </Stack>
             </Typography>
@@ -168,11 +168,12 @@ const InterLinearComponent = ({viewCorpora,
       visibleVerses,
       computedPosition,
       true,
-      wordMap
+      wordMap,
+      containers,
       )
       .then(verseElement => setVerseElement(verseElement));
 
-  }, [computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
+  }, [computedPosition, viewCorpora, visibleVerses, verseAtPosition, containers, wordMap]);
 
   // get a Map of all the linked Words for the visible Verses
   useEffect( () => {
