@@ -139,7 +139,7 @@
       "main": "app/electron/main.js"
     },
     "directories": {
-      "buildResources": "build/",
+      "buildResources": "installer/resources",
       "app": "."
     },
     "extraFiles": [
