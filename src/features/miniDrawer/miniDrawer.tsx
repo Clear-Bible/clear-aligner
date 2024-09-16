@@ -12,8 +12,8 @@ import { useEffect } from 'react';
 import { Drawer, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
 import { grey } from '@mui/material/colors';
 import SvgIcon from '@mui/material/SvgIcon';
-import { ReactComponent as LogoLight } from '../../common/assests/clearAlignerLogoLight.svg'
-import { ReactComponent as LogoDark } from '../../common/assests/clearAlignerLogoDark.svg'
+import { ReactComponent as LogoLight } from '../../common/assets/clearAlignerLogoLight.svg'
+import { ReactComponent as LogoDark } from '../../common/assets/clearAlignerLogoDark.svg'
 
 
 /**
