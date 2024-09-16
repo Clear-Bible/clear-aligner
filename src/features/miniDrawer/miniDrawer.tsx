@@ -12,8 +12,8 @@ import { useEffect } from 'react';
 import { Drawer, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
 import { grey } from '@mui/material/colors';
 import SvgIcon from '@mui/material/SvgIcon';
-import { ReactComponent as Logo } from '../../common/assests/clearAlignerLogo.svg'
-
+import { ReactComponent as LogoLight } from '../../common/assests/clearAlignerLogoLight.svg'
+import { ReactComponent as LogoDark } from '../../common/assests/clearAlignerLogoDark.svg'
 
 
 /**
@@ -72,8 +72,8 @@ export const MiniDrawer = () => {
                sx={{height: '100vh'}}>
           <Stack>
             <ListItem key={ListItems.Icon.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
-              <SvgIcon>
-                <Logo/>
+              <SvgIcon sx={{height: '35px', width: '35px'}}>
+                {theme.palette.mode === 'light' ? <LogoLight /> : <LogoDark/> }
               </SvgIcon>
             </ListItem>
             <ListItem key={ListItems.Home.key} sx={{ display: 'flex', flexDirection: 'column', px: 0 }}>
