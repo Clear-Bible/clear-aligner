@@ -99,7 +99,7 @@ export const useSyncProject = (): SyncState => {
         }
         case SyncProgress.REFRESHING_PERMISSIONS: {
           await getUserGroups(true);
-          setProgress(SyncProgress.SWITCH_TO_PROJECT);
+          setProgress(SyncProgress.SWITCH_TO_PROJECT); /// test
           break;
         }
         case SyncProgress.SWITCH_TO_PROJECT: {
