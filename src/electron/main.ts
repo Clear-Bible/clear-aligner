@@ -10,6 +10,7 @@ import { setUpIpcMain } from './database-main'
 function createWindow() {
   const systemScaleFactor = screen.getPrimaryDisplay().scaleFactor;
   const customScale = systemScaleFactor > 1 ? .75/systemScaleFactor : systemScaleFactor;
+
   // Create the browser window.
   const win = new BrowserWindow({
     ...(nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {}),
@@ -17,6 +18,7 @@ function createWindow() {
     width: 1280,
     height: 720,
     autoHideMenuBar: true,
+    icon: path.join(__dirname, '../../src/electron/assets/icons/transparent_icon.png'),
     webPreferences: {
       preload: path.join(__dirname, '/database-renderer.js'),
       nodeIntegration: true,
