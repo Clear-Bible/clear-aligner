@@ -30,7 +30,6 @@ import { Project } from '../../state/projects/tableManager';
 import { currentProjectBorderIndicatorHeight, projectCardHeight, projectCardMargin, projectCardWidth } from './index';
 import useProjectCardSettingsMenu from './projectCardSettingsMenu';
 import useProjectSharingDialog from './useProjectSharingDialog';
-import { useDeleteProject } from '../../api/projects/useDeleteProject';
 import { useDeleteProjectFromServerWithDialog } from '../../api/projects/useDeleteProjectFromServerWithDialog';
 import { useDeleteProjectFromLocalWithDialog } from '../../api/projects/useDeleteProjectFromLocalWithDialog';
 
