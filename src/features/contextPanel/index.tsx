@@ -6,16 +6,21 @@ import React, { ReactElement } from 'react';
 import { Card, Stack } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
-import LinkBuilderComponent from 'features/linkBuilder';
-import { CorpusContainer } from 'structs';
+import { CorpusContainer, Verse } from 'structs';
+import BCVWP from '../bcvwp/BCVWPSupport';
+import { LiveInterlinear } from '../liveInterlinear';
 
 interface ContextPanelProps {
   containers: CorpusContainer[];
+  position?: BCVWP;
+  visibleSourceVerses: Verse[];
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({
-  containers,
-}): ReactElement => {
+                                                            containers,
+                                                            position,
+                                                            visibleSourceVerses
+                                                          }): ReactElement => {
   useDebug('ContextPanel');
 
   return (
@@ -23,7 +28,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
       direction="row"
       spacing={2}
       style={{
-        height: '12.5rem',
+        height: '18.7rem',
         flexGrow: 0,
         flexShrink: 0
       }}
@@ -33,14 +38,20 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
       <Card
         elevation={6}
         key="a"
-        sx={ (theme) => ({
+        sx={(theme) => ({
           flexGrow: '1',
           flexBasis: '0',
           backgroundColor: theme.palette.primary.contrastText,
-          backgroundImage: 'none'
+          backgroundImage: 'none',
+          overflow: 'auto',
+          paddingTop: '21px'
         })}
       >
-        <LinkBuilderComponent containers={containers} />
+        <LiveInterlinear
+          containers={containers}
+          position={position}
+          visibleSourceVerses={visibleSourceVerses}
+        />
       </Card>
     </Stack>
   );

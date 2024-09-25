@@ -19,13 +19,14 @@ import { AlignmentSide } from '../../common/data/project/corpus';
 import { WordDisplayVariant } from '../wordDisplay';
 
 export interface CorpusProps {
-  viewCorpora: CorpusContainer;
-  viewportIndex: number;
-  position: BCVWP | null;
+  viewCorpora: CorpusContainer,
+  viewportIndex: number,
+  position: BCVWP | null,
   containers: {
     sources?: CorpusContainer,
     targets?: CorpusContainer
-  };
+  },
+  setVisibleSourceVerses?: ((verses: Verse[]) => void)
 }
 
 const determineCorpusView = async (
@@ -87,23 +88,27 @@ const determineCorpusView = async (
   });
 };
 
-export const CorpusComponent = (props: CorpusProps): ReactElement => {
-  const textContainerRef = useRef<HTMLDivElement | null>(null);
-  const { viewCorpora, containers } = props;
-  const [verseElement, setVerseElement] = useState<JSX.Element[]>();
+export const CorpusComponent = ({
+                                  containers,
+                                  position,
+                                  viewCorpora,
+                                  setVisibleSourceVerses
+                                }: CorpusProps): ReactElement => {
+  useDebug('Corpus');
 
-  useDebug('TextComponent');
+  const textContainerRef = useRef<HTMLDivElement | null>(null);
+  const [verseElement, setVerseElement] = useState<JSX.Element[]>();
 
   const computedPosition = useMemo(() => {
     if (viewCorpora.id === AlignmentSide.TARGET) {
-      return props.position ?? null;
+      return position ?? null;
     }
     // displaying source
-    if (!props.position || !containers.targets) return null;
-    const verseString = containers.targets.verseByReference(props.position)?.sourceVerse;
+    if (!position || !containers.targets) return null;
+    const verseString = containers.targets.verseByReference(position)?.sourceVerse;
     if ((verseString ?? '').trim().length) return BCVWP.parseFromString(verseString!);
-    return props.position;
-  }, [viewCorpora.id, props.position, containers.targets]);
+    return position;
+  }, [viewCorpora.id, position, containers]);
 
   const verseAtPosition: Verse | undefined = useMemo(
     () =>
@@ -210,8 +215,13 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     return visibleVerses.length <= 1 ? 'remove' : showAdd;
   }, [viewCorpora, visibleVerses, verseKeys]);
 
-  useEffect(() => {
+  useMemo(() => {
+    if (viewCorpora.id === AlignmentSide.SOURCE) {
+      setVisibleSourceVerses?.(visibleVerses);
+    }
+  }, [setVisibleSourceVerses, viewCorpora.id, visibleVerses]);
 
+  useEffect(() => {
     determineCorpusView(
       viewCorpora,
       visibleVerses,

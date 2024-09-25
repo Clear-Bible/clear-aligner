@@ -8,7 +8,7 @@ import { Box, Card, Grid, Stack } from '@mui/material';
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import CorpusComponent from 'features/corpus';
-import { CorpusContainer, CorpusViewport } from 'structs';
+import { CorpusContainer, CorpusViewport, Verse } from 'structs';
 
 import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -19,10 +19,15 @@ import { AlignmentSide } from '../../common/data/project/corpus';
 interface PolyglotProps {
   containers: CorpusContainer[];
   position: BCVWP | null;
+  setVisibleSourceVerses?: (verses: Verse[]) => void;
 }
 
-export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
-  useDebug('PolyglotComponent');
+export const Polyglot: React.FC<PolyglotProps> = ({
+                                                    containers,
+                                                    position,
+                                                    setVisibleSourceVerses}) => {
+  useDebug('Polyglot');
+
   const { preferences } = React.useContext(AppContext);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
@@ -79,7 +84,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                 elevation={2}
                 className="corpus-container corpus-scroll-container"
                 key={key}
-                sx={ (theme) => ({
+                sx={(theme) => ({
                   flexGrow: '1',
                   flexBasis: '0',
                   minWidth: '16rem',
@@ -97,6 +102,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                     targets: containers?.find(c => c.id === AlignmentSide.TARGET)
                   }}
                   position={position}
+                  setVisibleSourceVerses={setVisibleSourceVerses}
                 />
               </Card>
             );

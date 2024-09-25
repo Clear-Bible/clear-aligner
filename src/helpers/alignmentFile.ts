@@ -26,7 +26,7 @@ export const saveAlignmentFile = (links: Link[] | undefined) => {
             },
             source: (link.sources ?? []),
             target: (link.targets ?? [])
-          } as AlignmentRecord) ?? []
+          } as AlignmentRecord)
       )
   };
 
