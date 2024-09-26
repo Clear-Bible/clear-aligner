@@ -2,7 +2,7 @@ import { Box, Button, CircularProgress, Dialog, Stack } from '@mui/material';
 import React from 'react';
 
 export interface SyncProgressDialogProps {
-  showDialog?: boolean;
+  showDialog?: boolean; // TODO - remove commit.
   onCancel?: () => void;
 }
 
