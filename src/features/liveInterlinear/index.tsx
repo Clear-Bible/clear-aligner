@@ -7,7 +7,7 @@ import { LinksTable } from '../../state/links/tableManager';
 import { AlignmentSide } from '../../common/data/project/corpus';
 
 interface LiveInterlinearProps {
-  containers: CorpusContainer[];
+  containers: CorpusContainer[]; // TODO - remove this comment!
   position?: BCVWP;
   visibleSourceVerses: Verse[];
 }
