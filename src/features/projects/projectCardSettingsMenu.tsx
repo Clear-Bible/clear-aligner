@@ -4,6 +4,7 @@ import { DeleteOutlined, EditOutlined, MoreVertOutlined, PeopleAltOutlined, Sync
 import React, { useCallback, useMemo, useState } from 'react';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import { ProjectLocation } from '../../common/data/project/project';
 
 /**
  * Props for the settings menu displayed on project cards
@@ -47,6 +48,10 @@ const useProjectCardSettingsMenu = ({
   const [ settingsMenuRef, setSettingsMenuRef ] = useState<Element>();
   const closeSettingsMenu = useCallback(() => setIsSettingsMenuOpen(false), [setIsSettingsMenuOpen]);
 
+  const showEdit = useMemo<boolean>(() => project.location !== ProjectLocation.REMOTE, [project?.location]);
+  const showShare = useMemo<boolean>(() => project.location === ProjectLocation.SYNCED, [project?.location]);
+  const showSync = useMemo<boolean>(() => project.location === ProjectLocation.SYNCED, [project?.location]);
+
   const settingsMenu = useMemo(() => (
     <>
       <IconButton
@@ -67,7 +72,7 @@ const useProjectCardSettingsMenu = ({
         open={isSettingsMenuOpen}
         onClose={() => setIsSettingsMenuOpen(false)}>
         <MenuList>
-          <MenuItem
+          {showEdit && <MenuItem
             disabled={!onEdit}
             onClick={(e) => {
               closeSettingsMenu();
@@ -77,8 +82,8 @@ const useProjectCardSettingsMenu = ({
               <EditOutlined/>
             </ListItemIcon>
             <ListItemText>Edit</ListItemText>
-          </MenuItem>
-          <MenuItem
+          </MenuItem>}
+          {showShare && <MenuItem
             disabled={!onShare}
             onClick={() => {
               closeSettingsMenu();
@@ -88,8 +93,8 @@ const useProjectCardSettingsMenu = ({
               <PeopleAltOutlined/>
             </ListItemIcon>
             <ListItemText>Share</ListItemText>
-          </MenuItem>
-          <MenuItem
+          </MenuItem>}
+          {showSync && <MenuItem
             disabled={!onSync}
             onClick={() => {
               closeSettingsMenu();
@@ -99,7 +104,7 @@ const useProjectCardSettingsMenu = ({
               <SyncOutlined/>
             </ListItemIcon>
             <ListItemText>Sync</ListItemText>
-          </MenuItem>
+          </MenuItem>}
           {(showDeleteFromServer || showDeleteLocalProject) &&
             <Divider />}
           {showDeleteFromServer &&
@@ -133,7 +138,22 @@ const useProjectCardSettingsMenu = ({
         </MenuList>
       </Popover>
     </>
-  ), [disabled, isSettingsMenuOpen, settingsMenuRef, onEdit, onShare, onSync, closeSettingsMenu, onDeleteFromServer, onDeleteLocalProject, showDeleteFromServer, showDeleteLocalProject]);
+  ), [
+    disabled,
+    isSettingsMenuOpen,
+    settingsMenuRef,
+    onEdit,
+    onShare,
+    onSync,
+    closeSettingsMenu,
+    onDeleteFromServer,
+    onDeleteLocalProject,
+    showDeleteFromServer,
+    showDeleteLocalProject,
+    showEdit,
+    showShare,
+    showSync
+  ]);
 
   return {
     settingsMenu,

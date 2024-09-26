@@ -137,7 +137,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     }
   }, [project.location]);
 
-  const serverActionButtonDisabled: boolean = useMemo(() => {
+  const serverActionButtonDisabled: boolean = useMemo<boolean>(() => {
     switch (project.location) {
       case ProjectLocation.SYNCED:
         if (!project) {
@@ -161,7 +161,21 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       default:
         return ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons;
     }
-  }, [project, disableProjectButtons, isSignedIn, syncingProject]);
+  },
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    [
+      project,
+      project.location,
+      project.updatedAt,
+      project.serverUpdatedAt,
+      project.lastSyncTime,
+      project.lastSyncServerTime,
+      project.sourceCorpora,
+      project.targetCorpora,
+      disableProjectButtons,
+      isSignedIn,
+      syncingProject
+    ]);
 
   const serverActionButton = useMemo(() => {
     const signedOutIcon = (
