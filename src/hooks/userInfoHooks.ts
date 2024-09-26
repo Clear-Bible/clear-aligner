@@ -4,6 +4,9 @@ import uuid from 'uuid-random';
 import { useNetworkState } from '@uidotdev/usehooks';
 import { AppContext } from '../App';
 import { userState } from '../features/profileAvatar/profileAvatar';
+import { ApiUtils } from '../api/utils';
+import generateRequest = ApiUtils.generateRequest;
+import RequestType = ApiUtils.RequestType;
 
 /**
  * name of the admin group, for comparison
@@ -52,4 +55,37 @@ export const useIsSignedIn = (): boolean => {
   const { userStatus } = useContext(AppContext);
 
   return useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
+}
+
+/**
+ * convenience hook for checking if the current user is an admin or not
+ * @param forceRefresh whether the request for the current user's groups should trigger a refresh from the server
+ * @param refreshKey updating this key triggers an update
+ */
+export const useIsAdmin = ({ forceRefresh, refreshKey }: UseCurrentUserGroupsProps): boolean => {
+  const groups = useCurrentUserGroups({ forceRefresh, refreshKey });
+  return (groups ?? []).includes(ADMIN_GROUP);
+}
+
+/**
+ * retrieve user list from server
+ */
+export const useUsersFromServer = (): string[]|undefined => {
+  const [ userList, setUserList ] = useState<string[]>();
+
+  useEffect(() => {
+    const retrieveList = async () => {
+      const usersResponse = await generateRequest<string[]>({
+        requestPath: '/api/non_admin_users',
+        requestType: RequestType.GET
+      });
+      if (usersResponse.success) {
+        const list = await (usersResponse.response as any).body.json()
+        setUserList(list as string[]);
+      }
+    };
+    void retrieveList();
+  }, [ setUserList ]);
+
+  return userList;
 }

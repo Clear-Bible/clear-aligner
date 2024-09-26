@@ -13,7 +13,6 @@ import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { DatabaseApi, useDatabase } from '../../hooks/useDatabase';
-import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
 import { getUserGroups } from '../../server/amplifySetup';
 import { ProjectState as ProjectStateType } from '../../state/databaseManagement';
 import { Containers } from '../../hooks/useCorpusContainers';
@@ -82,7 +81,6 @@ export const stepSwitchToProject = async (progress: SyncProgress,
  * @param progress
  * @param setProgress
  * @param project
- * @param isAdmin
  * @param abortController
  * @param setUniqueNameError
  * @param setSnackBarMessage
@@ -92,17 +90,16 @@ export const stepSyncingProject = async (
   progress: SyncProgress,
   setProgress: (s: SyncProgress) => void,
   project: Project,
-  isAdmin: boolean,
   abortController: React.MutableRefObject<AbortController | undefined>,
   setUniqueNameError: (s: boolean) => void,
   setSnackBarMessage: Function,
   setIsSnackBarOpen: Function
 ) => {
-  if ((project.location === ProjectLocation.SYNCED && isAdmin)
-    || (project.location === ProjectLocation.LOCAL)) {
+  if ((project.location === ProjectLocation.SYNCED)
+      || (project.location === ProjectLocation.LOCAL)) {
     const res = await ApiUtils.generateRequest<any>({
       requestPath: '/api/projects',
-      requestType: ApiUtils.RequestType.POST,
+      requestType: project.location === ProjectLocation.SYNCED ? ApiUtils.RequestType.PATCH : ApiUtils.RequestType.POST,
       signal: abortController.current?.signal,
       payload: mapProjectEntityToProjectDTO(project)
     });
@@ -262,8 +259,6 @@ export const useSyncProject = (): SyncState => {
   const [canceled, setCanceled] = useState<boolean>(false);
   const [uniqueNameError, setUniqueNameError] = useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
-  const groups = useCurrentUserGroups({ forceRefresh: true });
-  const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
@@ -321,7 +316,6 @@ export const useSyncProject = (): SyncState => {
             progress,
             setProgress,
             project,
-            isAdmin,
             abortController,
             setUniqueNameError,
             setSnackBarMessage,
@@ -369,7 +363,6 @@ export const useSyncProject = (): SyncState => {
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setIsSnackBarOpen,
-    isAdmin,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
     dbApi,
     setProjects,
