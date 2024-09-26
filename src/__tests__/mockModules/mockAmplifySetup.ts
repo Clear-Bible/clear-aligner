@@ -1,5 +1,3 @@
-import Mock = jest.Mock;
-
 interface MockAmplifySetupState {
   mockUserGroups: undefined | string[];
 }

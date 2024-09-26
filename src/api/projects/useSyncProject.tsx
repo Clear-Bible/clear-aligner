@@ -3,7 +3,7 @@ import { mapProjectEntityToProjectDTO, ProjectLocation, ProjectState } from '../
 import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
 import { AppContext } from '../../App';
-import { useSyncWordsOrParts } from './useSyncWordsOrParts';
+import { ProjectTokenReport, useSyncWordsOrParts } from './useSyncWordsOrParts';
 import { InitializationStates } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
@@ -12,9 +12,13 @@ import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
 import { UserPreference } from '../../state/preferences/tableManager';
-import { useDatabase } from '../../hooks/useDatabase';
+import { DatabaseApi, useDatabase } from '../../hooks/useDatabase';
 import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
 import { getUserGroups } from '../../server/amplifySetup';
+import { ProjectState as ProjectStateType } from '../../state/databaseManagement';
+import { Containers } from '../../hooks/useCorpusContainers';
+import { AlignmentSide } from '../../common/data/project/corpus';
+import ResponseObject = ApiUtils.ResponseObject;
 
 export enum SyncProgress {
   IDLE,
@@ -39,6 +43,207 @@ export interface SyncState {
   uniqueNameError: boolean;
   setUniqueNameError: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
+/**
+ * exported for testing
+ * @param progress
+ * @param setProgress
+ * @param preferences
+ * @param setPreferences
+ * @param project
+ * @param projectState
+ */
+export const stepSwitchToProject = async (progress: SyncProgress,
+                                    setProgress: (s: SyncProgress) => void,
+                                    preferences: UserPreference|undefined,
+                                    setPreferences: React.Dispatch<React.SetStateAction<UserPreference|undefined>>,
+                                    project: Project,
+                                    projectState: ProjectStateType) => {
+  if (preferences?.currentProject && preferences?.currentProject === project?.id && preferences?.initialized === InitializationStates.INITIALIZED) {
+    setProgress(SyncProgress.SYNCING_PROJECT);
+  } else {
+    try {
+      await projectState.linksTable.reset();
+    } catch(x) {
+      console.error(x);
+    }
+    projectState.linksTable.setSourceName(project.id);
+    setPreferences((p: UserPreference | undefined) => ({
+      ...(p ?? {}) as UserPreference,
+      currentProject: project.id,
+      initialized: InitializationStates.UNINITIALIZED,
+      onInitialized: [ ...(p?.onInitialized ?? []), () => setProgress(SyncProgress.SYNCING_PROJECT) ]
+    }));
+  }
+};
+
+/**
+ * exported for testing
+ * @param progress
+ * @param setProgress
+ * @param project
+ * @param isAdmin
+ * @param abortController
+ * @param setUniqueNameError
+ * @param setSnackBarMessage
+ * @param setIsSnackBarOpen
+ */
+export const stepSyncingProject = async (
+  progress: SyncProgress,
+  setProgress: (s: SyncProgress) => void,
+  project: Project,
+  isAdmin: boolean,
+  abortController: React.MutableRefObject<AbortController | undefined>,
+  setUniqueNameError: (s: boolean) => void,
+  setSnackBarMessage: Function,
+  setIsSnackBarOpen: Function
+) => {
+  if ((project.location === ProjectLocation.SYNCED && isAdmin)
+    || (project.location === ProjectLocation.LOCAL)) {
+    const res = await ApiUtils.generateRequest<any>({
+      requestPath: '/api/projects',
+      requestType: ApiUtils.RequestType.POST,
+      signal: abortController.current?.signal,
+      payload: mapProjectEntityToProjectDTO(project)
+    });
+    if (res.success) {
+      setProgress(SyncProgress.SYNCING_CORPORA);
+    } else {
+      if (res.response.statusCode === 403) {
+        setSnackBarMessage('You do not have permission to complete this operation');
+      } else if ((res.body?.message ?? "").includes("duplicate key")) {
+        setUniqueNameError(true);
+        setSnackBarMessage("Failed to sync project. Project name already exists");
+      } else {
+        setSnackBarMessage("Failed to sync project.");
+      }
+      console.error("Response failed: ", res.body);
+      setIsSnackBarOpen(true);
+      setProgress(SyncProgress.FAILED);
+    }
+  } else {
+    setProgress(SyncProgress.SYNCING_CORPORA);
+  }
+};
+
+/**
+ * exported for testing
+ * @param progress
+ * @param setProgress
+ * @param project
+ * @param containers
+ * @param setSnackBarMessage
+ * @param setIsSnackBarOpen
+ * @param syncWordsOrParts
+ */
+export const stepSyncingCorpora = async (
+  progress: SyncProgress,
+  setProgress: (s: SyncProgress) => void,
+  project: Project,
+  containers: Containers,
+  setSnackBarMessage: Function,
+  setIsSnackBarOpen: Function,
+  syncWordsOrParts: (project: Project, side?: AlignmentSide) => Promise<ResponseObject<ProjectTokenReport>|undefined>
+) => {
+  if (project.sourceCorpora?.corpora.some((c) => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some((c) => !c.words || c.words.length < 1)) {
+    if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some((c) => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some((c) => !c.words || c.words.length < 1)) {
+      setProgress(SyncProgress.FAILED);
+      return;
+    }
+    project.sourceCorpora = containers.sourceContainer;
+    project.targetCorpora = containers.targetContainer;
+  }
+  const res = await syncWordsOrParts(project);
+  if (!res?.success) {
+    if (res?.response.statusCode === 403) {
+      setSnackBarMessage('You do not have permission to sync corpora. Skipping corpora');
+    } else {
+      setSnackBarMessage('An unknown error occurred while attempting to sync corpora. Skipping corpora');
+    }
+    setIsSnackBarOpen(true);
+  }
+  setProgress(SyncProgress.SYNCING_ALIGNMENTS);
+};
+
+/**
+ * exported for testing
+ * @param progress
+ * @param setProgress
+ * @param project
+ * @param setSnackBarMessage
+ * @param setIsSnackBarOpen
+ * @param uploadAlignments
+ * @param syncAlignments
+ */
+export const stepSyncingAlignments = async (
+  progress: SyncProgress,
+  setProgress: (s: SyncProgress) => void,
+  project: Project,
+  setSnackBarMessage: Function,
+  setIsSnackBarOpen: Function,
+  uploadAlignments: (projectId?: string, controller?: AbortController) => Promise<ResponseObject<{}>|undefined>,
+  syncAlignments: (projectId?: string, controller?: AbortController) => Promise<boolean>
+) => {
+  if (project.location === ProjectLocation.LOCAL) {
+    const uploadResponse = await uploadAlignments(project.id);
+    if (!uploadResponse?.success) {
+      if (uploadResponse?.response.statusCode === 403) {
+        setSnackBarMessage('You do not have permission to upload alignment links. Skipping links');
+      } else {
+        setSnackBarMessage('An unknown error occurred while attempting to upload alignment links. Skipping links');
+      }
+      setIsSnackBarOpen(true);
+    }
+  } else {
+    const syncResponse = await syncAlignments(project.id);
+    if (!syncResponse) {
+      setSnackBarMessage('An error occurred while attempting to synchronize alignment links. Skipping links');
+      setIsSnackBarOpen(true);
+    }
+  }
+  setProgress(SyncProgress.UPDATING_PROJECT);
+};
+
+/**
+ * exported for testing
+ * @param progress
+ * @param setProgress
+ * @param project
+ * @param dbApi
+ * @param publishProject
+ * @param projectState
+ * @param setProjects
+ */
+export const stepUpdatingProject = async (
+  progress: SyncProgress,
+  setProgress: (s: SyncProgress) => void,
+  project: Project,
+  dbApi: DatabaseApi,
+  publishProject: (project: Project, state: ProjectState) => Promise<Project|undefined>,
+  projectState: ProjectStateType,
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>
+) => {
+  const currentTime = DateTime.now().toMillis();
+  project.updatedAt = currentTime;
+  project.lastSyncTime = currentTime;
+  project.location = ProjectLocation.SYNCED;
+  await dbApi.toggleCorporaUpdatedFlagOff(project.id);
+  // Update project state to Published.
+  const publishedProject = await publishProject(project, ProjectState.PUBLISHED);
+  project.lastSyncServerTime = publishedProject?.serverUpdatedAt;
+  project.serverUpdatedAt = publishedProject?.serverUpdatedAt;
+  await projectState.projectTable?.sync?.(project).catch(console.error);
+  setProjects((projects) =>
+    projects.map((p) => {
+      if (p.id !== project.id) return p;
+      p.updatedAt = project.updatedAt;
+      p.lastSyncTime = project.lastSyncTime;
+      p.serverUpdatedAt = project.serverUpdatedAt;
+      p.lastSyncServerTime = project.lastSyncServerTime;
+      return p;
+    }));
+  setProgress(SyncProgress.IDLE);
+};
 
 /**
  * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
@@ -103,116 +308,57 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SWITCH_TO_PROJECT: {
-          if (preferences?.currentProject && preferences?.currentProject === project?.id && preferences?.initialized === InitializationStates.INITIALIZED) {
-            setProgress(SyncProgress.SYNCING_PROJECT);
-          } else {
-            try {
-              await projectState.linksTable.reset();
-            } catch(x) {
-              console.error(x);
-            }
-            projectState.linksTable.setSourceName(project.id);
-            setPreferences((p: UserPreference | undefined) => ({
-              ...(p ?? {}) as UserPreference,
-              currentProject: project.id,
-              initialized: InitializationStates.UNINITIALIZED,
-              onInitialized: [ ...(p?.onInitialized ?? []), () => setProgress(SyncProgress.SYNCING_PROJECT) ]
-            }));
-          }
+          await stepSwitchToProject(progress,
+            setProgress,
+            preferences,
+            setPreferences,
+            project,
+            projectState);
           break;
         }
         case SyncProgress.SYNCING_PROJECT: {
-          if ((project.location === ProjectLocation.SYNCED && isAdmin)
-              || (project.location === ProjectLocation.LOCAL)) {
-            const res = await ApiUtils.generateRequest<any>({
-              requestPath: '/api/projects',
-              requestType: ApiUtils.RequestType.POST,
-              signal: abortController.current?.signal,
-              payload: mapProjectEntityToProjectDTO(project)
-            });
-            if (res.success) {
-              setProgress(SyncProgress.SYNCING_CORPORA);
-            } else {
-              if (res.response.statusCode === 403) {
-                setSnackBarMessage('You do not have permission to complete this operation');
-              } else if ((res.body?.message ?? "").includes("duplicate key")) {
-                setUniqueNameError(true);
-                setSnackBarMessage("Failed to sync project. Project name already exists");
-              } else {
-                setSnackBarMessage("Failed to sync project.");
-              }
-              console.error("Response failed: ", res.body);
-              setIsSnackBarOpen(true);
-              setProgress(SyncProgress.FAILED);
-            }
-          } else {
-            setProgress(SyncProgress.SYNCING_CORPORA);
-          }
+          await stepSyncingProject(
+            progress,
+            setProgress,
+            project,
+            isAdmin,
+            abortController,
+            setUniqueNameError,
+            setSnackBarMessage,
+            setIsSnackBarOpen);
           break;
         }
         case SyncProgress.SYNCING_CORPORA: {
-          if (project.sourceCorpora?.corpora.some((c) => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some((c) => !c.words || c.words.length < 1)) {
-            if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some((c) => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some((c) => !c.words || c.words.length < 1)) {
-              setProgress(SyncProgress.FAILED);
-              break;
-            }
-            project.sourceCorpora = containers.sourceContainer;
-            project.targetCorpora = containers.targetContainer;
-          }
-          const res = await syncWordsOrParts(project);
-          if (!res?.success) {
-            if (res?.response.statusCode === 403) {
-              setSnackBarMessage('You do not have permission to sync corpora. Skipping corpora');
-            } else {
-              setSnackBarMessage('An unknown error occurred while attempting to sync corpora. Skipping corpora');
-            }
-            setIsSnackBarOpen(true);
-          }
-          setProgress(SyncProgress.SYNCING_ALIGNMENTS);
+          await stepSyncingCorpora(
+            progress,
+            setProgress,
+            project,
+            containers,
+            setSnackBarMessage,
+            setIsSnackBarOpen,
+            syncWordsOrParts);
           break;
         }
         case SyncProgress.SYNCING_ALIGNMENTS: {
-          if (project.location === ProjectLocation.LOCAL) {
-            const uploadResponse = await uploadAlignments(project.id);
-            if (!uploadResponse?.success) {
-              if (uploadResponse?.response.statusCode === 403) {
-                setSnackBarMessage('You do not have permission to upload alignment links. Skipping links');
-              } else {
-                setSnackBarMessage('An unknown error occurred while attempting to upload alignment links. Skipping links');
-              }
-              setIsSnackBarOpen(true);
-            }
-          } else {
-            const syncResponse = await syncAlignments(project.id);
-            if (!syncResponse) {
-              setSnackBarMessage('An error occurred while attempting to synchronize alignment links. Skipping links');
-              setIsSnackBarOpen(true);
-            }
-          }
-          setProgress(SyncProgress.UPDATING_PROJECT);
+          await stepSyncingAlignments(
+            progress,
+            setProgress,
+            project,
+            setSnackBarMessage,
+            setIsSnackBarOpen,
+            uploadAlignments,
+            syncAlignments);
           break;
         }
         case SyncProgress.UPDATING_PROJECT: {
-          const currentTime = DateTime.now().toMillis();
-          project.updatedAt = currentTime;
-          project.lastSyncTime = currentTime;
-          project.location = ProjectLocation.SYNCED;
-          await dbApi.toggleCorporaUpdatedFlagOff(project.id);
-          // Update project state to Published.
-          const publishedProject = await publishProject(project, ProjectState.PUBLISHED);
-          project.lastSyncServerTime = publishedProject?.serverUpdatedAt;
-          project.serverUpdatedAt = publishedProject?.serverUpdatedAt;
-          await projectState.projectTable?.sync?.(project).catch(console.error);
-          setProjects((projects) =>
-            projects.map((p) => {
-              if (p.id !== project.id) return p;
-              p.updatedAt = project.updatedAt;
-              p.lastSyncTime = project.lastSyncTime;
-              p.serverUpdatedAt = project.serverUpdatedAt;
-              p.lastSyncServerTime = project.lastSyncServerTime;
-              return p;
-            }));
-          setProgress(SyncProgress.IDLE);
+          await stepUpdatingProject(
+            progress,
+            setProgress,
+            project,
+            dbApi,
+            publishProject,
+            projectState,
+            setProjects);
           break;
         }
       }
