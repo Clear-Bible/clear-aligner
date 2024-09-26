@@ -17,9 +17,6 @@ const createInterLinearMap = async (linksTable: LinksTable, verses: Verse[], tar
 
   for (const verse of verses) {
     const bcvId = verse.bcvId;
-    const bcvId1 = verse.bcvId;
-    const bcvId2 = verse.bcvId;
-    const bcvId3 = verse.bcvId;
     const links = await linksTable.findByBCV(AlignmentSide.SOURCE, bcvId.book!, bcvId.chapter!, bcvId.verse!); //database query
     for (const link of links) {
       for (const sourceWordId of link.sources) {
