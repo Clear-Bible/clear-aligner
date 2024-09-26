@@ -21,8 +21,9 @@ import { Box } from '@mui/system';
 import AppBar from '@mui/material/AppBar';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 import { SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
+import { DEFAULT_DOCUMENT_TITLE } from '../../common/constants';
 
-const defaultDocumentTitle = 'ClearAligner';
+
 
 interface AlignmentEditorProps {
   useDialogStyling?: boolean;
@@ -55,12 +56,12 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   useEffect(() => {
     if (currentPosition) {
       layoutCtx.setWindowTitle(
-        `${defaultDocumentTitle}: ${
+        `${DEFAULT_DOCUMENT_TITLE}: ${
           currentPosition.getBookInfo()?.EnglishBookName
         } ${currentPosition?.chapter}:${currentPosition?.verse}`
       );
     } else {
-      layoutCtx.setWindowTitle(defaultDocumentTitle);
+      layoutCtx.setWindowTitle(DEFAULT_DOCUMENT_TITLE);
     }
   }, [currentPosition, layoutCtx]);
 
