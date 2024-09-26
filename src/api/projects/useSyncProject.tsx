@@ -13,7 +13,6 @@ import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { useDatabase } from '../../hooks/useDatabase';
-import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
 import { getUserGroups } from '../../server/amplifySetup';
 
 export enum SyncProgress {
@@ -57,8 +56,6 @@ export const useSyncProject = (): SyncState => {
   const [canceled, setCanceled] = useState<boolean>(false);
   const [uniqueNameError, setUniqueNameError] = useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
-  const groups = useCurrentUserGroups({ forceRefresh: true });
-  const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
@@ -122,11 +119,11 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SYNCING_PROJECT: {
-          if ((project.location === ProjectLocation.SYNCED && isAdmin)
+          if ((project.location === ProjectLocation.SYNCED)
               || (project.location === ProjectLocation.LOCAL)) {
             const res = await ApiUtils.generateRequest<any>({
               requestPath: '/api/projects',
-              requestType: ApiUtils.RequestType.POST,
+              requestType: project.location === ProjectLocation.SYNCED ? ApiUtils.RequestType.PATCH : ApiUtils.RequestType.POST,
               signal: abortController.current?.signal,
               payload: mapProjectEntityToProjectDTO(project)
             });
@@ -223,7 +220,6 @@ export const useSyncProject = (): SyncState => {
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setIsSnackBarOpen,
-    isAdmin,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
     dbApi,
     setProjects,

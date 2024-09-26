@@ -21,6 +21,7 @@ export enum ProjectState {
 export interface ProjectDTO {
   id?: string; // uuid
   name: string;
+  members: string[];
   state?: ProjectState;
   corpora: CorpusDTO[];
   updatedAt?: number;
@@ -36,6 +37,7 @@ export enum ProjectLocation {
 export class ProjectEntity {
   id?: string; // uuid
   name: string;
+  members: string;
   location: ProjectLocation;
   serverState?: ProjectState;
   lastSyncTime?: number;
@@ -47,12 +49,14 @@ export class ProjectEntity {
   constructor() {
     this.name = '';
     this.location = ProjectLocation.LOCAL;
+    this.members = '[]';
   }
 }
 
 export const mapProjectEntityToProjectDTO = (project: Project): ProjectDTO => ({
   id: project.id,
   name: project.name,
+  members: project.members ?? [],
   state: project.state ?? ProjectState.DRAFT,
   corpora: [...(project.targetCorpora?.corpora ?? []), ...(project.sourceCorpora?.corpora ?? [])]
     .map(mapCorpusEntityToCorpusDTO)
@@ -68,6 +72,7 @@ export const mapProjectDtoToProject = (projectEntity: ProjectDTO, location: Proj
   return {
     id: projectEntity.id,
     name: projectEntity.name,
+    members: projectEntity.members,
     abbreviation: targetCorpus.name,
     fileName: targetCorpus.fileName ?? "",
     languageCode: targetCorpus.language.code,

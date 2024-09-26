@@ -328,9 +328,9 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
 
   const isFormReadOnly = useMemo<boolean>(() => {
     if (project.location === ProjectLocation.REMOTE) return true;
-    if (project.location === ProjectLocation.SYNCED && (!isAdmin || !isSignedIn)) return true;
+    if (project.location === ProjectLocation.SYNCED && !isSignedIn) return true;
     return false;
-  }, [isAdmin, isSignedIn, project.location]);
+  }, [isSignedIn, project.location]);
 
   return (
     <>
