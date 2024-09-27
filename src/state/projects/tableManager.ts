@@ -29,6 +29,7 @@ export interface Project {
   lastSyncServerTime?: number;
   location: ProjectLocation;
   state?: ProjectState;
+  members?: string[];
 }
 
 export interface ProjectDto {
@@ -127,6 +128,7 @@ export class ProjectTable extends VirtualTable {
       const projectEntity: ProjectEntity = {
         id: project.id,
         name: project.name,
+        members: JSON.stringify(project.members ?? []),
         location: project.location ?? ProjectLocation.LOCAL,
         serverState: project.state,
         lastSyncTime: project.lastSyncTime,
@@ -223,6 +225,7 @@ export class ProjectTable extends VirtualTable {
         if (!projectEntities.find(entity => entity.id === src.id)) {
           const project: ProjectEntity = {
             ...src,
+            members: JSON.stringify(src.members ?? []),
             location: ProjectLocation.LOCAL,
             serverState: undefined,
             lastSyncServerTime: undefined,
@@ -232,11 +235,12 @@ export class ProjectTable extends VirtualTable {
         }
       }
       this.projects = new Map<string, Project>(projectEntities.map((entity) => {
-        const p = dataSources?.find(src => src.id === entity.id);
+        const p: Project | undefined = dataSources?.find(src => src.id === entity.id);
         return [entity.id!, {
           ...(p ?? {}),
           ...entity,
-          name: entity.name
+          name: entity.name,
+          members: JSON.parse(entity.members ?? '[]')
         } as Project];
       }));
     }
