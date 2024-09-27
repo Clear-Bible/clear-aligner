@@ -20,7 +20,7 @@ export interface PublishState {
 export const usePublishProject = (): PublishState => {
   const {cancel, cancelToken, reset} = useCancelTask();
   const { projectState, setProjects } = useContext(AppContext);
-  const [publishState, setPublishState] = React.useState<ProjectState>();
+  const [publishState, setPublishState] = useState<ProjectState>();
   const [progress, setProgress] = useState<Progress>(Progress.IDLE);
   const abortController = useRef<AbortController | undefined>();
 

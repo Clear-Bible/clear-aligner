@@ -30,9 +30,17 @@ export default {
   jest: {
     configure: (jestConfig) => {
       jestConfig.testMatch = [
-        '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
+        '<rootDir>/src/**/__tests__/**/*.{spec,test}.{js,jsx,ts,tsx}',
         '<rootDir>/src/**/*.ui.{spec,test}.{js,jsx,ts,tsx}'
       ];
+      jestConfig.globals = {
+        '__DEV__': true
+      };
+      jestConfig.moduleNameMapper = {
+        '.*amplifySetup.*': require.resolve('./src/__tests__/mockModules/mockAmplifySetup'),
+        '@uidotdev/usehooks': require.resolve('./src/__tests__/mockModules/uidotdev/usehooks')
+      };
+      jestConfig.extensionsToTreatAsEsm = ['.ts']
       return jestConfig;
     }
   },
