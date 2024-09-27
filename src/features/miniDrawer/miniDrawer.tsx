@@ -61,6 +61,7 @@ export const MiniDrawer = () => {
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
+            borderRight: 'none !important'
           },
         }}
         variant="permanent"
