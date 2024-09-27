@@ -180,7 +180,7 @@ const lightTheme: Theme = createTheme({
       styleOverrides:{
         root: {
           paddingLeft: "12px !important",
-          paddingTop: "12px",
+          paddingTop: "5px",
           paddingRight: "12px !important",
           paddingBottom: "6px",
           maxHeight: "58px !important",
@@ -378,7 +378,7 @@ const darkTheme = createTheme({
       styleOverrides:{
         root: {
           paddingLeft: "12px !important",
-          paddingTop: "12px",
+          paddingTop: "5px",
           paddingRight: "12px !important",
           paddingBottom: "6px",
           maxHeight: "58px !important",
