@@ -72,7 +72,7 @@ export const MiniDrawer = () => {
                sx={{height: '100vh'}}>
           <Stack>
             <ListItem key={ListItems.Icon.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
-              <SvgIcon sx={{height: '35px', width: '35px'}}>
+              <SvgIcon sx={{height: '42px', width: '42px'}}>
                 {theme.palette.mode === 'light' ? <LogoLight /> : <LogoDark/> }
               </SvgIcon>
             </ListItem>
