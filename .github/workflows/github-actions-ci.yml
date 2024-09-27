@@ -5,7 +5,7 @@ on:
     branches:
       - "**"
 jobs:
-  lint:
+  lint-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +22,9 @@ jobs:
       - name: Perform linting
         run: |
           yarn lint
+      - name: Run UI tests
+        run: |
+          yarn test-ui --all --ci --forceExit
   build-mac:
     needs: lint
     runs-on: macos-13
