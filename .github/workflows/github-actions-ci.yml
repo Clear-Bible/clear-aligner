@@ -35,7 +35,7 @@ jobs:
           yarn lint
       - name: Run UI tests
         run: |
-          yarn test-ui --all --ci --forceExit
+          yarn test-ui --all --silent --ci --forceExit
   build-mac:
     needs: lint-test
     runs-on: macos-13
