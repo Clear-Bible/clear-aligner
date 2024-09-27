@@ -76,10 +76,9 @@ test('useSyncProject:stepSyncingProject', async () => {
     progress,
     mockSetProgress,
     project,
-    false,
     undefined as any as React.MutableRefObject<AbortController|undefined>,
     (s: boolean) => undefined,
-    () => undefined,
+    (s: boolean) => undefined,
     () => undefined);
   expect(progress).toBe(SyncProgress.SYNCING_CORPORA);
 });

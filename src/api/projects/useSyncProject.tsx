@@ -19,6 +19,9 @@ import { Containers } from '../../hooks/useCorpusContainers';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import ResponseObject = ApiUtils.ResponseObject;
 
+/**
+ * enum for indicating which step of the sync operation is in progress
+ */
 export enum SyncProgress {
   IDLE,
   IN_PROGRESS,
@@ -34,6 +37,9 @@ export enum SyncProgress {
   CANCELED
 }
 
+/**
+ * current synchronization state
+ */
 export interface SyncState {
   sync: (project: Project) => void;
   progress: SyncProgress;
@@ -44,13 +50,16 @@ export interface SyncState {
 }
 
 /**
- * exported for testing
- * @param progress
- * @param setProgress
- * @param preferences
- * @param setPreferences
- * @param project
- * @param projectState
+ * switch to project step, only used when the current project in {@link AppContext}
+ * isn't equal to the project id being synced
+ *
+ * WARNING: exported for testing, not intended for reuse in other parts of the application
+ * @param progress current progress
+ * @param setProgress setter callback
+ * @param preferences current {@link UserPreference}
+ * @param setPreferences callback for setting preferences
+ * @param project project being operated on
+ * @param projectState {@link ProjectStateType}
  */
 export const stepSwitchToProject = async (progress: SyncProgress,
                                     setProgress: (s: SyncProgress) => void,
@@ -77,14 +86,16 @@ export const stepSwitchToProject = async (progress: SyncProgress,
 };
 
 /**
- * exported for testing
- * @param progress
- * @param setProgress
- * @param project
- * @param abortController
- * @param setUniqueNameError
- * @param setSnackBarMessage
- * @param setIsSnackBarOpen
+ * synchronization of project metadata step
+ *
+ * WARNING: exported for testing, not intended for reuse in other parts of the application
+ * @param progress current progress
+ * @param setProgress setter callback
+ * @param project project being operated on
+ * @param abortController React ref for a {@link AbortController}
+ * @param setUniqueNameError dependency, callback for setting an error state
+ * @param setSnackBarMessage dependency for setting the snackbar message
+ * @param setIsSnackBarOpen dependency for opening the snackbar
  */
 export const stepSyncingProject = async (
   progress: SyncProgress,
@@ -124,14 +135,16 @@ export const stepSyncingProject = async (
 };
 
 /**
- * exported for testing
- * @param progress
- * @param setProgress
- * @param project
- * @param containers
- * @param setSnackBarMessage
- * @param setIsSnackBarOpen
- * @param syncWordsOrParts
+ * corpora synchronization step
+ *
+ * WARNING: exported for testing, not intended for reuse in other parts of the application
+ * @param progress current progress
+ * @param setProgress setter callback
+ * @param project project being operated on
+ * @param containers dependency, corpus {@link Containers}
+ * @param setSnackBarMessage dependency for setting the snackbar message
+ * @param setIsSnackBarOpen dependency for opening the snackbar
+ * @param syncWordsOrParts dependency for synchronization callback from {@link useSyncWordsOrParts}
  */
 export const stepSyncingCorpora = async (
   progress: SyncProgress,
@@ -163,14 +176,16 @@ export const stepSyncingCorpora = async (
 };
 
 /**
- * exported for testing
- * @param progress
- * @param setProgress
- * @param project
- * @param setSnackBarMessage
- * @param setIsSnackBarOpen
- * @param uploadAlignments
- * @param syncAlignments
+ * alignment sync step
+ *
+ * WARNING: exported for testing, not intended for reuse in other parts of the application
+ * @param progress current progress
+ * @param setProgress setter callback
+ * @param project project being operated on
+ * @param setSnackBarMessage dependency for setting the snackbar message
+ * @param setIsSnackBarOpen dependency for opening the snackbar
+ * @param uploadAlignments dependency for uploading alignments to the server
+ * @param syncAlignments dependency for performing a synchronization (journal entry upload)
  */
 export const stepSyncingAlignments = async (
   progress: SyncProgress,
@@ -202,14 +217,16 @@ export const stepSyncingAlignments = async (
 };
 
 /**
- * exported for testing
- * @param progress
- * @param setProgress
- * @param project
- * @param dbApi
- * @param publishProject
- * @param projectState
- * @param setProjects
+ * performs the updating project step
+ *
+ * WARNING: exported for testing, not intended for reuse in other parts of the application
+ * @param progress current progress
+ * @param setProgress setter callback
+ * @param project project being operated on
+ * @param dbApi {@link DatabaseApi}
+ * @param publishProject publish project dependency from {@link usePublishProject}
+ * @param projectState {@link ProjectStateType}
+ * @param setProjects dependency for the setProjects callback from {@link AppContext}
  */
 export const stepUpdatingProject = async (
   progress: SyncProgress,
