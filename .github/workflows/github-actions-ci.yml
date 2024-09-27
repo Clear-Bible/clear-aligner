@@ -26,7 +26,7 @@ jobs:
         run: |
           yarn test-ui --all --ci --forceExit
   build-mac:
-    needs: lint
+    needs: lint-test
     runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
           path: dist/**.dmg
           retention-days: 7
   build-win:
-    needs: lint
+    needs: lint-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
