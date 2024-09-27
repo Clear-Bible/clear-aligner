@@ -130,7 +130,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             <Typography
               variant="h4"
               color={'primary'}
-              sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
+              sx={{ marginRight: 5, fontWeight: 'bold', fontSize: '24px' }}>Projects</Typography>
           </Grid>
           <Grid item sx={{ px: 2 }}>
             {
