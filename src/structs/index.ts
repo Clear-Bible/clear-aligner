@@ -496,3 +496,8 @@ export class NamedContainers {
     this.targets = inputContainers.find(c => c.id === AlignmentSide.TARGET);
   }
 }
+
+export interface LinkWords {
+  link: Link,
+  words: Word[]
+}

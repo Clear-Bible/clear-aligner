@@ -1,44 +1,98 @@
 import { WordDisplay } from '../wordDisplay';
-import { Corpus, Link, NamedContainers, Verse, Word } from '../../structs';
+import { Corpus, Link, LinkWords, NamedContainers, Verse, Word } from '../../structs';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { useDataLastUpdated, useFindLinksByBCV } from '../../state/links/tableManager';
 import React, { ReactElement, useMemo } from 'react';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import { Box, Stack } from '@mui/material';
+import { Stack } from '@mui/material';
 
 export interface InterlinearVerseDisplayProps extends LimitedToLinks {
   containers?: NamedContainers;
   verse: Verse;
   allowGloss?: boolean;
-  wordMap: Map<string, Word[]> | undefined;
+  wordMap: Map<string, LinkWords[]> | undefined;
 }
 
-const determineInterlinearTargetView = (
-  corpus: Corpus | undefined,
-  linkMap: Map<string, Link[]> | undefined,
-  sourceTokens: Word[],
-  wordMap: Map<string, Word[]> | undefined,
-  allowGloss: boolean | undefined) => {
-  const targetTokens =
-    (sourceTokens?.map(token => {
-      return wordMap?.get(token.id) ?? [];
-    }).filter(Boolean) ?? [])
+const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
+
+const determineInterlinearTargetView = (targetCorpus: Corpus,
+                                        linkMap: Map<string, Link[]>,
+                                        wordMap: Map<string, LinkWords[]>,
+                                        displayedLinkIds: Set<string>,
+                                        sourceTokens: Word[],
+                                        allowGloss: boolean = false) => {
+  const targetLinkWords =
+    (sourceTokens?.map(token => wordMap?.get(token.id) ?? [])
+      .filter(Boolean) ?? [])
       .flat();
-  if (targetTokens.length < 1) {
+  if (targetLinkWords.length < 1) {
     return <></>;
   }
-  return targetTokens
-    .map((token, tokenIndex) =>
-      <WordDisplay
-        key={`${corpus?.id}/${tokenIndex}/${token?.id}`}
-        links={linkMap}
-        corpus={corpus}
-        parts={targetTokens}
-        allowGloss={allowGloss}
-      />);
+  return <Stack
+    direction={'row'}
+    useFlexGap
+    spacing={0}>
+    {(targetLinkWords.map((linkWords, linkWordIndex) => {
+      const workTokenWords = displayedLinkIds?.has(linkWords.link.id!)
+        ? [linkWords.words[0]]
+          .map(linkWord => ({
+            ...linkWord,
+            text: REPEATED_LINK_PLACEHOLDER_CHAR,
+            after: undefined
+          }))
+        : linkWords.words;
+      displayedLinkIds?.add(linkWords.link.id!);
+      const targetTokenWords = groupPartsIntoWords(workTokenWords);
+      return targetTokenWords
+        .map((tokens, tokensIndex) =>
+          <WordDisplay
+            key={`${targetCorpus?.id}/${linkWordIndex}/${tokensIndex}/${tokens.at(0)?.id}`}
+            links={linkMap}
+            corpus={targetCorpus}
+            parts={tokens}
+            allowGloss={allowGloss}
+          />);
+    }).filter(Boolean) ?? [])
+      .flat()}
+  </Stack>;
 };
 
+const determineInterlinearView = (
+  sourceCorpus: Corpus,
+  targetCorpus: Corpus,
+  linkMap: Map<string, Link[]>,
+  wordMap: Map<string, LinkWords[]>,
+  verseTokens: Word[][],
+  allowGloss: boolean = false) => {
+  const displayedLinkIds = new Set<string>();
+  return (verseTokens || [])
+    .map((wordTokens: Word[], wordIndex): ReactElement =>
+      <>
+        <Stack
+          direction={'row'}
+          useFlexGap
+          spacing={2}>
+          <Stack
+            direction={'column'}
+            useFlexGap
+            spacing={0}>
+            <WordDisplay
+              key={`${sourceCorpus?.id}/${wordIndex}/${wordTokens.at(0)?.id}`}
+              links={linkMap}
+              corpus={sourceCorpus}
+              parts={wordTokens}
+              allowGloss={allowGloss}
+            />
+            {determineInterlinearTargetView(
+              targetCorpus, linkMap,
+              wordMap, displayedLinkIds,
+              wordTokens, allowGloss)}
+          </Stack>
+        </Stack>
+      </>
+    );
+};
 
 /**
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
@@ -90,30 +144,10 @@ export const InterlinearVerseDisplay = ({
     return result;
   }, [allLinks]);
 
-  console.log('verseTokens', verseTokens);
-  console.log('wordMap', wordMap);
-  console.log('allLinks', allLinks);
-  console.log('linkMap', linkMap);
-
   return <>
-    {(verseTokens || []).map(
-      (wordTokens: Word[], wordIndex): ReactElement =>
-        <>
-          <Stack spacing={2}>
-            <Box>
-              <WordDisplay
-                key={`${sourceCorpus?.id}/${wordIndex}/${wordTokens.at(0)?.id}`}
-                links={linkMap}
-                corpus={sourceCorpus}
-                parts={wordTokens}
-                allowGloss={allowGloss}
-              />
-            </Box>
-            <Box>
-              {determineInterlinearTargetView(targetCorpus, linkMap, wordTokens, wordMap, allowGloss)}
-            </Box>
-          </Stack>
-        </>
-    )}
+    {determineInterlinearView(
+      sourceCorpus!, targetCorpus!,
+      linkMap!, wordMap!,
+      verseTokens!, allowGloss)}
   </>;
 };

@@ -135,6 +135,9 @@ export const CorpusComponent = ({
   );
 
   useEffect(() => {
+    setVisibleVerses(initialVerses);
+  }, [initialVerses, visibleVerses]);
+  useEffect(() => {
     setChangedVisibleVerses?.(visibleVerses, viewCorpora);
   }, [setChangedVisibleVerses, viewCorpora, visibleVerses]);
 

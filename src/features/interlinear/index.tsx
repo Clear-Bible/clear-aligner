@@ -1,4 +1,4 @@
-import { CorpusContainer, LinkStatus, NamedContainers, Verse, Word } from '../../structs';
+import { CorpusContainer, LinkStatus, LinkWords, NamedContainers, Verse } from '../../structs';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import React, { Fragment, ReactElement, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import useDebug from '../../hooks/useDebug';
@@ -14,13 +14,14 @@ interface InterlinearProps {
   visibleSourceVerses: Verse[];
 }
 
+
 const createInterLinearMap = async (
   linksTable: LinksTable,
   verses: Verse[],
   targetContainer: CorpusContainer,
   includeRejected = false):
-  Promise<Map<string, Word[]>> => {
-  const result = new Map<string, Word[]>();
+  Promise<Map<string, LinkWords[]>> => {
+  const result = new Map<string, LinkWords[]>();
 
   for (const verse of verses) {
     const bcvId = verse.bcvId;
@@ -31,15 +32,20 @@ const createInterLinearMap = async (
         continue;
       }
       for (const sourceWordId of link.sources) {
-        const targetWords = result.get(sourceWordId) ?? [];
+        const linkWord = {
+          link,
+          words: []
+        } as LinkWords;
         for (const targetWordId of link.targets) {
           const targetWord = targetContainer.wordByReferenceString(targetWordId);
           if (targetWord) {
-            targetWords.push(targetWord);
+            linkWord.words.push(targetWord);
           }
         }
-        if (targetWords.length > 0) {
-          result.set(sourceWordId, targetWords);
+        if (linkWord.words.length > 0) {
+          const linkWords = result.get(sourceWordId) ?? [];
+          linkWords.push(linkWord);
+          result.set(sourceWordId, linkWords);
         }
       }
     }
@@ -49,7 +55,7 @@ const createInterLinearMap = async (
 
 const determineInterLinearView = async (
   verses: Verse[],
-  wordMap: Map<string, Word[]> | undefined,
+  wordMap: Map<string, LinkWords[]> | undefined,
   containers: NamedContainers) => {
   return verses.map((verse, verseIndex) => {
     const languageInfo = containers.sources?.languageAtReferenceString(verse.bcvId.toReferenceString());
@@ -111,7 +117,7 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
   useDebug('InterlinearComponent');
 
   const { projectState } = useContext(AppContext);
-  const [wordMap, setWordMap] = useState<Map<string, Word[]> | undefined>();
+  const [wordMap, setWordMap] = useState<Map<string, LinkWords[]> | undefined>();
   const namedContainers = useMemo(() => {
     return new NamedContainers(containers);
   }, [containers]);
