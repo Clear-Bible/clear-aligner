@@ -11,7 +11,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Drawer, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
 import { grey } from '@mui/material/colors';
-
+import SvgIcon from '@mui/material/SvgIcon';
+import { ReactComponent as LogoLight } from '../../common/assets/clearAlignerLogoLight.svg'
+import { ReactComponent as LogoDark } from '../../common/assets/clearAlignerLogoDark.svg'
 
 
 /**
@@ -37,6 +39,9 @@ export const MiniDrawer = () => {
       key: '/concordance',
       path: '/concordance',
       displayName: 'Concordance'
+    },
+    "Icon": {
+      key: 'clearAlignerIcon'
     }
 
   }
@@ -56,6 +61,7 @@ export const MiniDrawer = () => {
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
+            borderRight: 'none !important'
           },
         }}
         variant="permanent"
@@ -66,20 +72,25 @@ export const MiniDrawer = () => {
                alignItems={"center"}
                sx={{height: '100vh'}}>
           <Stack>
-            <ListItem key={ListItems.Home.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
+            <ListItem key={ListItems.Icon.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
+              <SvgIcon sx={{height: '42px', width: '42px'}}>
+                {theme.palette.mode === 'light' ? <LogoLight /> : <LogoDark/> }
+              </SvgIcon>
+            </ListItem>
+            <ListItem key={ListItems.Home.key} sx={{ display: 'flex', flexDirection: 'column', px: 0 }}>
               <Tooltip title={ListItems.Home.displayName} placement="right" arrow>
                 <IconButton
                   onClick={() => {
-                    navigate({ pathname: ListItems.Home.path })
+                    navigate({ pathname: ListItems.Home.path });
                   }}
                   color={selectedIndex === ListItems.Home.path ? 'primary' : 'default'}
                   sx={{
                     p: 1,
-                  backgroundColor: selectedIndex === ListItems.Home.path ?
-                    (theme.palette.mode === 'light' ? grey['400'] : grey['600'])
-                    : null,
+                    backgroundColor: selectedIndex === ListItems.Home.path ?
+                      (theme.palette.mode === 'light' ? grey['400'] : grey['600'])
+                      : null,
                     '&:hover': {
-                    backgroundColor: theme.palette.mode === 'light' ? grey['400'] : grey['600']
+                      backgroundColor: theme.palette.mode === 'light' ? grey['400'] : grey['600']
                     }
                   }}
                 >
@@ -87,7 +98,7 @@ export const MiniDrawer = () => {
                 </IconButton>
               </Tooltip>
             </ListItem>
-            <ListItem key={ListItems.Alignment.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
+            <ListItem key={ListItems.Alignment.key} sx={{ display: 'flex', flexDirection: 'column', px: 0 }}>
               <Tooltip title={ListItems.Alignment.displayName} placement="right" arrow>
                 <IconButton
                   onClick={() => {
