@@ -444,7 +444,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 width: '100%',
                 height: '100%'
               }}
-              onClick={!isSettingsMenuOpen ? (e) => {
+              onClick={!(isSettingsMenuOpen || isProjectSharingDialogOpen) ? (e) => {
                 e.preventDefault();
                 !isCurrentProject && updateCurrentProject();
               } : undefined}>
