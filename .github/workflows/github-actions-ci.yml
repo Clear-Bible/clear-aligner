@@ -5,7 +5,7 @@ on:
     branches:
       - "**"
 jobs:
-  lint:
+  lint-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,11 +19,25 @@ jobs:
         run: |
           sudo apt-get install -y python3-pip
           pip3 install regex
+      - name: Configure environment
+        run: |
+          echo CA_AWS_ENDPOINT="${CA_AWS_ENDPOINT}">> .env
+          echo CA_AWS_COGNITO_USER_POOL_ID="${CA_AWS_COGNITO_USER_POOL_ID}">> .env
+          echo CA_AWS_COGNITO_USER_POOL_CLIENT_ID="${CA_AWS_COGNITO_USER_POOL_CLIENT_ID}">> .env
+          echo CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL="${CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}">> .env
+        env:
+          CA_AWS_ENDPOINT: ${{ secrets.CA_AWS_ENDPOINT }}
+          CA_AWS_COGNITO_USER_POOL_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_ID }}
+          CA_AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_CLIENT_ID }}
+          CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: ${{ secrets.CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL }}
       - name: Perform linting
         run: |
           yarn lint
+      - name: Run UI tests
+        run: |
+          yarn test-ui --all --silent --ci --forceExit
   build-mac:
-    needs: lint
+    needs: lint-test
     runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +77,7 @@ jobs:
           path: dist/**.dmg
           retention-days: 7
   build-win:
-    needs: lint
+    needs: lint-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

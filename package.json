@@ -100,9 +100,10 @@
     "@storybook/testing-library": "^0.2.2",
     "@testing-library/jest-dom": "^5.16.3",
     "@testing-library/react": "^13.0.1",
+    "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^13.5.0",
     "@types/electron": "^1.6.10",
-    "@types/jest": "^27.4.1",
+    "@types/jest": "^29.5.13",
     "@types/node": "^20.12.7",
     "@types/react": "^18.2.77",
     "@types/react-dom": "^18",
@@ -120,6 +121,7 @@
     "rollup": "^2.70.1",
     "rollup-plugin-postcss": "^4.0.2",
     "storybook": "^7.5.3",
+    "ts-jest": "^29.2.5",
     "wait-on": "^7.0.1"
   },
   "resolutions": {

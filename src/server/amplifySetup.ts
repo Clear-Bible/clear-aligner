@@ -4,7 +4,7 @@ import { RestApiOptionsBase } from '@aws-amplify/api-rest/src/types';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
-const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
+const environmentVariables = (((window as any).environmentVariables ?? {}) as EnvironmentVariables);
 
 export const OverrideCaApiEndpoint = environmentVariables.caApiEndpoint;
 export const OverrideUserPoolId = environmentVariables.userPoolId;
