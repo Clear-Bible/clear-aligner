@@ -19,13 +19,13 @@ import { AlignmentSide } from '../../common/data/project/corpus';
 interface PolyglotProps {
   containers: CorpusContainer[];
   position: BCVWP | null;
-  setVisibleSourceVerses?: (verses: Verse[]) => void;
+  setNewVisibleVerses?: (verses: Verse[], corpus: CorpusContainer) => void;
 }
 
 export const Polyglot: React.FC<PolyglotProps> = ({
                                                     containers,
                                                     position,
-                                                    setVisibleSourceVerses}) => {
+                                                    setNewVisibleVerses}) => {
   useDebug('Polyglot');
 
   const { preferences } = React.useContext(AppContext);
@@ -102,7 +102,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({
                     targets: containers?.find(c => c.id === AlignmentSide.TARGET)
                   }}
                   position={position}
-                  setVisibleSourceVerses={setVisibleSourceVerses}
+                  setChangedVisibleVerses={setNewVisibleVerses}
                 />
               </Card>
             );

@@ -26,7 +26,7 @@ export interface CorpusProps {
     sources?: CorpusContainer,
     targets?: CorpusContainer
   },
-  setVisibleSourceVerses?: ((verses: Verse[]) => void)
+  setChangedVisibleVerses?: ((verses: Verse[], corpus: CorpusContainer) => void)
 }
 
 const determineCorpusView = async (
@@ -92,7 +92,7 @@ export const CorpusComponent = ({
                                   containers,
                                   position,
                                   viewCorpora,
-                                  setVisibleSourceVerses
+                                  setChangedVisibleVerses
                                 }: CorpusProps): ReactElement => {
   useDebug('Corpus');
 
@@ -134,7 +134,12 @@ export const CorpusComponent = ({
     [viewCorpora.corpora]
   );
 
-  useEffect(() => setVisibleVerses(initialVerses), [initialVerses]);
+  useEffect(() => {
+    if (viewCorpora.id === AlignmentSide.SOURCE) {
+      console.log('setChangedVisibleVerses', visibleVerses);
+    }
+    setChangedVisibleVerses?.(visibleVerses, viewCorpora);
+  }, [setChangedVisibleVerses, viewCorpora, visibleVerses]);
 
   const addBcvId = useCallback(() => {
     const firstExistingRef = visibleVerses?.at(0)?.bcvId ?? computedPosition;
@@ -214,12 +219,6 @@ export const CorpusComponent = ({
     const showAdd = !firstBcvId && !lastBcvId ? 'add' : null;
     return visibleVerses.length <= 1 ? 'remove' : showAdd;
   }, [viewCorpora, visibleVerses, verseKeys]);
-
-  useMemo(() => {
-    if (viewCorpora.id === AlignmentSide.SOURCE) {
-      setVisibleSourceVerses?.(visibleVerses);
-    }
-  }, [setVisibleSourceVerses, viewCorpora.id, visibleVerses]);
 
   useEffect(() => {
     determineCorpusView(

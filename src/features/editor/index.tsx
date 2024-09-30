@@ -2,8 +2,9 @@
  * This file contains the Editor component which is used in Alignment Editor
  * mode and wraps Polyglot, ControlPanel and ContextPanel.
  */
-import { ReactElement, useState } from 'react';
+import { ReactElement, useCallback, useState } from 'react';
 import { Container } from '@mui/material';
+import _ from 'lodash';
 
 import useDebug from 'hooks/useDebug';
 
@@ -15,6 +16,7 @@ import { CorpusContainer, Verse } from 'structs';
 
 import '../../styles/theme.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 interface EditorProps {
   containers: CorpusContainer[];
@@ -30,6 +32,12 @@ const Editor = ({
   useDebug('Editor');
 
   const [visibleSourceVerses, setVisibleSourceVerses] = useState<Verse[]>([]);
+  const setNewVisibleVerses = useCallback((inputVerses: Verse[], corpus: CorpusContainer) => {
+    if (corpus.id === AlignmentSide.SOURCE
+      && !_.isEqual(visibleSourceVerses, inputVerses)) {
+      setVisibleSourceVerses(inputVerses);
+    }
+  }, [visibleSourceVerses]);
 
   return (
     <Container maxWidth={false} disableGutters sx={{
@@ -43,7 +51,7 @@ const Editor = ({
       <Polyglot
         containers={containers}
         position={position}
-        setVisibleSourceVerses={setVisibleSourceVerses} />
+        setNewVisibleVerses={setNewVisibleVerses} />
       <ControlPanel />
       <ContextPanel
         containers={containers}

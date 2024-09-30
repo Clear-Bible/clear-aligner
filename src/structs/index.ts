@@ -486,3 +486,13 @@ export interface SyntaxNode {
 export interface SyntaxRoot extends SyntaxNode {
   _syntaxType: SyntaxType;
 }
+
+export class NamedContainers {
+  sources?: CorpusContainer;
+  targets?: CorpusContainer;
+
+  constructor(inputContainers: CorpusContainer[]) {
+    this.sources = inputContainers.find(c => c.id === AlignmentSide.SOURCE);
+    this.targets = inputContainers.find(c => c.id === AlignmentSide.TARGET);
+  }
+}
