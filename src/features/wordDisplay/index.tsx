@@ -44,17 +44,20 @@ export interface WordDisplayProps extends LimitedToLinks {
  * @param allowGloss boolean denoting whether to display gloss information if available.
  */
 export const WordDisplay = ({
-                              readonly,
-                              variant,
-                              suppressAfter,
+                              readonly = false,
+                              variant = WordDisplayVariant.BUTTON,
+                              suppressAfter = false,
                               onlyLinkIds,
-                              disableHighlighting,
+                              disableHighlighting = false,
                               parts,
                               corpus,
                               links,
-                              allowGloss = false,
+                              allowGloss = false
                             }: WordDisplayProps) => {
-  const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? { language: undefined, hasGloss: false }, [corpus]);
+  const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? {
+    language: undefined,
+    hasGloss: false
+  }, [corpus]);
   const { preferences } = React.useContext(AppContext);
   const ref = parts?.find((part) => part.id)?.id;
   const computedVariant = useMemo(() => {
@@ -79,38 +82,38 @@ export const WordDisplay = ({
       >
         {
           (computedVariant === WordDisplayVariant.BUTTON ?
-            (
-              <>
-                <ButtonWord
-                  disableHighlighting={disableHighlighting}
-                  disabled={readonly}
-                  suppressAfter={suppressAfter}
-                  onlyLinkIds={onlyLinkIds}
-                  links={links}
-                  tokens={parts}
-                  corpus={corpus}
-                  enableGlossDisplay={preferences?.showGloss && hasGloss}
-                />
-              </>
-            ) : (
-              <>
-                {parts?.map((part) => (
-                  <React.Fragment key={part?.id}>
-                    <TextSegment
-                      key={part.id}
-                      readonly={readonly}
-                      disableHighlighting={disableHighlighting}
-                      onlyLinkIds={onlyLinkIds}
-                      word={part}
-                      links={links}
-                      languageInfo={languageInfo}
-                      showAfter={!suppressAfter}
-                    />
-                  </React.Fragment>
-                ))}
-                <span> </span>
-              </>
-            )
+              (
+                <>
+                  <ButtonWord
+                    disableHighlighting={disableHighlighting}
+                    disabled={readonly}
+                    suppressAfter={suppressAfter}
+                    onlyLinkIds={onlyLinkIds}
+                    links={links}
+                    tokens={parts}
+                    corpus={corpus}
+                    enableGlossDisplay={preferences?.showGloss && hasGloss}
+                  />
+                </>
+              ) : (
+                <>
+                  {parts?.map((part) => (
+                    <React.Fragment key={part?.id}>
+                      <TextSegment
+                        key={part.id}
+                        readonly={readonly}
+                        disableHighlighting={disableHighlighting}
+                        onlyLinkIds={onlyLinkIds}
+                        word={part}
+                        links={links}
+                        languageInfo={languageInfo}
+                        showAfter={!suppressAfter}
+                      />
+                    </React.Fragment>
+                  ))}
+                  <span> </span>
+                </>
+              )
           )
         }
       </Typography>

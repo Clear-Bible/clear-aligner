@@ -135,9 +135,6 @@ export const CorpusComponent = ({
   );
 
   useEffect(() => {
-    if (viewCorpora.id === AlignmentSide.SOURCE) {
-      console.log('setChangedVisibleVerses', visibleVerses);
-    }
     setChangedVisibleVerses?.(visibleVerses, viewCorpora);
   }, [setChangedVisibleVerses, viewCorpora, visibleVerses]);
 

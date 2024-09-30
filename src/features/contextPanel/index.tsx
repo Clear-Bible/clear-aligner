@@ -8,7 +8,7 @@ import { Card, Stack } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { CorpusContainer, Verse } from 'structs';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { LiveInterlinear } from '../liveInterlinear';
+import { InterlinearComponent } from '../interlinear';
 
 interface ContextPanelProps {
   containers: CorpusContainer[];
@@ -47,7 +47,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
           paddingTop: '21px'
         })}
       >
-        <LiveInterlinear
+        <InterlinearComponent
           containers={containers}
           position={position}
           visibleSourceVerses={visibleSourceVerses}
