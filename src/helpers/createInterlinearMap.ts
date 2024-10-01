@@ -9,14 +9,14 @@ export interface LinkWords {
 
 export const createInterlinearMap = async (
   linksTable: LinksTable,
-  verses: Verse[],
+  sourceVerses: Verse[],
   targetContainer: CorpusContainer,
   includeRejectedLinks = false
 ): Promise<Map<string, LinkWords[]>> => {
   const result = new Map<string, LinkWords[]>();
-  for (const verse of verses) {
-    const bcvId = verse.bcvId;
-    const links = await linksTable.findByBCV(AlignmentSide.SOURCE, bcvId.book!, bcvId.chapter!, bcvId.verse!); //database query
+  for (const sourceVerse of sourceVerses) {
+    const sourceBcvId = sourceVerse.bcvId;
+    const links = await linksTable.findByBCV(AlignmentSide.SOURCE, sourceBcvId.book!, sourceBcvId.chapter!, sourceBcvId.verse!); //database query
     for (const link of links) {
       if (!includeRejectedLinks
         && link.metadata.status === LinkStatus.REJECTED) {

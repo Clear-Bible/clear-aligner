@@ -18,7 +18,6 @@ const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
 const determineInterlinearVerseTargetView = (
   corpus: Corpus,
   wordMap: Map<string, LinkWords[]>,
-  linkMap: Map<string, Link[]>,
   displayedLinkIds: Set<string>,
   sourceTokens: Word[],
   differentLanguageDirections = false,
@@ -34,6 +33,14 @@ const determineInterlinearVerseTargetView = (
   if (targetLinkWords.length < 1) {
     return <></>;
   }
+  const targetLinkMap = new Map<string, Link[]>();
+  wordMap.values().forEach(linkWords =>
+    linkWords.forEach(linkWord =>
+      linkWord.words.forEach(targetWord => {
+        const targetLinks = targetLinkMap.get(targetWord.id) ?? [];
+        targetLinks.push(linkWord.link);
+        targetLinkMap.set(targetWord.id, targetLinks);
+      })));
   return <Stack
     direction={'row'}
     useFlexGap
@@ -52,12 +59,12 @@ const determineInterlinearVerseTargetView = (
       return targetTokenWords
         .sort((leftWords, rightWords) =>
           (leftWords.at(0)?.id ?? '')
-            .localeCompare((rightWords.at(0)?.id ?? ''))
+            .localeCompare(rightWords.at(0)?.id ?? '')
           * (differentLanguageDirections ? -1 : 1))
         .map((tokens, tokensIndex) =>
           <WordDisplay
             key={`interlinear/${corpus?.id}/${linkWordIndex}/${tokensIndex}/${tokens.at(0)?.id}`}
-            links={linkMap}
+            links={targetLinkMap}
             corpus={corpus}
             parts={tokens}
             allowGloss={allowGloss}
@@ -84,9 +91,12 @@ const determineInterlinearVerseView = (
     sourceCorpus.language.textDirection
     !== targetCorpus.language.textDirection;
   const verseTokens: Word[][] = groupPartsIntoWords(verse.words);
-  const linkMap = new Map<string, Link[]>();
-  wordMap.forEach((linkWords, wordId) =>
-    linkMap.set(wordId, linkWords.map(linkWord => linkWord.link)));
+  const sourceLinkMap = new Map<string, Link[]>();
+  wordMap.forEach((linkWords, sourceWordId) => {
+    const sourceLinks = sourceLinkMap.get(sourceWordId) ?? [];
+    sourceLinks.push(...linkWords.map(linkWord => linkWord.link));
+    sourceLinkMap.set(sourceWordId, sourceLinks);
+  });
   const displayedLinkIds = new Set<string>();
   return (verseTokens || [])
     .map((wordTokens: Word[], wordIndex): ReactElement =>
@@ -100,16 +110,15 @@ const determineInterlinearVerseView = (
           spacing={0}>
           <WordDisplay
             key={`interlinear/${sourceCorpus?.id}/${wordIndex}/${wordTokens.at(0)?.id}`}
-            links={linkMap}
+            links={sourceLinkMap}
             corpus={sourceCorpus}
             parts={wordTokens}
             allowGloss={allowGloss}
           />
           {determineInterlinearVerseTargetView(
             targetCorpus, wordMap,
-            linkMap, displayedLinkIds,
-            wordTokens, differentLanguageDirections,
-            allowGloss)}
+            displayedLinkIds, wordTokens,
+            differentLanguageDirections, allowGloss)}
         </Stack>
       </Stack>
     );
