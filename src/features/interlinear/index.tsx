@@ -9,7 +9,7 @@ interface InterlinearProps {
   verses: Verse[];
 }
 
-const determineInterlinearView = async (
+const determineInterlinearView = (
   verses: Verse[],
   containers: NamedContainers
 ) => {
@@ -85,10 +85,10 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
       || !namedContainers.isComplete()) {
       return;
     }
-    determineInterlinearView(
-      verses,
-      namedContainers)
-      .then(setInterlinearElements);
+    setInterlinearElements(
+      determineInterlinearView(
+        verses,
+        namedContainers));
   }, [containers, namedContainers, verses]);
 
   return (
@@ -98,11 +98,9 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
         container
         sx={{ pl: 4, flex: 8, overflow: 'auto' }}
       >
-        {
-          (interlinearElements?.length ?? 0) > 0
-            ? interlinearElements
-            : <Typography>No verse data for this reference.</Typography>
-        }
+        {(interlinearElements?.length ?? 0) > 0
+          ? interlinearElements
+          : <Typography>No verse data for this reference.</Typography>}
       </Grid>
     </Fragment>
   );

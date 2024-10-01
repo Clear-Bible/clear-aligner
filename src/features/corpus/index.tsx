@@ -29,7 +29,7 @@ export interface CorpusProps {
   setChangedVisibleVerses?: ((verses: Verse[], corpus: CorpusContainer) => void)
 }
 
-const determineCorpusView = async (
+const determineCorpusView = (
   viewCorpora: CorpusContainer,
   verses: Verse[],
   bcvId: BCVWP | null
@@ -98,7 +98,6 @@ export const CorpusComponent = ({
 
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
-
   const computedPosition = useMemo(() => {
     if (viewCorpora.id === AlignmentSide.TARGET) {
       return position ?? null;
@@ -109,34 +108,27 @@ export const CorpusComponent = ({
     if ((verseString ?? '').trim().length) return BCVWP.parseFromString(verseString!);
     return position;
   }, [viewCorpora.id, position, containers]);
-
-  const verseAtPosition: Verse | undefined = useMemo(
+  const computedVerse: Verse | undefined = useMemo(
     () =>
       computedPosition
         ? viewCorpora.verseByReference(computedPosition)
         : undefined,
     [computedPosition, viewCorpora]
   );
-
   const initialVerses = useMemo(() => {
-    if (!computedPosition || !viewCorpora) return [];
-    const verse = viewCorpora.verseByReference(computedPosition);
-    if (!verse) return [];
-    return [verse].filter((v) => v);
-  }, [viewCorpora, computedPosition]);
-
+    return [computedVerse].filter(Boolean) as Verse[];
+  }, [computedVerse]);
   const [visibleVerses, setVisibleVerses] = useState<Verse[]>(initialVerses);
   const verseKeys = useMemo(
     () =>
       viewCorpora.corpora
-        .flatMap((corpus) => Object.keys(corpus.wordsByVerse))
+        .flatMap((viewCorpus) => Object.keys(viewCorpus.wordsByVerse))
         .sort(),
     [viewCorpora.corpora]
   );
-
   useEffect(() => {
     setVisibleVerses(initialVerses);
-  }, [initialVerses, visibleVerses]);
+  }, [initialVerses]);
   useEffect(() => {
     setChangedVisibleVerses?.(visibleVerses, viewCorpora);
   }, [setChangedVisibleVerses, viewCorpora, visibleVerses]);
@@ -181,6 +173,7 @@ export const CorpusComponent = ({
       ...visibleVerses,
       newLastVerse ? viewCorpora.verseByReference(newLastVerse) : undefined
     ].filter((v) => v) as Verse[];
+    console.log('setVisibleVerses', updatedVerses);
     setVisibleVerses(updatedVerses);
   }, [visibleVerses, viewCorpora, computedPosition]);
 
@@ -190,16 +183,12 @@ export const CorpusComponent = ({
         return verses;
       }
       return verses.slice(
-        computedPosition?.matchesTruncated(verses[0]?.bcvId, BCVWPField.Verse)
-          ? 0
-          : 1,
+        computedPosition?.matchesTruncated(verses[0]?.bcvId, BCVWPField.Verse) ? 0 : 1,
         verses.length === 1 ||
         computedPosition?.matchesTruncated(
           verses[verses.length - 1]?.bcvId,
           BCVWPField.Verse
-        )
-          ? verses.length
-          : -1
+        ) ? verses.length : -1
       );
     }), [computedPosition]);
 
@@ -219,14 +208,13 @@ export const CorpusComponent = ({
     const showAdd = !firstBcvId && !lastBcvId ? 'add' : null;
     return visibleVerses.length <= 1 ? 'remove' : showAdd;
   }, [viewCorpora, visibleVerses, verseKeys]);
-
   useEffect(() => {
-    determineCorpusView(
-      viewCorpora,
-      visibleVerses,
-      computedPosition)
-      .then(verseElement => setVerseElement(verseElement));
-  }, [computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
+    setVerseElement(
+      determineCorpusView(
+        viewCorpora,
+        visibleVerses,
+        computedPosition));
+  }, [computedPosition, viewCorpora, visibleVerses, computedVerse]);
 
   if (!viewCorpora) {
     return <Typography>Empty State</Typography>;
@@ -259,7 +247,9 @@ export const CorpusComponent = ({
           sx={{ flex: 1 }}
         >
           <Typography variant="h6" sx={{ mr: 1 }}>
-            {computedPosition ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name : ''}
+            {computedPosition
+              ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name
+              : ''}
           </Typography>
 
           <Tooltip
@@ -294,11 +284,9 @@ export const CorpusComponent = ({
         container
         sx={{ pl: 4, flex: 8, overflow: 'auto' }}
       >
-        {
-          (verseElement?.length ?? 0) > 0
-            ? verseElement
-            : <Typography>No verse data for this reference.</Typography>
-        }
+        {(verseElement?.length ?? 0) > 0
+          ? verseElement
+          : <Typography>No verse data for this reference.</Typography>}
       </Grid>
     </Grid>
   );

@@ -1,5 +1,5 @@
 import { WordDisplay } from '../wordDisplay';
-import { Corpus, Link, NamedContainers, Verse, Word } from '../../structs';
+import { Corpus, Link, NamedContainers, TextDirection, Verse, Word } from '../../structs';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
@@ -80,16 +80,15 @@ const determineInterlinearVerseView = (
   wordMap?: Map<string, LinkWords[]>,
   allowGloss: boolean = false
 ) => {
-  if (!containers.isComplete()
-    || !wordMap || wordMap.size < 1) {
+  if (!containers.isComplete() || !wordMap) {
     return [];
   }
   const verseRef = verse.bcvId.toReferenceString();
-  const sourceCorpus = containers?.sources?.corpusAtReferenceString(verseRef)!;
-  const targetCorpus = containers?.targets?.corpusAtReferenceString(verseRef)!;
+  const sourceCorpus = containers?.sources?.corpusAtReferenceString(verseRef);
+  const targetCorpus = containers?.targets?.corpusAtReferenceString(verseRef);
   const differentLanguageDirections =
-    sourceCorpus.language.textDirection
-    !== targetCorpus.language.textDirection;
+    (sourceCorpus?.language.textDirection ?? TextDirection.LTR)
+    !== (targetCorpus?.language.textDirection ?? TextDirection.LTR);
   const verseTokens: Word[][] = groupPartsIntoWords(verse.words);
   const sourceLinkMap = new Map<string, Link[]>();
   wordMap.forEach((linkWords, sourceWordId) => {
@@ -115,7 +114,7 @@ const determineInterlinearVerseView = (
             parts={wordTokens}
             allowGloss={allowGloss}
           />
-          {determineInterlinearVerseTargetView(
+          {targetCorpus && determineInterlinearVerseTargetView(
             targetCorpus, wordMap,
             displayedLinkIds, wordTokens,
             differentLanguageDirections, allowGloss)}
@@ -139,6 +138,8 @@ export const InterlinearVerseDisplay = ({
                                         }: InterlinearVerseDisplayProps) => {
   const { projectState } = useContext(AppContext);
   const [wordMap, setWordMap] = useState<Map<string, LinkWords[]> | undefined>();
+  const [verseElements, setVerseElements] = useState<JSX.Element[]>();
+
   useEffect(() => {
     if (!containers.isComplete()) {
       return;
@@ -147,7 +148,18 @@ export const InterlinearVerseDisplay = ({
       .then(setWordMap);
   }, [projectState.linksTable, verse, containers]);
 
+  useEffect(() => {
+    if (!containers.isComplete()) {
+      return;
+    }
+    setVerseElements(
+      determineInterlinearVerseView(
+        containers, verse, wordMap, allowGloss));
+  }, [allowGloss, containers, verse, wordMap]);
+
   return <>
-    {determineInterlinearVerseView(containers, verse, wordMap, allowGloss)}
+    {(verseElements?.length ?? 0) > 0
+      ? verseElements
+      : <></>}
   </>;
 };
