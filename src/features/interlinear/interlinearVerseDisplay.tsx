@@ -16,12 +16,12 @@ export interface InterlinearVerseDisplayProps extends LimitedToLinks {
 
 const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
 
-const determineInterlinearTargetView = (targetCorpus: Corpus,
-                                        linkMap: Map<string, Link[]>,
-                                        wordMap: Map<string, LinkWords[]>,
-                                        displayedLinkIds: Set<string>,
-                                        sourceTokens: Word[],
-                                        allowGloss: boolean = false) => {
+const determineInterlinearVerseTargetView = (targetCorpus: Corpus,
+                                             linkMap: Map<string, Link[]>,
+                                             wordMap: Map<string, LinkWords[]>,
+                                             displayedLinkIds: Set<string>,
+                                             sourceTokens: Word[],
+                                             allowGloss: boolean = false) => {
   const targetLinkWords =
     (sourceTokens?.map(token => wordMap?.get(token.id) ?? [])
       .filter(Boolean) ?? [])
@@ -58,7 +58,7 @@ const determineInterlinearTargetView = (targetCorpus: Corpus,
   </Stack>;
 };
 
-const determineInterlinearView = (
+const determineInterlinearVerseView = (
   sourceCorpus: Corpus,
   targetCorpus: Corpus,
   linkMap: Map<string, Link[]>,
@@ -84,7 +84,7 @@ const determineInterlinearView = (
               parts={wordTokens}
               allowGloss={allowGloss}
             />
-            {determineInterlinearTargetView(
+            {determineInterlinearVerseTargetView(
               targetCorpus, linkMap,
               wordMap, displayedLinkIds,
               wordTokens, allowGloss)}
@@ -145,7 +145,7 @@ export const InterlinearVerseDisplay = ({
   }, [allLinks]);
 
   return <>
-    {determineInterlinearView(
+    {determineInterlinearVerseView(
       sourceCorpus!, targetCorpus!,
       linkMap!, wordMap!,
       verseTokens!, allowGloss)}

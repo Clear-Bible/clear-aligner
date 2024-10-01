@@ -53,7 +53,7 @@ const createInterLinearMap = async (
   return result;
 };
 
-const determineInterLinearView = async (
+const determineInterlinearView = async (
   verses: Verse[],
   wordMap: Map<string, LinkWords[]> | undefined,
   containers: NamedContainers) => {
@@ -133,7 +133,7 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
   }, [projectState.linksTable, visibleSourceVerses, namedContainers]);
 
   useEffect(() => {
-    determineInterLinearView(
+    determineInterlinearView(
       visibleSourceVerses,
       wordMap,
       namedContainers)
