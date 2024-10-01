@@ -307,10 +307,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     onSave: async (project: Project) => {
       project.updatedAt = DateTime.now().toMillis();
       await projectState.projectTable?.update?.(project, false, false, true);
-      setPreferences((p) => ({
-        ...(p ?? {}) as UserPreference,
-        initialized: InitializationStates.UNINITIALIZED
-      }));
       const updatedProjects = await projectState.projectTable?.getProjects(true);
       setProjects(p => Array.from(updatedProjects?.values?.() ?? p));
       setIsProjectSharingDialogOpen(false);
@@ -444,7 +440,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 width: '100%',
                 height: '100%'
               }}
-              onClick={!isSettingsMenuOpen ? (e) => {
+              onClick={!(isSettingsMenuOpen || isProjectSharingDialogOpen) ? (e) => {
                 e.preventDefault();
                 !isCurrentProject && updateCurrentProject();
               } : undefined}>
