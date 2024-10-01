@@ -72,8 +72,6 @@ const determineInterlinearVerseView = (
   wordMap: Map<string, LinkWords[]>,
   verseTokens: Word[][],
   allowGloss: boolean = false) => {
-  console.log('sourceLanguage', sourceLanguage);
-  console.log('targetLanguage', targetLanguage);
   const displayedLinkIds = new Set<string>();
   const languageDirectionReversed = sourceLanguage.textDirection !== targetLanguage.textDirection;
   return (verseTokens || [])
