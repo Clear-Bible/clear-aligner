@@ -487,17 +487,22 @@ export interface SyntaxRoot extends SyntaxNode {
   _syntaxType: SyntaxType;
 }
 
+/**
+ * Helper class that maintains a matched pair of corpus containers.
+ */
 export class NamedContainers {
   sources?: CorpusContainer;
   targets?: CorpusContainer;
+  all: CorpusContainer[];
 
   constructor(inputContainers: CorpusContainer[]) {
     this.sources = inputContainers.find(c => c.id === AlignmentSide.SOURCE);
     this.targets = inputContainers.find(c => c.id === AlignmentSide.TARGET);
+    this.all = inputContainers;
   }
-}
 
-export interface LinkWords {
-  link: Link,
-  words: Word[]
+  /**
+   * Returns true if this contains both a source and target container.
+   */
+  isComplete = (): boolean => !!this.sources && !!this.targets;
 }

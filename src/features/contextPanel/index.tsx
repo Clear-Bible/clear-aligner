@@ -49,8 +49,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
       >
         <InterlinearComponent
           containers={containers}
-          position={position}
-          visibleSourceVerses={visibleSourceVerses}
+          verses={visibleSourceVerses}
         />
       </Card>
     </Stack>

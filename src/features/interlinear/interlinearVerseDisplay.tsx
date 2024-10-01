@@ -1,28 +1,32 @@
 import { WordDisplay } from '../wordDisplay';
-import { Corpus, LanguageInfo, Link, LinkWords, NamedContainers, Verse, Word } from '../../structs';
+import { Corpus, Link, NamedContainers, Verse, Word } from '../../structs';
 import { LimitedToLinks } from '../corpus/verseDisplay';
-import { useDataLastUpdated, useFindLinksByBCV } from '../../state/links/tableManager';
-import React, { ReactElement, useMemo } from 'react';
+import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { AlignmentSide } from '../../common/data/project/corpus';
 import { Stack } from '@mui/material';
+import { AppContext } from '../../App';
+import { createInterlinearMap, LinkWords } from '../../helpers/createInterlinearMap';
 
 export interface InterlinearVerseDisplayProps extends LimitedToLinks {
-  containers?: NamedContainers;
+  containers: NamedContainers;
   verse: Verse;
   allowGloss?: boolean;
-  wordMap: Map<string, LinkWords[]> | undefined;
 }
 
 const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
 
-const determineInterlinearVerseTargetView = (targetCorpus: Corpus,
-                                             linkMap: Map<string, Link[]>,
-                                             wordMap: Map<string, LinkWords[]>,
-                                             displayedLinkIds: Set<string>,
-                                             sourceTokens: Word[],
-                                             languageDirectionReversed = false,
-                                             allowGloss = false) => {
+const determineInterlinearVerseTargetView = (
+  corpus: Corpus,
+  wordMap: Map<string, LinkWords[]>,
+  linkMap: Map<string, Link[]>,
+  displayedLinkIds: Set<string>,
+  sourceTokens: Word[],
+  differentLanguageDirections = false,
+  allowGloss = false
+) => {
+  if (!wordMap || wordMap.size < 1) {
+    return <></>;
+  }
   const targetLinkWords =
     (sourceTokens?.map(token => wordMap?.get(token.id) ?? [])
       .filter(Boolean) ?? [])
@@ -49,12 +53,12 @@ const determineInterlinearVerseTargetView = (targetCorpus: Corpus,
         .sort((leftWords, rightWords) =>
           (leftWords.at(0)?.id ?? '')
             .localeCompare((rightWords.at(0)?.id ?? ''))
-          * (languageDirectionReversed ? -1 : 1))
+          * (differentLanguageDirections ? -1 : 1))
         .map((tokens, tokensIndex) =>
           <WordDisplay
-            key={`${targetCorpus?.id}/${linkWordIndex}/${tokensIndex}/${tokens.at(0)?.id}`}
+            key={`interlinear/${corpus?.id}/${linkWordIndex}/${tokensIndex}/${tokens.at(0)?.id}`}
             links={linkMap}
-            corpus={targetCorpus}
+            corpus={corpus}
             parts={tokens}
             allowGloss={allowGloss}
           />);
@@ -64,42 +68,50 @@ const determineInterlinearVerseTargetView = (targetCorpus: Corpus,
 };
 
 const determineInterlinearVerseView = (
-  sourceCorpus: Corpus,
-  targetCorpus: Corpus,
-  sourceLanguage: LanguageInfo,
-  targetLanguage: LanguageInfo,
-  linkMap: Map<string, Link[]>,
-  wordMap: Map<string, LinkWords[]>,
-  verseTokens: Word[][],
-  allowGloss: boolean = false) => {
+  containers: NamedContainers,
+  verse: Verse,
+  wordMap?: Map<string, LinkWords[]>,
+  allowGloss: boolean = false
+) => {
+  if (!containers.isComplete()
+    || !wordMap || wordMap.size < 1) {
+    return [];
+  }
+  const verseRef = verse.bcvId.toReferenceString();
+  const sourceCorpus = containers?.sources?.corpusAtReferenceString(verseRef)!;
+  const targetCorpus = containers?.targets?.corpusAtReferenceString(verseRef)!;
+  const differentLanguageDirections =
+    sourceCorpus.language.textDirection
+    !== targetCorpus.language.textDirection;
+  const verseTokens: Word[][] = groupPartsIntoWords(verse.words);
+  const linkMap = new Map<string, Link[]>();
+  wordMap.forEach((linkWords, wordId) =>
+    linkMap.set(wordId, linkWords.map(linkWord => linkWord.link)));
   const displayedLinkIds = new Set<string>();
-  const languageDirectionReversed = sourceLanguage.textDirection !== targetLanguage.textDirection;
   return (verseTokens || [])
     .map((wordTokens: Word[], wordIndex): ReactElement =>
-      <>
+      <Stack
+        direction={'row'}
+        useFlexGap
+        spacing={2}>
         <Stack
-          direction={'row'}
+          direction={'column'}
           useFlexGap
-          spacing={2}>
-          <Stack
-            direction={'column'}
-            useFlexGap
-            spacing={0}>
-            <WordDisplay
-              key={`${sourceCorpus?.id}/${wordIndex}/${wordTokens.at(0)?.id}`}
-              links={linkMap}
-              corpus={sourceCorpus}
-              parts={wordTokens}
-              allowGloss={allowGloss}
-            />
-            {determineInterlinearVerseTargetView(
-              targetCorpus, linkMap,
-              wordMap, displayedLinkIds,
-              wordTokens, languageDirectionReversed,
-              allowGloss)}
-          </Stack>
+          spacing={0}>
+          <WordDisplay
+            key={`interlinear/${sourceCorpus?.id}/${wordIndex}/${wordTokens.at(0)?.id}`}
+            links={linkMap}
+            corpus={sourceCorpus}
+            parts={wordTokens}
+            allowGloss={allowGloss}
+          />
+          {determineInterlinearVerseTargetView(
+            targetCorpus, wordMap,
+            linkMap, displayedLinkIds,
+            wordTokens, differentLanguageDirections,
+            allowGloss)}
         </Stack>
-      </>
+      </Stack>
     );
 };
 
@@ -114,53 +126,19 @@ const determineInterlinearVerseView = (
 export const InterlinearVerseDisplay = ({
                                           containers,
                                           verse,
-                                          allowGloss = false,
-                                          wordMap
+                                          allowGloss = false
                                         }: InterlinearVerseDisplayProps) => {
-  const dataLastUpdated = useDataLastUpdated();
-  const [sourceCorpus, targetCorpus, sourceLanguage, targetLanguage] =
-    useMemo(() => {
-      const verseRef = verse.bcvId.toReferenceString();
-      return [
-        containers?.sources?.corpusAtReferenceString(verseRef),
-        containers?.targets?.corpusAtReferenceString(verseRef),
-        containers?.sources?.languageAtReferenceString(verseRef),
-        containers?.targets?.languageAtReferenceString(verseRef)
-      ];
-    }, [containers?.sources, containers?.targets, verse.bcvId]);
-  const verseTokens: Word[][] = useMemo(
-    () => groupPartsIntoWords(verse.words),
-    [verse?.words]
-  );
-  const { result: allLinks } = useFindLinksByBCV(
-    AlignmentSide.SOURCE,
-    verse.bcvId.book,
-    verse.bcvId.chapter,
-    verse.bcvId.verse,
-    false,
-    `${verse.bcvId?.toReferenceString()}-${dataLastUpdated}`
-  );
-  const linkMap = useMemo(() => {
-    if (!allLinks || allLinks.length < 1) {
+  const { projectState } = useContext(AppContext);
+  const [wordMap, setWordMap] = useState<Map<string, LinkWords[]> | undefined>();
+  useEffect(() => {
+    if (!containers.isComplete()) {
       return;
     }
-    const result = new Map<string, Link[]>();
-    allLinks
-      .forEach(link => (link!.sources ?? [])
-        .forEach(wordId => {
-          if (!result.has(wordId)) {
-            result.set(wordId, []);
-          }
-          result.get(wordId)!.push(link!);
-        }));
-    return result;
-  }, [allLinks]);
+    createInterlinearMap(projectState.linksTable, [verse], containers?.targets!)
+      .then(setWordMap);
+  }, [projectState.linksTable, verse, containers]);
 
   return <>
-    {determineInterlinearVerseView(
-      sourceCorpus!, targetCorpus!,
-      sourceLanguage!, targetLanguage!,
-      linkMap!, wordMap!,
-      verseTokens!, allowGloss)}
+    {determineInterlinearVerseView(containers, verse, wordMap, allowGloss)}
   </>;
 };

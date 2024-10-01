@@ -40,7 +40,10 @@ const MaxContextWords = 2;
  * word (usually 1:1).
  * @param linkMap Map of word IDs to links.
  */
-export const compressAlignedWords = (inputWords: Word[][], linkMap: Map<string, Link[]>): CompressedWord[][] => {
+export const compressAlignedWords = (
+  inputWords: Word[][],
+  linkMap: Map<string, Link[]>
+): CompressedWord[][] => {
   // compute 0-based indexes, to simplify implementation
   const workInputWords = inputWords.flat();
   const alignedWordIdxs = workInputWords
