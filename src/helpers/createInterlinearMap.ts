@@ -1,5 +1,5 @@
 import { LinksTable } from '../state/links/tableManager';
-import { CorpusContainer, Link, LinkStatus, Verse, Word } from '../structs';
+import { Link, LinkStatus, NamedContainers, Verse, Word } from '../structs';
 import { AlignmentSide } from '../common/data/project/corpus';
 
 export interface LinkWords {
@@ -7,39 +7,46 @@ export interface LinkWords {
   words: Word[]
 }
 
+export interface InterlinearMap {
+  sourceVerse: Verse,
+  containers: NamedContainers,
+  sourceMap: Map<string, LinkWords[]>
+}
+
 export const createInterlinearMap = async (
   linksTable: LinksTable,
-  sourceVerses: Verse[],
-  targetContainer: CorpusContainer,
+  sourceVerse: Verse,
+  containers: NamedContainers,
   includeRejectedLinks = false
-): Promise<Map<string, LinkWords[]>> => {
-  const result = new Map<string, LinkWords[]>();
-  for (const sourceVerse of sourceVerses) {
-    const sourceBcvId = sourceVerse.bcvId;
-    const links = await linksTable.findByBCV(AlignmentSide.SOURCE, sourceBcvId.book!, sourceBcvId.chapter!, sourceBcvId.verse!); //database query
-    for (const link of links) {
-      if (!includeRejectedLinks
-        && link.metadata.status === LinkStatus.REJECTED) {
-        continue;
+): Promise<InterlinearMap | undefined> => {
+  if (!containers.isComplete()) {
+    return;
+  }
+  const sourceMap = new Map<string, LinkWords[]>();
+  const sourceBcvId = sourceVerse.bcvId;
+  const links = await linksTable.findByBCV(AlignmentSide.SOURCE, sourceBcvId.book!, sourceBcvId.chapter!, sourceBcvId.verse!); //database query
+  for (const link of links) {
+    if (!includeRejectedLinks
+      && link.metadata.status === LinkStatus.REJECTED) {
+      continue;
+    }
+    for (const sourceWordId of link.sources) {
+      const linkWord = {
+        link,
+        words: []
+      } as LinkWords;
+      for (const targetWordId of link.targets) {
+        const targetWord = containers.targets?.wordByReferenceString(targetWordId);
+        if (targetWord) {
+          linkWord.words.push(targetWord);
+        }
       }
-      for (const sourceWordId of link.sources) {
-        const linkWord = {
-          link,
-          words: []
-        } as LinkWords;
-        for (const targetWordId of link.targets) {
-          const targetWord = targetContainer.wordByReferenceString(targetWordId);
-          if (targetWord) {
-            linkWord.words.push(targetWord);
-          }
-        }
-        if (linkWord.words.length > 0) {
-          const linkWords = result.get(sourceWordId) ?? [];
-          linkWords.push(linkWord);
-          result.set(sourceWordId, linkWords);
-        }
+      if (linkWord.words.length > 0) {
+        const linkWords = sourceMap.get(sourceWordId) ?? [];
+        linkWords.push(linkWord);
+        sourceMap.set(sourceWordId, linkWords);
       }
     }
   }
-  return result;
+  return { sourceVerse, containers, sourceMap } as InterlinearMap;
 };

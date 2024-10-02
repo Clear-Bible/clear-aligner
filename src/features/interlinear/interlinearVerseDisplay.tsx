@@ -1,11 +1,11 @@
 import { WordDisplay } from '../wordDisplay';
-import { Corpus, Link, NamedContainers, TextDirection, Verse, Word } from '../../structs';
+import { Corpus, Link, NamedContainers, Verse, Word } from '../../structs';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { Stack } from '@mui/material';
 import { AppContext } from '../../App';
-import { createInterlinearMap, LinkWords } from '../../helpers/createInterlinearMap';
+import { createInterlinearMap, InterlinearMap } from '../../helpers/createInterlinearMap';
 
 export interface InterlinearVerseDisplayProps extends LimitedToLinks {
   containers: NamedContainers;
@@ -15,90 +15,136 @@ export interface InterlinearVerseDisplayProps extends LimitedToLinks {
 
 const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
 
+/**
+ * Renders the target word side of the interlinear map.
+ * @param interlinearMap
+ * @param sourceCorpus
+ * @param sourceTokens
+ * @param displayedLinkIds
+ * @param allowGloss
+ */
 const determineInterlinearVerseTargetView = (
-  corpus: Corpus,
-  wordMap: Map<string, LinkWords[]>,
-  displayedLinkIds: Set<string>,
+  interlinearMap: InterlinearMap,
+  sourceCorpus: Corpus,
   sourceTokens: Word[],
-  differentLanguageDirections = false,
+  displayedLinkIds: Set<string>,
   allowGloss = false
 ) => {
-  if (!wordMap || wordMap.size < 1) {
+  if (!interlinearMap.containers.isComplete()
+    || interlinearMap.sourceMap.size < 1) {
     return <></>;
   }
-  const targetLinkWords =
-    (sourceTokens?.map(token => wordMap?.get(token.id) ?? [])
-      .filter(Boolean) ?? [])
-      .flat();
-  if (targetLinkWords.length < 1) {
-    return <></>;
-  }
-  const targetLinkMap = new Map<string, Link[]>();
-  wordMap.values().forEach(linkWords =>
-    linkWords.forEach(linkWord =>
-      linkWord.words.forEach(targetWord => {
-        const targetLinks = targetLinkMap.get(targetWord.id) ?? [];
-        targetLinks.push(linkWord.link);
-        targetLinkMap.set(targetWord.id, targetLinks);
-      })));
-  return <Stack
-    direction={'row'}
-    useFlexGap
-    spacing={0}>
-    {(targetLinkWords.map((linkWords, linkWordIndex) => {
-      const workTokenWords = displayedLinkIds?.has(linkWords.link.id!)
-        ? [linkWords.words[0]]
+
+  /**
+   * Nuts and bolts of render code.
+   */
+  const createView = () => {
+    // reduce source map to lists of links and words
+    const targetLinkWords =
+      (sourceTokens?.map(sourceToken => interlinearMap.sourceMap?.get(sourceToken.id) ?? [])
+        .filter(Boolean) ?? [])
+        .flat();
+
+    // reduce lists of links and words to tokens
+    const targetTokens =
+      (targetLinkWords.map(targetLinkWord => targetLinkWord.words)
+        .filter(Boolean) ?? [])
+        .flat();
+    if (targetTokens.length < 1) {
+      return <></>;
+    }
+
+    // figure out if there's source/target language direction mismatch
+    const targetCorpus = interlinearMap.containers.targets?.corpusAtReferenceString(targetTokens[0].id);
+    if (!targetCorpus) {
+      return <></>;
+    }
+    const differentLanguageDirections =
+      sourceCorpus.language.textDirection
+      !== targetCorpus.language.textDirection;
+
+    // reduce lists of links and words to a map of word IDs to links
+    const targetLinkMap = new Map<string, Link[]>();
+    targetLinkWords.forEach(linkWords =>
+      linkWords.words.forEach(targetToken => {
+        const targetLinks = targetLinkMap.get(targetToken.id) ?? [];
+        targetLinks.push(linkWords.link);
+        targetLinkMap.set(targetToken.id, targetLinks);
+      }));
+
+    // replace with placeholder, as needed
+    const compressedTokens =
+      targetLinkWords.some(linkWords =>
+        displayedLinkIds?.has(linkWords.link.id!))
+        ? [targetTokens[0]]
           .map(linkWord => ({
             ...linkWord,
             text: REPEATED_LINK_PLACEHOLDER_CHAR,
             after: undefined
           }))
-        : linkWords.words;
-      displayedLinkIds?.add(linkWords.link.id!);
-      const targetTokenWords = groupPartsIntoWords(workTokenWords);
-      return targetTokenWords
-        .sort((leftWords, rightWords) =>
-          (leftWords.at(0)?.id ?? '')
-            .localeCompare(rightWords.at(0)?.id ?? '')
-          * (differentLanguageDirections ? -1 : 1))
-        .map((tokens, tokensIndex) =>
-          <WordDisplay
-            key={`interlinear/${corpus?.id}/${linkWordIndex}/${tokensIndex}/${tokens.at(0)?.id}`}
-            links={targetLinkMap}
-            corpus={corpus}
-            parts={tokens}
-            allowGloss={allowGloss}
-          />);
-    }).filter(Boolean) ?? [])
-      .flat()}
+        : targetTokens;
+    targetLinkWords.forEach(linkWords =>
+      displayedLinkIds?.add(linkWords.link.id!));
+
+    // sort what's left and concatenate
+    const sortedTokens = compressedTokens
+      .sort((leftWords, rightWords) =>
+        leftWords.id.localeCompare(rightWords.id)
+        * (differentLanguageDirections ? -1 : 1));
+    const outputToken = {
+      ...sortedTokens[0],
+      text: sortedTokens.map(sortedToken => sortedToken.text).join(' '),
+      after: undefined
+    } as Word;
+
+    // render target words
+    return (
+      <WordDisplay
+        key={`interlinear/${targetCorpus?.id}/${outputToken}.id}`}
+        links={targetLinkMap}
+        corpus={targetCorpus}
+        parts={[outputToken]}
+        allowGloss={allowGloss}
+      />);
+  };
+  return <Stack
+    direction={'row'}
+    useFlexGap
+    spacing={0}>
+    {createView()}
   </Stack>;
 };
 
+/**
+ * Renders the source and target words for a given verse.
+ * @param interlinearMap
+ * @param allowGloss
+ */
 const determineInterlinearVerseView = (
-  containers: NamedContainers,
-  verse: Verse,
-  wordMap?: Map<string, LinkWords[]>,
+  interlinearMap: InterlinearMap,
   allowGloss: boolean = false
 ) => {
-  if (!containers.isComplete() || !wordMap) {
+  if (!interlinearMap.containers.isComplete()) {
     return [];
   }
-  const verseRef = verse.bcvId.toReferenceString();
-  const sourceCorpus = containers?.sources?.corpusAtReferenceString(verseRef);
-  const targetCorpus = containers?.targets?.corpusAtReferenceString(verseRef);
-  const differentLanguageDirections =
-    (sourceCorpus?.language.textDirection ?? TextDirection.LTR)
-    !== (targetCorpus?.language.textDirection ?? TextDirection.LTR);
-  const verseTokens: Word[][] = groupPartsIntoWords(verse.words);
+  // fetch source corpus, if available
+  const verseRef = interlinearMap.sourceVerse.bcvId.toReferenceString();
+  const sourceCorpus = interlinearMap.containers.sources?.corpusAtReferenceString(verseRef);
+  if (!sourceCorpus) {
+    return [];
+  }
+  // reduce source map into map of word IDs to links
   const sourceLinkMap = new Map<string, Link[]>();
-  wordMap.forEach((linkWords, sourceWordId) => {
+  interlinearMap.sourceMap.forEach((linkWords, sourceWordId) => {
     const sourceLinks = sourceLinkMap.get(sourceWordId) ?? [];
     sourceLinks.push(...linkWords.map(linkWord => linkWord.link));
     sourceLinkMap.set(sourceWordId, sourceLinks);
   });
+  // render source and target words
   const displayedLinkIds = new Set<string>();
+  const verseTokens: Word[][] = groupPartsIntoWords(interlinearMap.sourceVerse.words);
   return (verseTokens || [])
-    .map((wordTokens: Word[], wordIndex): ReactElement =>
+    .map((sourceTokens: Word[], sourceIndex): ReactElement =>
       <Stack
         direction={'row'}
         useFlexGap
@@ -108,16 +154,15 @@ const determineInterlinearVerseView = (
           useFlexGap
           spacing={0}>
           <WordDisplay
-            key={`interlinear/${sourceCorpus?.id}/${wordIndex}/${wordTokens.at(0)?.id}`}
+            key={`interlinear/${sourceCorpus?.id}/${sourceIndex}/${sourceTokens.at(0)?.id}`}
             links={sourceLinkMap}
             corpus={sourceCorpus}
-            parts={wordTokens}
+            parts={sourceTokens}
             allowGloss={allowGloss}
           />
-          {targetCorpus && determineInterlinearVerseTargetView(
-            targetCorpus, wordMap,
-            displayedLinkIds, wordTokens,
-            differentLanguageDirections, allowGloss)}
+          {determineInterlinearVerseTargetView(
+            interlinearMap, sourceCorpus, sourceTokens,
+            displayedLinkIds, allowGloss)}
         </Stack>
       </Stack>
     );
@@ -137,25 +182,25 @@ export const InterlinearVerseDisplay = ({
                                           allowGloss = false
                                         }: InterlinearVerseDisplayProps) => {
   const { projectState } = useContext(AppContext);
-  const [wordMap, setWordMap] = useState<Map<string, LinkWords[]> | undefined>();
+  const [interlinearMap, setInterlinearMap] = useState<InterlinearMap | undefined>();
   const [verseElements, setVerseElements] = useState<JSX.Element[]>();
 
   useEffect(() => {
     if (!containers.isComplete()) {
       return;
     }
-    createInterlinearMap(projectState.linksTable, [verse], containers?.targets!)
-      .then(setWordMap);
+    createInterlinearMap(projectState.linksTable, verse, containers)
+      .then(setInterlinearMap);
   }, [projectState.linksTable, verse, containers]);
 
   useEffect(() => {
-    if (!containers.isComplete()) {
+    if (!interlinearMap) {
       return;
     }
     setVerseElements(
       determineInterlinearVerseView(
-        containers, verse, wordMap, allowGloss));
-  }, [allowGloss, containers, verse, wordMap]);
+        interlinearMap, allowGloss));
+  }, [allowGloss, containers, verse, interlinearMap]);
 
   return <>
     {(verseElements?.length ?? 0) > 0
