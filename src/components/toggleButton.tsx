@@ -1,47 +1,58 @@
-/**
- * This file contains ToggleButton component used in the Concordance View
- */
-import { Button, useTheme } from '@mui/material';
+import { Button, SxProps, Theme } from '@mui/material';
+import { RemovableTooltip } from './removableTooltip';
 import React from 'react';
 
 /**
- * Props for the ToggleButton Component
+ * props for the {@link ToggleButton} component
  */
 export interface ToggleButtonProps {
-  onSelect: Function,
-  variant: "text" | "contained" | "outlined" | undefined
-  children: React.ReactNode,
-  backgroundColor: string,
-  buttonAction: string,
+  disabled?: boolean;
+  /**
+   * optional tooltip
+   */
+  tooltipText?: string;
+  /**
+   * whether this button toggled into the on/checked state
+   */
+  isOn?: boolean;
+  onStateChanged?: (on: boolean) => void;
+  sx?: SxProps<Theme>;
+  children: string | JSX.Element | JSX.Element[];
 }
 
 /**
- * ToggleButton Component combines a color from the parent component with
- * colors from the custom MUI color palette.
+ * toggle button component that acts like a checkbox
+ * @param disabled whether this button should be in a disabled state
+ * @param tooltipText optional tooltip text
+ * @param isOn whether the button is toggled in the on/enabled state currently
+ * @param onStateChanged callback for state changes (when a user clicks)
+ * @param sx optional style overrides
+ * @param children button children
  */
-export const ToggleButton = ({onSelect, variant, children, backgroundColor, buttonAction} : ToggleButtonProps) => {
-  const theme = useTheme();
-
-  const handleSelect = () => {
-    onSelect(buttonAction)
-  }
-
+export const ToggleButton = ({
+                               disabled,
+                               tooltipText,
+                               isOn,
+                               onStateChanged,
+                               sx,
+                               children
+                             }: ToggleButtonProps) => {
   return (
-    <Button
-      variant={variant}
-      onClick={handleSelect}
-      sx={{
-        width: '40px',
-      '&:disabled' : theme.palette.toggleButtons.disabled,
-      '&:enabled' : theme.palette.toggleButtons.enabled,
-      '&:hover' : theme.palette.toggleButtons.hover,
-      '&.MuiButton-contained' : {
-          ...theme.palette.toggleButtons.selected,
-          backgroundColor: backgroundColor,
-      }
-    }}>
-      {children}
-    </Button>
-  )
-}
-
+    <RemovableTooltip
+      removed={disabled || !tooltipText}
+      title={tooltipText}
+      arrow
+      describeChild>
+      <Button
+        variant={isOn ? 'contained' : 'outlined'}
+        disabled={disabled}
+        onClick={() => onStateChanged?.(!isOn)}
+        sx={{
+          maxWidth: '40px',
+          ...(sx ?? {})
+        }}>
+        {children}
+      </Button>
+    </RemovableTooltip>
+  );
+};

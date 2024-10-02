@@ -72,7 +72,14 @@ export interface DatabaseApi {
    */
   updateLinkText: (sourceName: string, linkIdOrIds: string|string[]) => Promise<boolean|any[]>;
   updateAllLinkText: (sourceName: string) => Promise<boolean>;
-  corporaGetLinksByAlignedWord: (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null) => Promise<Link[]>;
+  /**
+   * Retrieve links by source text, target text or both
+   * @param sourceName source being queried
+   * @param sourcesText optional source text to search for
+   * @param targetsText optional target text to search for
+   * @param sort optional sorting information
+   */
+  corporaGetLinksByAlignedWord: (sourceName: string, sourcesText?: string, targetsText?: string, sort?: GridSortItem | null) => Promise<Link[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
   findLinksByBCV: (sourceName: string, side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number) => Promise<Link[]>;
   findLinksByWordId: (sourceName: string, side: AlignmentSide, referenceString: string) => Promise<Link[]>;

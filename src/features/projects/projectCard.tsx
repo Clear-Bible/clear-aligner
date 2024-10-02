@@ -27,11 +27,16 @@ import { Box } from '@mui/system';
 import { DateTime } from 'luxon';
 import ProjectCreationDialog from './projectCreationDialog';
 import { Project } from '../../state/projects/tableManager';
-import { currentProjectBorderIndicatorHeight, projectCardHeight, projectCardMargin, projectCardWidth } from './index';
 import useProjectCardSettingsMenu from './projectCardSettingsMenu';
 import useProjectSharingDialog from './useProjectSharingDialog';
 import { useDeleteProjectFromServerWithDialog } from '../../api/projects/useDeleteProjectFromServerWithDialog';
 import { useDeleteProjectFromLocalWithDialog } from '../../api/projects/useDeleteProjectFromLocalWithDialog';
+import {
+  currentProjectBorderIndicatorHeight,
+  projectCardHeight,
+  projectCardMargin,
+  projectCardWidth
+} from './styleConstants';
 
 /**
  * props for the project card component

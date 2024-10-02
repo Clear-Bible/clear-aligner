@@ -1408,19 +1408,23 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  corporaGetLinksByAlignedWord = async (sourceName: string, sourcesText: string, targetsText: string, sort: GridSortItem) => {
+  corporaGetLinksByAlignedWord = async (sourceName: string, sourcesText?: string, targetsText?: string, sort?: GridSortItem|null) => {
+    if (!sourcesText && !targetsText) return [];
     const dataSource = (await this.getDataSource(sourceName));
     const entityManager = dataSource.manager;
+    const whereSourceTextClause = !!sourcesText ? 'l.sources_text = ?' : undefined;
+    const whereTargetTextClause = !!sourcesText ? 'l.targets_text = ?' : undefined;
     const linkIds = (await entityManager.query(`
       SELECT l.id        id,
              ltw.word_id word_id
       FROM links l
              INNER JOIN links__target_words ltw
                         ON ltw.link_id = l.id
-      WHERE l.sources_text = ?
-        AND l.targets_text = ?
+      ${(whereSourceTextClause || whereTargetTextClause)
+        ? `WHERE ${[ whereSourceTextClause, whereTargetTextClause ].filter(v => !!v).join(' AND ')}`
+        : ''}
       GROUP BY id
-        ${this._buildOrderBy(sort, { ref: 'word_id' })};`, [sourcesText, targetsText]))
+        ${this._buildOrderBy(sort, { ref: 'word_id' })};`, [sourcesText, targetsText].filter(v => !!v)))
       .map((link: any) => link.id);
     return (await this.findLinksById(dataSource, linkIds));
   };

@@ -1,5 +1,5 @@
 import { Corpus, LanguageInfo, Link, LinkOriginManual, LinkStatus, TextDirection, Word } from '../../structs';
-import { useMemo, useRef } from 'react';
+import { useContext, useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
@@ -13,6 +13,8 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
+import { AppContext } from '../../App';
+import { useSuggestions } from '../../hooks/useSuggestions';
 
 const alphaTransparencyValueForButtonTokens = '.12';
 /**
@@ -147,6 +149,7 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const { features: { enableTokenSuggestions } } = useContext(AppContext);
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
@@ -211,8 +214,6 @@ export const ButtonToken = ({
   // Allow the user to right-click on an alignment and change it's state
   const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink );
 
-
-
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
   /**
@@ -223,6 +224,8 @@ export const ButtonToken = ({
    * indicates whether this token was a member of the link which is currently being edited (does not indicate if if it currently selected in the edited link, just that it was a member of that link before it was opened for editing)
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
+
+  const { suggestions } = useSuggestions({ editedLink });
 
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (token.side) {

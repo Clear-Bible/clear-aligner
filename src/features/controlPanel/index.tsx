@@ -64,7 +64,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }
 
   const createLink = () => {
-    inProgressLink && saveLink(inProgressLink);
+    inProgressLink && saveLink(inProgressLink.toLink());
     dispatch(resetTextSegments());
   }
 

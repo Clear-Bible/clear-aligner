@@ -15,6 +15,7 @@ import { useNetworkState } from '@uidotdev/usehooks';
 import { userState } from '../features/profileAvatar/profileAvatar';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { EnvironmentVariables } from '../structs/environmentVariables';
+import { FeaturePreferences } from '../common/data/featurePreferences';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
@@ -30,6 +31,9 @@ const useInitialization = (): AppContextProps => {
   const [snackBarMessage, setSnackBarMessage] = React.useState("")
   const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
   const [ isBusyDialogOpen, setIsBusyDialogOpen ] = useState<boolean>(false);
+  const [ features, setFeatures ] = useState<FeaturePreferences>({
+    enableTokenSuggestions: true // defaults to enabled
+  });
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -186,7 +190,9 @@ const useInitialization = (): AppContextProps => {
     isProjectDialogOpen,
     setIsProjectDialogOpen,
     isBusyDialogOpen,
-    setIsBusyDialogOpen
+    setIsBusyDialogOpen,
+    features,
+    setFeatures
   };
 };
 
