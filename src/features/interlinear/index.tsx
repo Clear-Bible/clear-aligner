@@ -1,7 +1,7 @@
 import { CorpusContainer, NamedContainers, Verse } from '../../structs';
 import React, { Fragment, ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import useDebug from '../../hooks/useDebug';
-import { Grid, Stack, Typography } from '@mui/material';
+import { Grid, Typography } from '@mui/material';
 import { InterlinearVerseDisplay } from './interlinearVerseDisplay';
 
 interface InterlinearProps {
@@ -52,14 +52,11 @@ const determineInterlinearView = (
               style={{
                 paddingBottom: '0.5rem'
               }}
-
             >
-              <Stack direction={'row'}>
-                <InterlinearVerseDisplay containers={containers}
-                                         verse={verse}
-                                         allowGloss
-                />
-              </Stack>
+              <InterlinearVerseDisplay containers={containers}
+                                       verse={verse}
+                                       allowGloss
+              />
             </Typography>
           </Grid>
         </Grid>
