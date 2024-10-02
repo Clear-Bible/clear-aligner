@@ -135,7 +135,7 @@ export const checkAlignmentFile = (inputFile: string, maxErrorMessages = 100): A
         && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no origin (missing/empty "meta.origin" field).`);
       }
       const possibleStatus = (possibleRecord?.meta?.status as string | undefined);
-      if (!possibleStatus || !((possibleStatus ?? '').toUpperCase() in LinkStatus)) {
+      if (!possibleStatus || !(camelCaseToSnakeCase(possibleStatus ?? '').toUpperCase() in LinkStatus)) {
         isRecordValid = false;
         result.errorMessages.length < maxErrorMessages
         && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no valid status (missing/invalid "meta.status" field).`);
@@ -167,3 +167,10 @@ export const checkAlignmentFile = (inputFile: string, maxErrorMessages = 100): A
   }
   return result;
 };
+
+/**
+ * Transform Link State from camel case to snake case
+ */
+function camelCaseToSnakeCase(str: string){
+  return str.replace(/[A-Z]/g, (letter: string) => `_${letter.toLowerCase()}`);
+}
