@@ -148,9 +148,6 @@ const determineInterlinearVerseView = (
 /**
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
  * which doesn't edit alignments
- * @param readonly optional property to specify if the verse should be displayed in read-only mode
- * @param verse verse to be displayed
- * @param allowGloss boolean denoting whether to display gloss information if available.
  * @constructor
  */
 export const InterlinearVerseDisplay = ({
@@ -190,8 +187,9 @@ export const InterlinearVerseDisplay = ({
     direction={'row'}
     spacing={0}
     rowSpacing={1}>
-    {verseElements?.map((verseElement) => (
-      <Grid item>
+    {verseElements?.map((verseElement, verseIndex) => (
+      <Grid item
+            key={`interlinear/${verseIndex}`}>
         {verseElement}
       </Grid>
     ))}
