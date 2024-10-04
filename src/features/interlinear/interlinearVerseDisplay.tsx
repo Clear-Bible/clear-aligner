@@ -8,11 +8,17 @@ import { AppContext } from '../../App';
 import { createInterlinearMap, InterlinearMap } from '../../helpers/createInterlinearMap';
 import { useDataLastUpdated } from '../../state/links/tableManager';
 
+/**
+ * Display props for an interlinear display.
+ */
 export interface InterlinearVerseDisplayProps extends LimitedToLinks {
   containers: NamedContainers;
   verse: Verse;
 }
 
+/**
+ * Placeholder character for repeated mappings.
+ */
 const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
 
 /**
@@ -146,8 +152,9 @@ const determineInterlinearVerseView = (
 };
 
 /**
- * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
- * which doesn't edit alignments
+ * Display the text of a verse and highlight the words included in alignments.
+ * @param containers Corpus containers (required).
+ * @param verse Verse to display (required).
  * @constructor
  */
 export const InterlinearVerseDisplay = ({

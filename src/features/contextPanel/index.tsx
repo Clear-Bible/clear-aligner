@@ -23,6 +23,11 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
                                                           }): ReactElement => {
   useDebug('ContextPanel');
 
+  if (!position
+    || (visibleSourceVerses?.length ?? 0) < 1) {
+    return <></>;
+  }
+
   return (
     <Stack
       direction="row"
@@ -49,6 +54,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
       >
         <InterlinearComponent
           containers={containers}
+          position={position}
           verses={visibleSourceVerses}
         />
       </Card>

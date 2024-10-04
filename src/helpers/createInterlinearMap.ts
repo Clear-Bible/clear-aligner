@@ -7,12 +7,23 @@ export interface LinkWords {
   words: Word[]
 }
 
+/**
+ * Packaging for interlinear mapping information for a particular verse.
+ */
 export interface InterlinearMap {
   sourceVerse: Verse,
   containers: NamedContainers,
   sourceMap: Map<string, LinkWords[]>
 }
 
+/**
+ * Queries the database for a list of alignments for a given verse, then organizes them into
+ * convenient source/target word mappings for easier rendering.
+ * @param linksTable Alignment table (required).
+ * @param sourceVerse Source verse (required).
+ * @param containers Source/target containers (required).
+ * @param includeRejectedLinks True to include rejected links, false otherwise.
+ */
 export const createInterlinearMap = async (
   linksTable: LinksTable,
   sourceVerse: Verse,

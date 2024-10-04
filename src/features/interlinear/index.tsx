@@ -3,15 +3,24 @@ import React, { Fragment, ReactElement, useEffect, useMemo, useRef, useState } f
 import useDebug from '../../hooks/useDebug';
 import { Grid, Typography } from '@mui/material';
 import { InterlinearVerseDisplay } from './interlinearVerseDisplay';
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 
 interface InterlinearProps {
   containers: CorpusContainer[];
+  position: BCVWP;
   verses: Verse[];
 }
 
+/**
+ * Generates interlinear view contents.
+ * @param containers Corpus containers (required).
+ * @param position Current position (required).
+ * @param verses List of verses to display (required).
+ */
 const determineInterlinearView = (
-  verses: Verse[],
-  containers: NamedContainers
+  containers: NamedContainers,
+  position: BCVWP,
+  verses: Verse[]
 ) => {
   if (verses.length < 1
     || !containers.isComplete()) {
@@ -30,7 +39,11 @@ const determineInterlinearView = (
           item xs={1}
           sx={{ p: '1px', width: '53px', height: '16px', justifyContent: 'center', marginTop: '20px' }}
           display={'flex'}>
-          <Typography>
+          <Typography sx={
+            position?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
+              ? { fontStyle: 'italic' }
+              : {}
+          }>
             {verse.citation}
           </Typography>
         </Grid>
@@ -64,10 +77,18 @@ const determineInterlinearView = (
   });
 };
 
+/**
+ * Component that displays interlinear elements (linked source/target tokens) for a supplied set of verses.
+ * @param containers Corpus containers (required).
+ * @param position Current position (required).
+ * @param verses List of verses to display (required).
+ * @constructor
+ */
 export const InterlinearComponent: React.FC<InterlinearProps> = ({
                                                                    containers,
+                                                                   position,
                                                                    verses
-                                                                 }): ReactElement => {
+                                                                 }: InterlinearProps): ReactElement => {
   useDebug('InterlinearComponent');
 
   const namedContainers = useMemo(() => {
@@ -83,9 +104,10 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
     }
     setInterlinearElements(
       determineInterlinearView(
-        verses,
-        namedContainers));
-  }, [containers, namedContainers, verses]);
+        namedContainers,
+        position,
+        verses));
+  }, [containers, namedContainers, position, verses]);
 
   return (
     <Fragment>
