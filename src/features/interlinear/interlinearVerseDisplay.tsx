@@ -193,7 +193,8 @@ export const InterlinearVerseDisplay = ({
     container
     direction={'row'}
     spacing={0}
-    rowSpacing={1}>
+    rowSpacing={1}
+    columnSpacing={0.5}>
     {verseElements?.map((verseElement, verseIndex) => (
       <Grid item
             key={`interlinear/${verseIndex}`}>
