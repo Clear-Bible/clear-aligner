@@ -92,7 +92,7 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
       <Grid
         ref={textContainerRef}
         container
-        sx={{ pl: 4, flex: 8, overflow: 'auto' }}
+        sx={{ pl: 0, flex: 8, overflow: 'auto' }}
       >
         {(interlinearElements?.length ?? 0) > 0
           ? interlinearElements
