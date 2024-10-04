@@ -1,5 +1,5 @@
 import { WordDisplay } from '../wordDisplay';
-import { Corpus, Link, NamedContainers, Verse, Word } from '../../structs';
+import { Link, NamedContainers, Verse, Word } from '../../structs';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
@@ -18,17 +18,13 @@ const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
 /**
  * Renders the target word side of the interlinear map.
  * @param interlinearMap
- * @param sourceCorpus
  * @param sourceTokens
  * @param displayedLinkIds
- * @param allowGloss
  */
 const determineInterlinearVerseTargetView = (
   interlinearMap: InterlinearMap,
-  sourceCorpus: Corpus,
   sourceTokens: Word[],
-  displayedLinkIds: Set<string>,
-  allowGloss = false
+  displayedLinkIds: Set<string>
 ) => {
   if (!interlinearMap.containers.isComplete()
     || interlinearMap.sourceMap.size < 1) {
@@ -94,7 +90,7 @@ const determineInterlinearVerseTargetView = (
   // render target words
   return (
     <Grid item
-          key={`interlinear/${targetCorpus?.id}/${outputToken}.id}`}>
+          key={`interlinear/${targetCorpus?.id}/${sortedTokens.map(sortedToken => sortedToken.id).join('+')}.id}`}>
       <WordDisplay
         links={targetLinkMap}
         corpus={targetCorpus}
@@ -107,7 +103,6 @@ const determineInterlinearVerseTargetView = (
 /**
  * Renders the source and target words for a given verse.
  * @param interlinearMap
- * @param allowGloss
  */
 const determineInterlinearVerseView = (
   interlinearMap: InterlinearMap
@@ -132,12 +127,12 @@ const determineInterlinearVerseView = (
   const displayedLinkIds = new Set<string>();
   const verseTokens: Word[][] = groupPartsIntoWords(interlinearMap.sourceVerse.words);
   return (verseTokens || [])
-    .map((sourceTokens: Word[], sourceIndex): ReactElement =>
+    .map((sourceTokens: Word[]): ReactElement =>
       <Grid container
             direction={'column'}
             spacing={0}>
         <Grid item
-              key={`interlinear/${sourceCorpus?.id}/${sourceIndex}/${sourceTokens.at(0)?.id}`}>
+              key={`interlinear/${sourceCorpus?.id}/${sourceTokens.map(sourceToken => sourceToken.id).join('+')}`}>
           <WordDisplay
             links={sourceLinkMap}
             corpus={sourceCorpus}
@@ -146,8 +141,7 @@ const determineInterlinearVerseView = (
           />
         </Grid>
         {determineInterlinearVerseTargetView(
-          interlinearMap, sourceCorpus, sourceTokens,
-          displayedLinkIds)}
+          interlinearMap, sourceTokens, displayedLinkIds)}
       </Grid>);
 };
 
@@ -193,7 +187,9 @@ export const InterlinearVerseDisplay = ({
 
   return <Grid
     container
-    direction={'row'}>
+    direction={'row'}
+    spacing={0}
+    rowSpacing={1}>
     {verseElements?.map((verseElement) => (
       <Grid item>
         {verseElement}
