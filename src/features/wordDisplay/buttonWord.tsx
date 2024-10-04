@@ -88,8 +88,8 @@ export const ButtonWord = ({
                             '.MuiButtonGroup-grouped': {
                               padding: '0px !important',
                               minWidth: '12px !important',
-                              height: enableGlossDisplay ? '82px !important' : '62px !important',
-                              ...(fillWidth ? { width: '100%' } : {})
+                              height: enableGlossDisplay ? '82px !important' : '62px !important'
+                              // ...(fillWidth ? { width: '100%' } : {})
                             }
                           }}>
       {tokens?.map((token) => <ButtonToken key={token.id} token={token} completeWord={tokens}
@@ -142,6 +142,7 @@ export interface ButtonTokenProps {
  * @param showRejected whether rejected links should be displayed
  * @param suppressAfter whether the after string should be displayed
  * @param hoverHighlightingDisabled whether normal hover behavior is suppressed
+ * @param fillWidth
  */
 export const ButtonToken = ({
                               disabled,
@@ -466,6 +467,7 @@ export const ButtonToken = ({
         {gradientSvg}
         <LocalizedTextDisplay
           sx={{
+            width: '100%',
             height: '100%'
           }}
           languageInfo={languageInfo}>
@@ -477,8 +479,8 @@ export const ButtonToken = ({
             }}>
             <Box
               sx={{
-                width: '100%',
                 display: 'flex',
+                width: '100%',
                 justifyContent: 'left',
                 m: 0
               }}>
@@ -501,8 +503,8 @@ export const ButtonToken = ({
                 <LocalizedTextDisplay
                   languageInfo={languageInfo}
                   sx={{
-                    width: '100%',
                     display: 'flex',
+                    width: '100%',
                     justifyContent: `${textJustification} !important`,
                     fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
                   }}>
@@ -516,6 +518,7 @@ export const ButtonToken = ({
                     variant={'caption'}
                     sx={{
                       display: 'flex',
+                      width: '100%',
                       justifyContent: `${textJustification} !important`,
                       color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
                     }}>
@@ -525,8 +528,8 @@ export const ButtonToken = ({
             </Box>
             <Box
               sx={{
-                width: '100%',
                 display: 'flex',
+                width: '100%',
                 justifyContent: 'right',
                 m: 0
               }}>
