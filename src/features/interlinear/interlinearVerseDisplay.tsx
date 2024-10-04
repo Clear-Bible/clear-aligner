@@ -16,10 +16,10 @@ export interface InterlinearVerseDisplayProps extends LimitedToLinks {
 const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
 
 /**
- * Renders the target word side of the interlinear map.
- * @param interlinearMap
- * @param sourceTokens
- * @param displayedLinkIds
+ * Renders the target word side of the interlinear mapping.
+ * @param interlinearMap Interlinear mapping information.
+ * @param sourceTokens Source tokens to map.
+ * @param displayedLinkIds Set of link IDs already displayed (used for placeholder rendering)
  */
 const determineInterlinearVerseTargetView = (
   interlinearMap: InterlinearMap,
@@ -102,7 +102,7 @@ const determineInterlinearVerseTargetView = (
 
 /**
  * Renders the source and target words for a given verse.
- * @param interlinearMap
+ * @param interlinearMap Interlinear mapping information.
  */
 const determineInterlinearVerseView = (
   interlinearMap: InterlinearMap
