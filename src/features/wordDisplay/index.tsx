@@ -25,13 +25,13 @@ export enum WordDisplayVariant {
  * props for {@link WordDisplay} component
  */
 export interface WordDisplayProps extends LimitedToLinks {
-  readonly?: boolean;
   variant?: WordDisplayVariant;
-  suppressAfter?: boolean;
   parts?: Word[];
   corpus?: Corpus;
-  allowGloss?: boolean;
   links?: Map<string, Link[]>;
+  readonly?: boolean;
+  suppressAfter?: boolean;
+  fillWidth?: boolean;
 }
 
 /**
@@ -41,18 +41,17 @@ export interface WordDisplayProps extends LimitedToLinks {
  * @param suppressAfter suppress after string at the end of the word
  * @param parts parts to display as a single word
  * @param languageInfo language info for display
- * @param allowGloss boolean denoting whether to display gloss information if available.
  */
 export const WordDisplay = ({
-                              readonly = false,
                               variant = WordDisplayVariant.BUTTON,
-                              suppressAfter = false,
                               onlyLinkIds,
-                              disableHighlighting = false,
                               parts,
                               corpus,
                               links,
-                              allowGloss = false
+                              readonly = false,
+                              suppressAfter = false,
+                              disableHighlighting = false,
+                              fillWidth = false
                             }: WordDisplayProps) => {
   const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? {
     language: undefined,
@@ -77,7 +76,8 @@ export const WordDisplay = ({
             : uuid()
         }-${languageInfo?.code}`}
         style={{
-          padding: '1px'
+          padding: '1px',
+          ...(fillWidth ? { width: '100%' } : {})
         }}
       >
         {
@@ -93,6 +93,7 @@ export const WordDisplay = ({
                     tokens={parts}
                     corpus={corpus}
                     enableGlossDisplay={preferences?.showGloss && hasGloss}
+                    fillWidth={fillWidth}
                   />
                 </>
               ) : (

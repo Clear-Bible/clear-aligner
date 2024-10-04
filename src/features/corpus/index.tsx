@@ -78,8 +78,7 @@ const determineCorpusView = (
             >
               <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())}
                             verse={verse}
-                            variant={WordDisplayVariant.BUTTON}
-                            allowGloss />
+                            variant={WordDisplayVariant.BUTTON} />
             </Typography>
           </Grid>
         </Grid>
@@ -173,7 +172,6 @@ export const CorpusComponent = ({
       ...visibleVerses,
       newLastVerse ? viewCorpora.verseByReference(newLastVerse) : undefined
     ].filter((v) => v) as Verse[];
-    console.log('setVisibleVerses', updatedVerses);
     setVisibleVerses(updatedVerses);
   }, [visibleVerses, viewCorpora, computedPosition]);
 

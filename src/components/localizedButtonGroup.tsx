@@ -24,13 +24,14 @@ const baseGroupedButtonSx: SxProps<Theme> = ({
  * @param languageInfo language information used for the button group
  * @param sx style information
  * @param children buttons in the button group
+ * @param fillWidth
  * @param others any other parameters normally applied to a material UI {@link ButtonGroup}
  */
 export const LocalizedButtonGroup = ({
-                                      languageInfo,
-                                      sx,
-                                      children,
-                                      ...others
+                                       languageInfo,
+                                       sx,
+                                       children,
+                                       ...others
                                      }: LocalizedButtonGroupProps) => {
 
   const firstButtonSx = useMemo<SxProps<Theme>>(() => {
@@ -42,7 +43,7 @@ export const LocalizedButtonGroup = ({
         borderRightStyle: outsideEdgeStyle,
         borderTopLeftRadius: dividerBorderRadius,
         borderBottomLeftRadius: dividerBorderRadius,
-        borderLeftStyle: dividingEdgeStyle,
+        borderLeftStyle: dividingEdgeStyle
       };
     } else { // LTR
       return {
@@ -98,7 +99,7 @@ export const LocalizedButtonGroup = ({
       '.MuiButtonGroup-grouped': {
         paddingX: '4px !important',
         minWidth: '12px !important',
-        ...((sx as any|undefined)?.['.MuiButtonGroup-grouped'] ?? {}),
+        ...((sx as any | undefined)?.['.MuiButtonGroup-grouped'] ?? {})
       },
       '.MuiButtonGroup-firstButton': firstButtonSx,
       '.MuiButtonGroup-middleButton': middleButtonSx,
@@ -114,4 +115,4 @@ export const LocalizedButtonGroup = ({
       {children}
     </ButtonGroup>
   );
-}
+};

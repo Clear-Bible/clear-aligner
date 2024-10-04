@@ -55,7 +55,6 @@ const determineInterlinearView = (
             >
               <InterlinearVerseDisplay containers={containers}
                                        verse={verse}
-                                       allowGloss
               />
             </Typography>
           </Grid>

@@ -6,11 +6,11 @@ import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { Grid } from '@mui/material';
 import { AppContext } from '../../App';
 import { createInterlinearMap, InterlinearMap } from '../../helpers/createInterlinearMap';
+import { useDataLastUpdated } from '../../state/links/tableManager';
 
 export interface InterlinearVerseDisplayProps extends LimitedToLinks {
   containers: NamedContainers;
   verse: Verse;
-  allowGloss?: boolean;
 }
 
 const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
@@ -50,15 +50,6 @@ const determineInterlinearVerseTargetView = (
     return <></>;
   }
 
-  // figure out if there's source/target language direction mismatch
-  const targetCorpus = interlinearMap.containers.targets?.corpusAtReferenceString(targetTokens[0].id);
-  if (!targetCorpus) {
-    return <></>;
-  }
-  const differentLanguageDirections =
-    sourceCorpus.language.textDirection
-    !== targetCorpus.language.textDirection;
-
   // reduce lists of links and words to a map of word IDs to links
   const targetLinkMap = new Map<string, Link[]>();
   targetLinkWords.forEach(linkWords =>
@@ -85,24 +76,30 @@ const determineInterlinearVerseTargetView = (
   // sort what's left and concatenate
   const sortedTokens = compressedTokens
     .sort((leftWords, rightWords) =>
-      leftWords.id.localeCompare(rightWords.id)
-      * (differentLanguageDirections ? -1 : 1));
+      leftWords.id.localeCompare(rightWords.id));
+
+  // build single 'token' consisting of the concatenated elements
   const outputToken = {
     ...sortedTokens[0],
     text: sortedTokens.map(sortedToken => sortedToken.text).join(' '),
     after: undefined
   } as Word;
 
+  // obtain target corpus
+  const targetCorpus = interlinearMap.containers.targets?.corpusAtReferenceString(outputToken.id);
+  if (!targetCorpus) {
+    return <></>;
+  }
+
   // render target words
   return (
     <Grid item
-          xs={1}>
+          key={`interlinear/${targetCorpus?.id}/${outputToken}.id}`}>
       <WordDisplay
-        key={`interlinear/${targetCorpus?.id}/${outputToken}.id}`}
         links={targetLinkMap}
         corpus={targetCorpus}
         parts={[outputToken]}
-        allowGloss={allowGloss}
+        fillWidth={true}
       />
     </Grid>);
 };
@@ -113,8 +110,7 @@ const determineInterlinearVerseTargetView = (
  * @param allowGloss
  */
 const determineInterlinearVerseView = (
-  interlinearMap: InterlinearMap,
-  allowGloss: boolean = false
+  interlinearMap: InterlinearMap
 ) => {
   if (!interlinearMap.containers.isComplete()) {
     return [];
@@ -137,24 +133,21 @@ const determineInterlinearVerseView = (
   const verseTokens: Word[][] = groupPartsIntoWords(interlinearMap.sourceVerse.words);
   return (verseTokens || [])
     .map((sourceTokens: Word[], sourceIndex): ReactElement =>
-      <Grid item>
-        <Grid container
-              direction={'column'}
-              spacing={0}>
-          <Grid item
-                xs={1}>
-            <WordDisplay
-              key={`interlinear/${sourceCorpus?.id}/${sourceIndex}/${sourceTokens.at(0)?.id}`}
-              links={sourceLinkMap}
-              corpus={sourceCorpus}
-              parts={sourceTokens}
-              allowGloss={allowGloss}
-            />
-          </Grid>
-          {determineInterlinearVerseTargetView(
-            interlinearMap, sourceCorpus, sourceTokens,
-            displayedLinkIds, allowGloss)}
+      <Grid container
+            direction={'column'}
+            spacing={0}>
+        <Grid item
+              key={`interlinear/${sourceCorpus?.id}/${sourceIndex}/${sourceTokens.at(0)?.id}`}>
+          <WordDisplay
+            links={sourceLinkMap}
+            corpus={sourceCorpus}
+            parts={sourceTokens}
+            fillWidth={true}
+          />
         </Grid>
+        {determineInterlinearVerseTargetView(
+          interlinearMap, sourceCorpus, sourceTokens,
+          displayedLinkIds)}
       </Grid>);
 };
 
@@ -168,9 +161,9 @@ const determineInterlinearVerseView = (
  */
 export const InterlinearVerseDisplay = ({
                                           containers,
-                                          verse,
-                                          allowGloss = false
+                                          verse
                                         }: InterlinearVerseDisplayProps) => {
+  const dataLastUpdated = useDataLastUpdated();
   const { projectState } = useContext(AppContext);
   const [interlinearMap, setInterlinearMap] = useState<InterlinearMap | undefined>();
   const [verseElements, setVerseElements] = useState<JSX.Element[]>();
@@ -181,7 +174,9 @@ export const InterlinearVerseDisplay = ({
     }
     createInterlinearMap(projectState.linksTable, verse, containers)
       .then(setInterlinearMap);
-  }, [projectState.linksTable, verse, containers]);
+    // we want dataLastUpdated in the dep array, to force
+    // re-render when alignments are created/modified/deleted
+  }, [projectState.linksTable, verse, containers, dataLastUpdated]);
 
   useEffect(() => {
     if (!interlinearMap) {
@@ -189,8 +184,8 @@ export const InterlinearVerseDisplay = ({
     }
     setVerseElements(
       determineInterlinearVerseView(
-        interlinearMap, allowGloss));
-  }, [allowGloss, containers, verse, interlinearMap]);
+        interlinearMap));
+  }, [containers, verse, interlinearMap]);
 
   if ((verseElements?.length ?? 0) < 1) {
     return <></>;
@@ -199,6 +194,10 @@ export const InterlinearVerseDisplay = ({
   return <Grid
     container
     direction={'row'}>
-    {verseElements}
+    {verseElements?.map((verseElement) => (
+      <Grid item>
+        {verseElement}
+      </Grid>
+    ))}
   </Grid>;
 };
