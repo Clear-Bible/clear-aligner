@@ -1,8 +1,46 @@
 import React, { useMemo } from 'react';
-import { ToggleButton } from '../../components/toggleButton';
 import defaultPreferenceItemStyle from './defaultPreferenceItemStyle';
 import { Box } from '@mui/system';
-import { SxProps, Theme } from '@mui/material';
+import { FormControlLabel, Switch, SxProps, Theme } from '@mui/material';
+import { RemovableTooltip } from '../../components/removableTooltip';
+
+interface PreferenceToggleProps {
+  tooltipText?: string;
+  labelText: string;
+  disabled?: boolean;
+  value?: boolean;
+  onUpdateValue?: (v: boolean) => void;
+}
+
+const PreferenceToggle = ({
+  disabled,
+  labelText,
+  tooltipText,
+  value,
+  onUpdateValue
+                          }: PreferenceToggleProps) => {
+  return (
+    <RemovableTooltip title={tooltipText}
+                      removed={disabled || !tooltipText}
+    >
+      <FormControlLabel
+        sx={{
+          width: '100%',
+          marginLeft: '2px',
+          justifyContent: 'space-between',
+        }}
+        control={
+        <Switch
+          disabled={disabled}
+          checked={value}
+          onChange={() => onUpdateValue?.(!value)}
+        />}
+        label={labelText}
+        labelPlacement={'start'}
+      />
+    </RemovableTooltip>
+  );
+}
 
 /**
  * token suggestion preference component props
@@ -35,15 +73,9 @@ export const TokenSuggestionPreference = ({
   return (
     <Box
       sx={boxSx}>
-      <ToggleButton
-        isOn={tokenSuggestionEnabled}
-        onStateChanged={setTokenSuggestionsEnabled}
-        sx={{
-          maxWidth: undefined,
-          height: '100%'
-        }}>
-        Token Suggestions
-      </ToggleButton>
+      <PreferenceToggle labelText={'Token Suggestions'}
+                        value={tokenSuggestionEnabled}
+                        onUpdateValue={setTokenSuggestionsEnabled} />
     </Box>
   );
 }

@@ -78,14 +78,22 @@ export interface DatabaseApi {
    * @param sourcesText optional source text to search for
    * @param targetsText optional target text to search for
    * @param sort optional sorting information
+   * @param excludeRejected whether rejected links should be returned
+   * @param itemLimit number of results to return
+   * @param itemSkip number of items to skip when returning results (for paging)
    */
-  corporaGetLinksByAlignedWord: (sourceName: string, sourcesText?: string, targetsText?: string, sort?: GridSortItem | null) => Promise<Link[]>;
+  corporaGetLinksByAlignedWord: (sourceName: string, sourcesText?: string, targetsText?: string, sort?: GridSortItem | null, excludeRejected?: boolean, itemLimit?: number, itemSkip?: number) => Promise<Link[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
   findLinksByBCV: (sourceName: string, side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number) => Promise<Link[]>;
   findLinksByWordId: (sourceName: string, side: AlignmentSide, referenceString: string) => Promise<Link[]>;
   languageGetAll: (sourceName: string) => Promise<LanguageInfo[]>;
   languageFindByIds: (sourceName: string, languageIds: string[]) => Promise<LanguageInfo[]>;
   getAllWordsByCorpus: (sourceName: string, linkSide: AlignmentSide, corpusId: string, wordLimit: number, wordSkip: number) => Promise<Word[]>;
+  /**
+   * Retrieve all corpora for the given project
+   * @param sourceName project id to query corpora from
+   */
+  getAllCorpora: (sourceName: string) => Promise<Corpus[]>;
   /**
    * Turns off flag indicating corpora have been updated since last sync
    * @param projectId

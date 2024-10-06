@@ -17,7 +17,7 @@ export const useMemoAsync = <T>(f: () => Promise<T>, deps: React.DependencyList)
   },
     // disable eslint deps inspection due to use of spread operator
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-    [ f, setState, ...deps ]);
+    [ ...deps ]);
 
   return state;
 }

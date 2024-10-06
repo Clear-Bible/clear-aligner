@@ -969,7 +969,8 @@ export class ProjectRepository extends BaseRepository {
                                                          w.gloss                           as gloss,
                                                          w.after                           as after,
                                                          w.position_part                   as position,
-                                                         w.source_verse_bcvid              as sourceVerse
+                                                         w.source_verse_bcvid              as sourceVerse,
+                                                         w.normalized_text                 as normalizedText
                                                   from words_or_parts w
                                                   where w.side = ?
                                                     and w.corpus_id = ?
@@ -1408,31 +1409,39 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  corporaGetLinksByAlignedWord = async (sourceName: string, sourcesText?: string, targetsText?: string, sort?: GridSortItem|null) => {
+  corporaGetLinksByAlignedWord = async (sourceName: string, sourcesText?: string, targetsText?: string, sort?: GridSortItem|null, excludeRejected?: boolean, itemLimit?: number, itemSkip?: number) => {
     if (!sourcesText && !targetsText) return [];
     const dataSource = (await this.getDataSource(sourceName));
     const entityManager = dataSource.manager;
     const whereSourceTextClause = !!sourcesText ? 'l.sources_text = ?' : undefined;
-    const whereTargetTextClause = !!sourcesText ? 'l.targets_text = ?' : undefined;
+    const whereTargetTextClause = !!targetsText ? 'l.targets_text = ?' : undefined;
+
+    const where = (!!whereSourceTextClause || !!whereTargetTextClause)
+      ? `WHERE ${[ whereSourceTextClause, whereTargetTextClause ].filter(v => !!v).join(' AND ')}`
+      : '';
+    const params = [sourcesText, targetsText].filter(v => !!v) as string[];
+
     const linkIds = (await entityManager.query(`
       SELECT l.id        id,
              ltw.word_id word_id
       FROM links l
              INNER JOIN links__target_words ltw
                         ON ltw.link_id = l.id
-      ${(whereSourceTextClause || whereTargetTextClause)
-        ? `WHERE ${[ whereSourceTextClause, whereTargetTextClause ].filter(v => !!v).join(' AND ')}`
-        : ''}
+      ${where}
+      ${excludeRejected ? `l.status != 'rejected` : ''}
       GROUP BY id
-        ${this._buildOrderBy(sort, { ref: 'word_id' })};`, [sourcesText, targetsText].filter(v => !!v)))
+        ${this._buildOrderBy(sort, { ref: 'word_id' })}
+        ${this._buildPaging(itemLimit, itemSkip)};`, params))
       .map((link: any) => link.id);
     return (await this.findLinksById(dataSource, linkIds));
   };
 
-  _buildOrderBy = (sort: GridSortItem, fieldMap: { [key: string]: string }) => {
+  _buildOrderBy = (sort?: GridSortItem|null, fieldMap: { [key: string]: string }) => {
     if (!sort || !sort.field || !sort.sort) return '';
     return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
   };
+
+  _buildPaging = (itemLimit?: number, itemSkip?: number): string => `${!!itemLimit ? `limit ${itemLimit}` : ''} ${!!itemSkip ? `offset ${itemSkip}` : ''}`;
 
   getBulkInsertDirPath = (projectId: string, dontMkDirIfMissing = false) => {
     const result = path.join(this.getDataDirectory(), JournalEntryDirectory, projectId);

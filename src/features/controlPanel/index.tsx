@@ -7,7 +7,7 @@ import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import { AddLink, LinkOff, RestartAlt } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer } from '../../structs';
+import { CorpusContainer, EditedLink } from '../../structs';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
 
@@ -41,12 +41,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   const linkHasBothSides = useMemo(
     () => {
       return (
-        Number(inProgressLink?.sources.length) > 0 &&
-        Number(inProgressLink?.targets.length) > 0
+        (Number(inProgressLink?.sources.length) > 0 || Number(inProgressLink?.suggestedSources.length) > 0) &&
+        (Number(inProgressLink?.targets.length) > 0 || Number(inProgressLink?.suggestedTargets.length) > 0)
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inProgressLink?.sources.length, inProgressLink?.targets.length]
+    [inProgressLink?.sources.length, inProgressLink?.targets.length, inProgressLink?.suggestedSources.length, inProgressLink?.suggestedTargets.length]
   );
 
   if (scrollLock && !formats.includes('scroll-lock')) {
@@ -64,7 +64,15 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }
 
   const createLink = () => {
-    inProgressLink && saveLink(inProgressLink.toLink());
+    if (inProgressLink) {
+      const newLink = EditedLink.toLink(inProgressLink)!;
+      if (Number(inProgressLink.suggestedSources.length) > 0 && inProgressLink.sources.length < 1) {
+        newLink.sources.push(inProgressLink.suggestedSources?.at(0)!)
+      } else if (Number(inProgressLink.suggestedTargets.length) > 0 && inProgressLink.targets.length < 1) {
+        newLink.targets.push(inProgressLink.suggestedTargets?.at(0)!)
+      }
+      saveLink(newLink);
+    }
     dispatch(resetTextSegments());
   }
 

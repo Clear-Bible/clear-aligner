@@ -1,20 +1,29 @@
-import { Corpus, LanguageInfo, Link, LinkOriginManual, LinkStatus, TextDirection, Word } from '../../structs';
-import { useContext, useMemo, useRef } from 'react';
+import {
+  Corpus,
+  EditedLink,
+  LanguageInfo,
+  Link,
+  LinkOriginManual,
+  LinkStatus,
+  TextDirection,
+  Word
+} from '../../structs';
+import { useEffect, useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
 import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
-import { toggleTextSegment } from '../../state/alignment.slice';
-import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink } from '@mui/icons-material';
+import { toggleTextSegment, submitSuggestionResolution } from '../../state/alignment.slice';
+import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
-import { AppContext } from '../../App';
 import { useSuggestions } from '../../hooks/useSuggestions';
+import { ProtoLinkSuggestion } from '../../common/data/project/linkSuggestion';
 
 const alphaTransparencyValueForButtonTokens = '.12';
 /**
@@ -149,7 +158,6 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const { features: { enableTokenSuggestions } } = useContext(AppContext);
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
@@ -163,8 +171,6 @@ export const ButtonToken = ({
         <stop offset={1} stopColor={gradientBottomColor} />
       </linearGradient>
     </svg>), [gradientSvgId]);
-
-
 
   /**
    * whether the current token is being hovered by the user
@@ -225,9 +231,62 @@ export const ButtonToken = ({
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
-  const { suggestions } = useSuggestions({ editedLink });
+  const staticEditedLink = useMemo(() => EditedLink.toLink(editedLink), [ editedLink ]);
 
-  const isSelectedInEditedLink = useAppSelector((state) => {
+  const { relevantSuggestions } = useSuggestions(token, staticEditedLink);
+
+  const relevantSuggestion = useMemo<ProtoLinkSuggestion|undefined>(() => {
+    if (isMemberOfAnyLink) return undefined;
+    return relevantSuggestions?.at(0);
+  }, [ isMemberOfAnyLink, relevantSuggestions ]);
+
+  const wasSubmittedForConsideration = useMemo<boolean>(() => {
+    if (!relevantSuggestion) return false;
+    switch (token.side) {
+      case AlignmentSide.SOURCE:
+        return editedLink?.suggestedSources.map(BCVWP.parseFromString).some((bcv) => BCVWP.compare(bcv, BCVWP.parseFromString(token.id)) === 0) ?? false;
+      case AlignmentSide.TARGET:
+        return editedLink?.suggestedTargets.map(BCVWP.parseFromString).some((bcv) => BCVWP.compare(bcv, BCVWP.parseFromString(token.id)) === 0) ?? false;
+    }
+  }, [ token.id, token.side, editedLink?.suggestedSources, editedLink?.suggestedTargets, relevantSuggestion ]);
+
+  useEffect(() => {
+    if (!relevantSuggestion || wasSubmittedForConsideration) return;
+    dispatch(submitSuggestionResolution({
+      suggestions: [{
+        side: token.side,
+        tokenRef: BCVWP.sanitize(token.id)
+      }]
+    }));
+  }, [ relevantSuggestion, wasSubmittedForConsideration, token, dispatch ]);
+
+  const firstSuggestion = useMemo(() => {
+    if (!relevantSuggestion) return undefined;
+    switch (token.side) {
+      case AlignmentSide.SOURCE:
+        return [ ...(editedLink?.suggestedSources ?? []) ]
+          .sort(BCVWP.compareString)
+          .at(0);
+      case AlignmentSide.TARGET:
+        return [ ...(editedLink?.suggestedTargets ?? []) ]
+          .sort(BCVWP.compareString)
+          .at(0);
+    }
+  }, [ relevantSuggestion, token.side, editedLink?.suggestedSources, editedLink?.suggestedTargets ]);
+
+  const isFirstSuggestion = useMemo<boolean>(() => !!firstSuggestion && firstSuggestion === token.id,
+    [ firstSuggestion, token.id ]);
+
+  const isSelectedInEditedLink = useMemo<boolean>(() => {
+    switch (token.side) {
+      case AlignmentSide.SOURCE:
+        return !!editedLink?.sources.includes( BCVWP.sanitize(token.id) );
+      case AlignmentSide.TARGET:
+        return !!editedLink?.targets.includes( BCVWP.sanitize(token.id) );
+    }
+  }, [ token.id, token.side, editedLink?.sources, editedLink?.targets ]);
+
+  /*const isSelectedInEditedLink = useAppSelector((state) => {
     switch (token.side) {
       case AlignmentSide.SOURCE:
         return !!state.alignment.present.inProgressLink?.sources.includes(
@@ -238,9 +297,9 @@ export const ButtonToken = ({
           BCVWP.sanitize(token.id)
         );
     }
-  });
+  }); //*/
 
-  const isCurrentlyHoveredToken = useMemo<boolean>(() => token?.side === currentlyHoveredToken?.side && token?.id === currentlyHoveredToken?.id, [currentlyHoveredToken, token?.id, token?.side]);
+  const isCurrentlyHoveredToken = useMemo<boolean>(() => token?.side === currentlyHoveredToken?.side && token?.id === currentlyHoveredToken?.id, [ token.id, token.side, currentlyHoveredToken?.id, currentlyHoveredToken?.side ]);
 
   /**
    * whether this token is a member of an alignment that the currently hovered token is a member of
@@ -258,6 +317,7 @@ export const ButtonToken = ({
    */
   const buttonPrimaryColor = useMemo(() => {
     if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) return theme.palette.primary.main;
+    if (relevantSuggestion) return theme.palette.secondary.light;
     if (!memberOfPrimaryLink?.metadata.status) return theme.palette.text.disabled;
     switch (memberOfPrimaryLink?.metadata.status) {
       case LinkStatus.APPROVED:
@@ -271,14 +331,14 @@ export const ButtonToken = ({
       default:
         return theme.palette.text.disabled;
     }
-  }, [memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink]);
+  }, [ relevantSuggestion, memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink, theme.palette.secondary.light ]);
 
   const buttonNormalBackgroundColor = useMemo(() => theme.palette.background.default, [theme.palette.background.default]);
 
   const sourceIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
-      if (isSelectedInEditedLink) {
+      if (isSelectedInEditedLink || !!relevantSuggestion) {
         return buttonNormalBackgroundColor;
       }
       return buttonPrimaryColor;
@@ -296,6 +356,16 @@ export const ButtonToken = ({
         margin: iconMargin
       }}>
     </Box>);
+    if (relevantSuggestion) {
+      return (
+        <Lightbulb
+          {...{
+            ...iconProps,
+            sx: iconProps?.sx,
+          }}
+        />
+      );
+    }
     if (!memberOfPrimaryLink) {
       return emptyBox;
     }
@@ -430,10 +500,10 @@ export const ButtonToken = ({
       sx={(theme) => ({
         textTransform: 'none',
         color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
-        borderColor: isSpecialMachineLearningCase && isSelectedInEditedLink ? 'transparent !important' : `${buttonPrimaryColor} !important`,
+        borderColor: ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isFirstSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`,
         '&:hover': hoverSx,
         padding: '0 !important',
-        ...(isSelectedInEditedLink ? {
+        ...(isSelectedInEditedLink || isFirstSuggestion ? {
           backgroundColor:  buttonPrimaryColor,
         } : {}),
         /**

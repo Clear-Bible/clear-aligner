@@ -411,18 +411,19 @@ export class EditedLink extends Link {
     this.suggestedTargets = [];
   }
 
-  suggestedSources: string[]; // BCVWP identifying suggested sources
-  suggestedTargets: string[]; // BCVWP identifying suggested targets
+  suggestedSources: string[];
+  suggestedTargets: string[];
 
   /**
    * generate an edited link from an input link
    * @param link link to generate the edited variation from
    */
-  public static fromLink(link: Link): EditedLink {
+  public static fromLink(link?: Link): EditedLink|undefined|null {
+    if (!link) return link;
     const l = new EditedLink();
     l.id = link.id;
-    l.sources = link.sources;
-    l.targets = link.targets;
+    l.sources = [ ...link.sources ];
+    l.targets = [ ...link.targets ];
     l.metadata = {
       ...link.metadata
     };
@@ -433,22 +434,16 @@ export class EditedLink extends Link {
    * converts the given link to a database-ready one
    * @param link
    */
-  public static toLink(link: EditedLink): Link {
+  public static toLink(link?: EditedLink|null): Link|undefined|null {
+    if (!link) return link;
     const l = new Link();
     l.id = link.id;
-    l.sources = link.sources;
-    l.targets = link.targets;
+    l.sources = [ ...link.sources ];
+    l.targets = [ ...link.targets ];
     l.metadata = {
       ...link.metadata
     };
     return l;
-  }
-
-  /**
-   * convert this link to one that can be persisted to the database
-   */
-  public toLink = (): Link => {
-    return EditedLink.toLink(this);
   }
 }
 

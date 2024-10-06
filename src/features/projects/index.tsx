@@ -16,10 +16,9 @@ import { useCurrentUserGroups, useIsSignedIn } from '../../hooks/userInfoHooks';
 import uuid from 'uuid-random';
 import { CreateProjectCard } from './createProjectCard';
 import { ProjectCard } from './projectCard';
-import { ThemeSelector } from '../../state/preferences/themeSelector';
-import { TokenSuggestionPreference } from '../../state/preferences/tokenSuggestionPreference';
 import { FeaturePreferences } from '../../common/data/featurePreferences';
 import { projectCardMargin } from './styleConstants';
+import { PreferencesButton } from '../../state/preferences/preferencesDialog';
 
 export interface ProjectsViewProps {
   preferredTheme: THEME_PREFERENCE;
@@ -187,20 +186,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({
 
         <Stack direction={'row'}>
           {/* Theme Preference */}
-          <ThemeSelector
-            sx={{ width: '200px' }}
+          <PreferencesButton
             preferredTheme={preferredTheme}
             setPreferredTheme={setPreferredTheme}/>
-          <TokenSuggestionPreference
-            sx={{ width: '200px' }}
-            tokenSuggestionEnabled={features.enableTokenSuggestions}
-            setTokenSuggestionsEnabled={(suggestionsEnabled: boolean) => {
-              setFeatures((featurePrefs) => ({
-                ...featurePrefs,
-                enableTokenSuggestions: suggestionsEnabled
-              }));
-            }}
-            />
         </Stack>
       </Grid>
     </>
