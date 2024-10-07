@@ -91,7 +91,7 @@ export const compressAlignedWords = (
           const inputWord = workInputWords[nextCtr];
           workWords[nextCtr] = {
             ...inputWord,
-            id: ZERO_BCVWP,
+            id: targetType === WordType.Ellipsis ? ZERO_BCVWP : inputWord.id,
             text: targetType === WordType.Ellipsis ? ELLIPSIS_CHAR : inputWord.text,
             normalizedText: targetType === WordType.Ellipsis ? ELLIPSIS_CHAR : inputWord.normalizedText,
             after: targetType === WordType.Ellipsis ? undefined : inputWord.after,
