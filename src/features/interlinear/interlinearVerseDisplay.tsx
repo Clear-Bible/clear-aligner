@@ -33,7 +33,7 @@ const determineDefaultTargetView = (
 ) => {
   return (
     <Grid item
-          key={uuid()}>
+          key={`interlinear/${sourceCorpus?.id}/${sourceTokens.map(sourceToken => sourceToken.id).join('+')}/default`}>
       <WordDisplay
         links={new Map<string, Link[]>()}
         corpus={sourceCorpus}
