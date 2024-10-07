@@ -24,7 +24,6 @@ const baseGroupedButtonSx: SxProps<Theme> = ({
  * @param languageInfo language information used for the button group
  * @param sx style information
  * @param children buttons in the button group
- * @param fillWidth
  * @param others any other parameters normally applied to a material UI {@link ButtonGroup}
  */
 export const LocalizedButtonGroup = ({

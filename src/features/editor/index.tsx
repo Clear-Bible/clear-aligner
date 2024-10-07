@@ -32,6 +32,10 @@ const Editor = ({
   useDebug('Editor');
 
   const [visibleSourceVerses, setVisibleSourceVerses] = useState<Verse[]>([]);
+
+  // callback used to capture what's visible in the upper half
+  // of the editor display, in order to keep the interlinear
+  // and anything like it in sync.
   const setNewVisibleVerses = useCallback((inputVerses: Verse[], corpus: CorpusContainer) => {
     if (corpus.id === AlignmentSide.SOURCE
       && !_.isEqual(visibleSourceVerses, inputVerses)) {
