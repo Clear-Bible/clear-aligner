@@ -1,12 +1,12 @@
-import { CorpusContainer, NamedContainers, Verse } from '../../structs';
-import React, { Fragment, ReactElement, useEffect, useMemo, useRef, useState } from 'react';
+import { NamedContainers, Verse } from '../../structs';
+import React, { Fragment, ReactElement, useEffect, useRef, useState } from 'react';
 import useDebug from '../../hooks/useDebug';
 import { Grid, Typography } from '@mui/material';
 import { InterlinearVerseDisplay } from './interlinearVerseDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 
 interface InterlinearProps {
-  containers: CorpusContainer[];
+  containers: NamedContainers;
   position: BCVWP;
   verses: Verse[];
 }
@@ -91,23 +91,16 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
                                                                  }: InterlinearProps): ReactElement => {
   useDebug('InterlinearComponent');
 
-  const namedContainers = useMemo(() => {
-    return new NamedContainers(containers);
-  }, [containers]);
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const [interlinearElements, setInterlinearElements] = useState<JSX.Element[]>();
 
   useEffect(() => {
-    if (!namedContainers
-      || !namedContainers.isComplete()) {
-      return;
-    }
     setInterlinearElements(
       determineInterlinearView(
-        namedContainers,
+        containers,
         position,
         verses));
-  }, [containers, namedContainers, position, verses]);
+  }, [containers, containers, position, verses]);
 
   return (
     <Fragment>

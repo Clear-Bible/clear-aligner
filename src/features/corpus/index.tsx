@@ -6,7 +6,7 @@ import React, { ReactElement, useCallback, useEffect, useMemo, useRef, useState 
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer, Verse } from 'structs';
+import { CorpusContainer, NamedContainers, Verse } from 'structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { VerseDisplay } from './verseDisplay';
 import {
@@ -22,10 +22,7 @@ export interface CorpusProps {
   viewCorpora: CorpusContainer,
   viewportIndex: number,
   position: BCVWP | null,
-  containers: {
-    sources?: CorpusContainer,
-    targets?: CorpusContainer
-  },
+  containers: NamedContainers,
   setChangedVisibleVerses?: ((verses: Verse[], corpus: CorpusContainer) => void)
 }
 

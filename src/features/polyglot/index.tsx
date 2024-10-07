@@ -8,7 +8,7 @@ import { Box, Card, Grid, Stack } from '@mui/material';
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import CorpusComponent from 'features/corpus';
-import { CorpusContainer, CorpusViewport, Verse } from 'structs';
+import { CorpusContainer, CorpusViewport, NamedContainers, Verse } from 'structs';
 
 import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -17,7 +17,7 @@ import { ControlPanelFormat } from '../../state/preferences/tableManager';
 import { AlignmentSide } from '../../common/data/project/corpus';
 
 interface PolyglotProps {
-  containers: CorpusContainer[];
+  containers: NamedContainers;
   position: BCVWP | null;
   setNewVisibleVerses?: (verses: Verse[], corpus: CorpusContainer) => void;
 }
@@ -25,7 +25,8 @@ interface PolyglotProps {
 export const Polyglot: React.FC<PolyglotProps> = ({
                                                     containers,
                                                     position,
-                                                    setNewVisibleVerses}) => {
+                                                    setNewVisibleVerses
+                                                  }) => {
   useDebug('Polyglot');
 
   const { preferences } = React.useContext(AppContext);
@@ -33,7 +34,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
   const corpusViewports: CorpusViewport[] | null = useMemo(
     () =>
-      containers?.map(
+      containers.all?.map(
         (container): CorpusViewport => ({
           containerId: container.id
         })
@@ -62,8 +63,8 @@ export const Polyglot: React.FC<PolyglotProps> = ({
           corpusViewports.sort(c => c.containerId === AlignmentSide.SOURCE ? -1 : 1).map((corpusViewport: CorpusViewport, index: number) => {
             const corpusId = corpusViewport.containerId;
             const key = `text_${index}`;
-            const container = containers.find(
-              (c) => c.id === corpusViewport.containerId
+            const container = containers.all?.find(
+              (container) => container.id === corpusViewport.containerId
             );
             if (!container) return <Grid key={key} />;
             return (
@@ -97,10 +98,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({
                   key={corpusId}
                   viewCorpora={container}
                   viewportIndex={index}
-                  containers={{
-                    sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
-                    targets: containers?.find(c => c.id === AlignmentSide.TARGET)
-                  }}
+                  containers={containers}
                   position={position}
                   setChangedVisibleVerses={setNewVisibleVerses}
                 />

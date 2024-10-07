@@ -6,12 +6,12 @@ import React, { ReactElement } from 'react';
 import { Card, Stack } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer, Verse } from 'structs';
+import { NamedContainers, Verse } from 'structs';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { InterlinearComponent } from '../interlinear';
 
 interface ContextPanelProps {
-  containers: CorpusContainer[];
+  containers: NamedContainers;
   position?: BCVWP;
   visibleSourceVerses: Verse[];
 }

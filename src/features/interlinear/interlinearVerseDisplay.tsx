@@ -7,6 +7,7 @@ import { Grid } from '@mui/material';
 import { AppContext } from '../../App';
 import { createInterlinearMap, InterlinearMap } from '../../helpers/createInterlinearMap';
 import { useDataLastUpdated } from '../../state/links/tableManager';
+import { ZERO_BCVWP } from '../bcvwp/BCVWPSupport';
 
 /**
  * Display props for an interlinear display.
@@ -39,6 +40,7 @@ const determineDefaultTargetView = (
         readonly={true}
         parts={[{
           ...sourceTokens[0],
+          id: ZERO_BCVWP,
           text: '',
           normalizedText: '',
           after: undefined
@@ -66,73 +68,67 @@ const determineTargetView = (
     return determineDefaultTargetView(sourceCorpus, sourceTokens);
   }
 
-  // reduce source map to lists of links and words
-  const targetLinkWords =
-    (sourceTokens?.map(sourceToken => interlinearMap.sourceMap?.get(sourceToken.id) ?? [])
-      .filter(Boolean) ?? [])
-      .flat();
-
-  // reduce lists of links and words to tokens
-  const targetTokens =
-    (targetLinkWords.map(targetLinkWord => targetLinkWord.words)
-      .filter(Boolean) ?? [])
-      .flat();
-  if (targetTokens.length < 1) {
-    return determineDefaultTargetView(sourceCorpus, sourceTokens);
-  }
-
-  // reduce lists of links and words to a map of word IDs to links
   const targetLinkMap = new Map<string, Link[]>();
-  targetLinkWords.forEach(linkWords =>
+  const targetTokens = sourceTokens.map(sourceToken => {
+    const linkWords = interlinearMap.sourceMap?.get(sourceToken.id)?.at(0);
+    if (!linkWords
+      || (!linkWords.link?.id)
+      || (linkWords?.words.length ?? 0) < 1) {
+      return {
+        ...sourceToken,
+        id: ZERO_BCVWP,
+        text: '',
+        normalizedText: '',
+        after: undefined
+      } as Word;
+    }
+
     linkWords.words.forEach(targetToken => {
       const targetLinks = targetLinkMap.get(targetToken.id) ?? [];
       targetLinks.push(linkWords.link);
       targetLinkMap.set(targetToken.id, targetLinks);
-    }));
+    });
 
-  // replace with placeholder, as needed
-  const compressedTokens =
-    targetLinkWords.some(linkWords =>
-      displayedLinkIds?.has(linkWords.link.id!))
-      ? [targetTokens[0]]
-        .map(linkWord => ({
-          ...linkWord,
-          text: REPEATED_LINK_PLACEHOLDER_CHAR,
-          normalizedText: REPEATED_LINK_PLACEHOLDER_CHAR,
-          after: undefined
-        }))
-      : targetTokens;
-  targetLinkWords.forEach(linkWords =>
-    displayedLinkIds?.add(linkWords.link.id!));
+    const sortedTokens = [...linkWords.words]
+      .sort((leftWord, rightWord) =>
+        leftWord.id.localeCompare(rightWord.id));
 
-  // sort what's left and concatenate
-  const sortedTokens = compressedTokens
-    .sort((leftWords, rightWords) =>
-      leftWords.id.localeCompare(rightWords.id));
+    const compressedTokens
+      = (displayedLinkIds?.has(linkWords.link.id!)
+      ? [{
+        ...sortedTokens[0],
+        text: REPEATED_LINK_PLACEHOLDER_CHAR,
+        normalizedText: REPEATED_LINK_PLACEHOLDER_CHAR,
+        after: undefined
+      } as Word]
+      : sortedTokens)
+      .filter(Boolean);
+    displayedLinkIds.add(linkWords.link.id!);
 
-  // build single 'token' consisting of the concatenated elements
-  const outputText = sortedTokens.map(sortedToken => sortedToken.text).join(' ');
-  const outputToken = {
-    ...sortedTokens[0],
-    text: outputText,
-    normalizedText: outputText,
-    after: undefined
-  } as Word;
+    const outputText = compressedTokens.map(compressedToken => compressedToken.text).join(' ');
+    return {
+      ...compressedTokens[0],
+      text: outputText,
+      normalizedText: outputText,
+      after: undefined
+    } as Word;
+  }).filter(Boolean);
 
   // obtain target corpus
-  const targetCorpus = interlinearMap.containers.targets?.corpusAtReferenceString(outputToken.id);
-  if (!targetCorpus) {
+  const targetCorpus = interlinearMap.containers.targets?.corpusAtReferenceString(targetTokens[0].id);
+  if (targetLinkMap.size < 1
+    || !targetCorpus) {
     return determineDefaultTargetView(sourceCorpus, sourceTokens);
   }
 
   // render target words
   return (
     <Grid item
-          key={`interlinear/${targetCorpus?.id}/${sortedTokens.map(sortedToken => sortedToken.id).join('+')}.id}`}>
+          key={`interlinear/${targetCorpus?.id}/${targetTokens.map(targetToken => targetToken.id).join('+')}.id}`}>
       <WordDisplay
         links={targetLinkMap}
         corpus={targetCorpus}
-        parts={[outputToken]}
+        parts={targetTokens}
         fillWidth={true}
       />
     </Grid>);

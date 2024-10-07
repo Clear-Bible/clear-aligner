@@ -1,4 +1,5 @@
 import { Link, Word } from '../structs';
+import { ZERO_BCVWP } from '../features/bcvwp/BCVWPSupport';
 
 /**
  * Enumeration used to rank compressed words within the output.
@@ -90,6 +91,7 @@ export const compressAlignedWords = (
           const inputWord = workInputWords[nextCtr];
           workWords[nextCtr] = {
             ...inputWord,
+            id: ZERO_BCVWP,
             text: targetType === WordType.Ellipsis ? ELLIPSIS_CHAR : inputWord.text,
             normalizedText: targetType === WordType.Ellipsis ? ELLIPSIS_CHAR : inputWord.normalizedText,
             after: targetType === WordType.Ellipsis ? undefined : inputWord.after,

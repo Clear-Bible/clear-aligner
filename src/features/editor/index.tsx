@@ -12,14 +12,14 @@ import Polyglot from 'features/polyglot';
 import ControlPanel from 'features/controlPanel';
 import ContextPanel from 'features/contextPanel';
 
-import { CorpusContainer, Verse } from 'structs';
+import { CorpusContainer, NamedContainers, Verse } from 'structs';
 
 import '../../styles/theme.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 
 interface EditorProps {
-  containers: CorpusContainer[];
+  containers: NamedContainers;
   position: BCVWP;
   usePaddingForEditorContainer?: boolean,
 }

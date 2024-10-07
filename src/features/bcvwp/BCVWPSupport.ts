@@ -23,7 +23,10 @@ export interface BCVWPOverrides {
   part?: number;
 }
 
+export const ZERO_BCVWP = '000000000000';
+
 export default class BCVWP {
+
   /**
    * 0-based index, from book list here: https://ubsicap.github.io/usfm/identification/books.html
    */
@@ -134,19 +137,19 @@ export default class BCVWP {
 
   hasUpToField(field: BCVWPField): boolean {
     const fields = [];
-    switch(field) {
+    switch (field) {
       case BCVWPField.Part:
         fields.push(BCVWPField.Part);
-        // falls through
+      // falls through
       case BCVWPField.Word:
         fields.push(BCVWPField.Word);
-        // falls through
+      // falls through
       case BCVWPField.Verse:
         fields.push(BCVWPField.Verse);
-        // falls through
+      // falls through
       case BCVWPField.Chapter:
         fields.push(BCVWPField.Chapter);
-        // falls through
+      // falls through
       case BCVWPField.Book:
         fields.push(BCVWPField.Book);
         return this.hasFields(...fields);
