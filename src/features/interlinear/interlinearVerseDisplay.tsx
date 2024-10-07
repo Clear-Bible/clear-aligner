@@ -68,6 +68,8 @@ const determineTargetView = (
     return determineDefaultTargetView(sourceCorpus, sourceTokens);
   }
 
+  // build link map and target tokens, pre-concatenated
+  // and compressed with placeholders
   const targetLinkMap = new Map<string, Link[]>();
   const targetTokens = sourceTokens.map(sourceToken => {
     const linkWords = interlinearMap.sourceMap?.get(sourceToken.id)?.at(0);
@@ -116,6 +118,8 @@ const determineTargetView = (
 
   // obtain target corpus
   const targetCorpus = interlinearMap.containers.targets?.corpusAtReferenceString(targetTokens[0].id);
+
+  // no links or corpus = empty target cell
   if (targetLinkMap.size < 1
     || !targetCorpus) {
     return determineDefaultTargetView(sourceCorpus, sourceTokens);
