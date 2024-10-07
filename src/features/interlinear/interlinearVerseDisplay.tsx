@@ -7,7 +7,6 @@ import { Grid } from '@mui/material';
 import { AppContext } from '../../App';
 import { createInterlinearMap, InterlinearMap } from '../../helpers/createInterlinearMap';
 import { useDataLastUpdated } from '../../state/links/tableManager';
-import uuid from 'uuid-random';
 
 /**
  * Display props for an interlinear display.
@@ -143,7 +142,7 @@ const determineTargetView = (
  * Renders the source and target words for a given verse.
  * @param interlinearMap Interlinear mapping information.
  */
-const determineInterlinearVerseView = (
+const determineVerseView = (
   interlinearMap: InterlinearMap
 ) => {
   if (!interlinearMap.containers.isComplete()) {
@@ -218,7 +217,7 @@ export const InterlinearVerseDisplay = ({
       return;
     }
     setVerseElements(
-      determineInterlinearVerseView(
+      determineVerseView(
         interlinearMap));
   }, [containers, verse, interlinearMap]);
 
