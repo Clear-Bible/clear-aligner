@@ -23,6 +23,9 @@ export interface BCVWPOverrides {
   part?: number;
 }
 
+/**
+ * Zeroed-out BCVWP, for when we need a reference that doesn't link with anything.
+ */
 export const ZERO_BCVWP = '000000000000';
 
 export default class BCVWP {
