@@ -89,7 +89,6 @@ export const ButtonWord = ({
                               padding: '0px !important',
                               minWidth: '12px !important',
                               height: enableGlossDisplay ? '82px !important' : '62px !important'
-                              // ...(fillWidth ? { width: '100%' } : {})
                             }
                           }}>
       {tokens?.map((token) => <ButtonToken key={token.id} token={token} completeWord={tokens}
@@ -142,7 +141,7 @@ export interface ButtonTokenProps {
  * @param showRejected whether rejected links should be displayed
  * @param suppressAfter whether the after string should be displayed
  * @param hoverHighlightingDisabled whether normal hover behavior is suppressed
- * @param fillWidth
+ * @param fillWidth True to use max available width.
  */
 export const ButtonToken = ({
                               disabled,

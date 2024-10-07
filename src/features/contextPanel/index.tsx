@@ -30,15 +30,15 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
 
   return (
     <Stack
-      direction="row"
+      direction='row'
       spacing={2}
       style={{
         height: '18.7rem',
         flexGrow: 0,
         flexShrink: 0
       }}
-      justifyContent="stretch"
-      alignItems="stretch"
+      justifyContent='stretch'
+      alignItems='stretch'
     >
       <Card
         elevation={6}

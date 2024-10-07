@@ -53,7 +53,8 @@ const determineInterlinearView = (
             container
             sx={{
               flexGrow: 1,
-              overflow: 'auto',
+              overflowX: 'hidden',
+              overflowY: 'auto',
               ...(languageInfo?.textDirection
                 ? { direction: languageInfo?.textDirection }
                 : {})
