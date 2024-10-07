@@ -1,5 +1,5 @@
 import { WordDisplay } from '../wordDisplay';
-import { Link, NamedContainers, Verse, Word } from '../../structs';
+import { Corpus, Link, NamedContainers, Verse, Word } from '../../structs';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
@@ -7,6 +7,7 @@ import { Grid } from '@mui/material';
 import { AppContext } from '../../App';
 import { createInterlinearMap, InterlinearMap } from '../../helpers/createInterlinearMap';
 import { useDataLastUpdated } from '../../state/links/tableManager';
+import uuid from 'uuid-random';
 
 /**
  * Display props for an interlinear display.
@@ -22,19 +23,48 @@ export interface InterlinearVerseDisplayProps extends LimitedToLinks {
 const REPEATED_LINK_PLACEHOLDER_CHAR = '\u2022';
 
 /**
+ * Render a default (empty) target view.
+ * @param sourceCorpus Source corpus (required).
+ * @param sourceTokens Source tokens to use for metadata (required).
+ */
+const determineDefaultTargetView = (
+  sourceCorpus: Corpus,
+  sourceTokens: Word[]
+) => {
+  return (
+    <Grid item
+          key={uuid()}>
+      <WordDisplay
+        links={new Map<string, Link[]>()}
+        corpus={sourceCorpus}
+        readonly={true}
+        parts={[{
+          ...sourceTokens[0],
+          text: '',
+          normalizedText: '',
+          after: undefined
+        }]}
+        suppressGloss={true}
+        fillWidth={true}
+      />
+    </Grid>);
+};
+
+/**
  * Renders the target word side of the interlinear mapping.
- * @param interlinearMap Interlinear mapping information.
- * @param sourceTokens Source tokens to map.
+ * @param sourceCorpus Source corpus (required).
+ * @param sourceTokens Source tokens to map (required).
+ * @param interlinearMap Interlinear mapping information (required).
  * @param displayedLinkIds Set of link IDs already displayed (used for placeholder rendering)
  */
-const determineInterlinearVerseTargetView = (
-  interlinearMap: InterlinearMap,
+const determineTargetView = (
+  sourceCorpus: Corpus,
   sourceTokens: Word[],
-  displayedLinkIds: Set<string>
-) => {
+  interlinearMap: InterlinearMap,
+  displayedLinkIds: Set<string>) => {
   if (!interlinearMap.containers.isComplete()
     || interlinearMap.sourceMap.size < 1) {
-    return <></>;
+    return determineDefaultTargetView(sourceCorpus, sourceTokens);
   }
 
   // reduce source map to lists of links and words
@@ -49,7 +79,7 @@ const determineInterlinearVerseTargetView = (
       .filter(Boolean) ?? [])
       .flat();
   if (targetTokens.length < 1) {
-    return <></>;
+    return determineDefaultTargetView(sourceCorpus, sourceTokens);
   }
 
   // reduce lists of links and words to a map of word IDs to links
@@ -69,6 +99,7 @@ const determineInterlinearVerseTargetView = (
         .map(linkWord => ({
           ...linkWord,
           text: REPEATED_LINK_PLACEHOLDER_CHAR,
+          normalizedText: REPEATED_LINK_PLACEHOLDER_CHAR,
           after: undefined
         }))
       : targetTokens;
@@ -81,16 +112,18 @@ const determineInterlinearVerseTargetView = (
       leftWords.id.localeCompare(rightWords.id));
 
   // build single 'token' consisting of the concatenated elements
+  const outputText = sortedTokens.map(sortedToken => sortedToken.text).join(' ');
   const outputToken = {
     ...sortedTokens[0],
-    text: sortedTokens.map(sortedToken => sortedToken.text).join(' '),
+    text: outputText,
+    normalizedText: outputText,
     after: undefined
   } as Word;
 
   // obtain target corpus
   const targetCorpus = interlinearMap.containers.targets?.corpusAtReferenceString(outputToken.id);
   if (!targetCorpus) {
-    return <></>;
+    return determineDefaultTargetView(sourceCorpus, sourceTokens);
   }
 
   // render target words
@@ -116,12 +149,14 @@ const determineInterlinearVerseView = (
   if (!interlinearMap.containers.isComplete()) {
     return [];
   }
+
   // fetch source corpus, if available
   const verseRef = interlinearMap.sourceVerse.bcvId.toReferenceString();
   const sourceCorpus = interlinearMap.containers.sources?.corpusAtReferenceString(verseRef);
   if (!sourceCorpus) {
     return [];
   }
+
   // reduce source map into map of word IDs to links
   const sourceLinkMap = new Map<string, Link[]>();
   interlinearMap.sourceMap.forEach((linkWords, sourceWordId) => {
@@ -129,6 +164,7 @@ const determineInterlinearVerseView = (
     sourceLinks.push(...linkWords.map(linkWord => linkWord.link));
     sourceLinkMap.set(sourceWordId, sourceLinks);
   });
+
   // render source and target words
   const displayedLinkIds = new Set<string>();
   const verseTokens: Word[][] = groupPartsIntoWords(interlinearMap.sourceVerse.words);
@@ -146,8 +182,9 @@ const determineInterlinearVerseView = (
             fillWidth={true}
           />
         </Grid>
-        {determineInterlinearVerseTargetView(
-          interlinearMap, sourceTokens, displayedLinkIds)}
+        {determineTargetView(
+          sourceCorpus, sourceTokens,
+          interlinearMap, displayedLinkIds)}
       </Grid>);
 };
 

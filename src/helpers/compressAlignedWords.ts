@@ -23,6 +23,11 @@ export interface CompressedWord extends Word {
 const MaxContextWords = 2;
 
 /**
+ * Ellipsis character.
+ */
+const ELLIPSIS_CHAR = '\u2026';
+
+/**
  * Takes an array of word objects and 1-based indexes (IDs) and produces an array of compressed words
  * that include the following:
  * 1. The aligned words.
@@ -85,7 +90,8 @@ export const compressAlignedWords = (
           const inputWord = workInputWords[nextCtr];
           workWords[nextCtr] = {
             ...inputWord,
-            text: targetType === WordType.Ellipsis ? '\u2026' : inputWord.text,
+            text: targetType === WordType.Ellipsis ? ELLIPSIS_CHAR : inputWord.text,
+            normalizedText: targetType === WordType.Ellipsis ? ELLIPSIS_CHAR : inputWord.normalizedText,
             after: targetType === WordType.Ellipsis ? undefined : inputWord.after,
             wordType: targetType
           };

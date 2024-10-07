@@ -31,6 +31,7 @@ export interface WordDisplayProps extends LimitedToLinks {
   links?: Map<string, Link[]>;
   readonly?: boolean;
   suppressAfter?: boolean;
+  suppressGloss?: boolean;
   fillWidth?: boolean;
 }
 
@@ -50,6 +51,7 @@ export const WordDisplay = ({
                               links,
                               readonly = false,
                               suppressAfter = false,
+                              suppressGloss = false,
                               disableHighlighting = false,
                               fillWidth = false
                             }: WordDisplayProps) => {
@@ -92,7 +94,7 @@ export const WordDisplay = ({
                     links={links}
                     tokens={parts}
                     corpus={corpus}
-                    enableGlossDisplay={preferences?.showGloss && hasGloss}
+                    enableGlossDisplay={preferences?.showGloss && hasGloss && !suppressGloss}
                     fillWidth={fillWidth}
                   />
                 </>
