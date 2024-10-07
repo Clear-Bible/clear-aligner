@@ -58,7 +58,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
         password: password,
       })
 
-      if(signInResponse.isSignedIn === true){
+      if(signInResponse.isSignedIn){
         setUserStatus(userState.LoggedIn);
         setShowLoginError(false)
         setSnackBarMessage("Signed in to ClearAligner Sync.")
