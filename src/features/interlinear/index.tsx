@@ -100,7 +100,7 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
         containers,
         position,
         verses));
-  }, [containers, containers, position, verses]);
+  }, [containers, position, verses]);
 
   return (
     <Fragment>
