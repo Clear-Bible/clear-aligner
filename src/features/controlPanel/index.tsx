@@ -7,7 +7,7 @@ import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import { AddLink, LinkOff, RestartAlt } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer, EditedLink } from '../../structs';
+import { EditedLink } from '../../structs';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 
 import uuid from 'uuid-random';
