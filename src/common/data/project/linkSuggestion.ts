@@ -27,4 +27,8 @@ export interface ResolvedLinkSuggestion {
    * resolved reference of token
    */
   tokenRef: string;
+  /**
+   * relevancy score of this alignment (higher is more relevant)
+   */
+  score: number;
 }

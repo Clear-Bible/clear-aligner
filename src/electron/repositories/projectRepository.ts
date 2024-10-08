@@ -1445,6 +1445,32 @@ export class ProjectRepository extends BaseRepository {
     return (await this.findLinksById(dataSource, linkIds));
   };
 
+  findLinkStatusesByAlignedWord = async (sourceName: string,
+                                    sourcesText?: string,
+                                    targetsText?: string,
+                                    excludeRejected?: boolean): Promise<{ status: LinkStatus, count: number }[]> => {
+    if (!sourcesText && !targetsText) return [];
+    const dataSource = (await this.getDataSource(sourceName));
+    const entityManager = dataSource.manager;
+
+    const whereSourceTextClause = !!sourcesText ? 'l.sources_text = ?' : undefined;
+    const whereTargetTextClause = !!targetsText ? 'l.targets_text = ?' : undefined;
+
+    const whereClauses = [
+      whereSourceTextClause,
+      whereTargetTextClause,
+      excludeRejected ? `l.status != 'rejected'` : undefined
+    ].filter(v => !!v);
+
+    const where = whereClauses && whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const params = [sourcesText, targetsText].filter(v => !!v) as string[];
+
+    return (await entityManager.query(`
+      SELECT l.status status, count(DISTINCT l.status) count
+      FROM links l
+      ${where};`, params));
+  };
+
   _buildOrderBy = (sort?: GridSortItem|null, fieldMap: { [key: string]: string }) => {
     if (!sort || !sort.field || !sort.sort) return '';
     return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;

@@ -5,6 +5,7 @@
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { ServerAlignmentLinkDTO } from '../common/data/serverAlignmentLinkDTO';
 import { AlignmentSide } from '../common/data/project/corpus';
+import { ResolvedLinkSuggestion } from '../common/data/project/linkSuggestion';
 
 /**
  * Parameters common to Project Repository functions
@@ -434,8 +435,8 @@ export class EditedLink extends Link {
     this.suggestedTargets = [];
   }
 
-  suggestedSources: string[];
-  suggestedTargets: string[];
+  suggestedSources: ResolvedLinkSuggestion[];
+  suggestedTargets: ResolvedLinkSuggestion[];
 
   /**
    * generate an edited link from an input link

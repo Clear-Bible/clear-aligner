@@ -17,7 +17,7 @@ import { CorpusContainer, NamedContainers, Verse } from 'structs';
 import '../../styles/theme.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import { SuggestionsContext, useProtoSuggestions } from '../../hooks/useSuggestions';
+import { SuggestionsContext, useSuggestionsContextInitializer } from '../../hooks/useSuggestions';
 import { useAppSelector } from '../../app';
 
 interface EditorProps {
@@ -47,7 +47,7 @@ const Editor = ({
 
   const inProgressLink = useAppSelector(state => state.alignment.present.inProgressLink);
 
-  const suggestionsContextValues = useProtoSuggestions(inProgressLink);
+  const suggestionsContextValues = useSuggestionsContextInitializer(inProgressLink);
 
   return (
     <SuggestionsContext.Provider

@@ -7,22 +7,21 @@ import {
   TextDirection,
   Word
 } from '../../structs';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
 import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
-import { toggleTextSegment, submitSuggestionResolution } from '../../state/alignment.slice';
+import { toggleTextSegment } from '../../state/alignment.slice';
 import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
-import { useRelevantSuggestions } from '../../hooks/useSuggestions';
-import { ProtoLinkSuggestion } from '../../common/data/project/linkSuggestion';
+import { useTokenSuggestionRelevancyScore } from '../../hooks/useSuggestions';
 
 const alphaTransparencyValueForButtonTokens = '.12';
 /**
@@ -241,49 +240,7 @@ export const ButtonToken = ({
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
-  const { relevantSuggestions } = useRelevantSuggestions(token);
-
-  const relevantSuggestion = useMemo<ProtoLinkSuggestion|undefined>(() => {
-    if (isMemberOfAnyLink) return undefined;
-    return relevantSuggestions?.at(0);
-  }, [ isMemberOfAnyLink, relevantSuggestions ]);
-
-  const wasSubmittedForConsideration = useMemo<boolean>(() => {
-    if (!relevantSuggestion) return false;
-    switch (token.side) {
-      case AlignmentSide.SOURCE:
-        return editedLink?.suggestedSources.map(BCVWP.parseFromString).some((bcv) => BCVWP.compare(bcv, BCVWP.parseFromString(token.id)) === 0) ?? false;
-      case AlignmentSide.TARGET:
-        return editedLink?.suggestedTargets.map(BCVWP.parseFromString).some((bcv) => BCVWP.compare(bcv, BCVWP.parseFromString(token.id)) === 0) ?? false;
-    }
-  }, [ token.id, token.side, editedLink?.suggestedSources, editedLink?.suggestedTargets, relevantSuggestion ]);
-
-  useEffect(() => {
-    if (!relevantSuggestion || wasSubmittedForConsideration) return;
-    dispatch(submitSuggestionResolution({
-      suggestions: [{
-        side: token.side,
-        tokenRef: BCVWP.sanitize(token.id)
-      }]
-    }));
-  }, [ relevantSuggestion, wasSubmittedForConsideration, token, dispatch ]);
-
-  const firstSuggestion = useMemo(() => {
-    if (!relevantSuggestion) return undefined;
-    switch (token.side) {
-      case AlignmentSide.SOURCE:
-        return [ ...(editedLink?.suggestedSources ?? []) ]
-          .sort(BCVWP.compareString)
-          .at(0);
-      case AlignmentSide.TARGET:
-        return [ ...(editedLink?.suggestedTargets ?? []) ]
-          .sort(BCVWP.compareString)
-          .at(0);
-    }
-  }, [ relevantSuggestion, token.side, editedLink?.suggestedSources, editedLink?.suggestedTargets ]);
-
-  const isFirstSuggestion = useMemo<boolean>(() => !!firstSuggestion && firstSuggestion === token.id,
-    [ firstSuggestion, token.id ]);
+  const { wasSubmittedForConsideration, isMostRelevantSuggestion, scoreIsRelevant } = useTokenSuggestionRelevancyScore(token, isMemberOfAnyLink);
 
   const isSelectedInEditedLink = useMemo<boolean>(() => {
     switch (token.side) {
@@ -293,19 +250,6 @@ export const ButtonToken = ({
         return !!editedLink?.targets.includes( BCVWP.sanitize(token.id) );
     }
   }, [ token.id, token.side, editedLink?.sources, editedLink?.targets ]);
-
-  /*const isSelectedInEditedLink = useAppSelector((state) => {
-    switch (token.side) {
-      case AlignmentSide.SOURCE:
-        return !!state.alignment.present.inProgressLink?.sources.includes(
-          BCVWP.sanitize(token.id)
-        );
-      case AlignmentSide.TARGET:
-        return !!state.alignment.present.inProgressLink?.targets.includes(
-          BCVWP.sanitize(token.id)
-        );
-    }
-  }); //*/
 
   const isCurrentlyHoveredToken = useMemo<boolean>(() => token?.side === currentlyHoveredToken?.side && token?.id === currentlyHoveredToken?.id, [ token.id, token.side, currentlyHoveredToken?.id, currentlyHoveredToken?.side ]);
 
@@ -325,7 +269,7 @@ export const ButtonToken = ({
    */
   const buttonPrimaryColor = useMemo(() => {
     if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) return theme.palette.primary.main;
-    if (relevantSuggestion) return theme.palette.secondary.light;
+    if (wasSubmittedForConsideration && scoreIsRelevant) return theme.palette.secondary.light;
     if (!memberOfPrimaryLink?.metadata.status) return theme.palette.text.disabled;
     switch (memberOfPrimaryLink?.metadata.status) {
       case LinkStatus.APPROVED:
@@ -339,14 +283,14 @@ export const ButtonToken = ({
       default:
         return theme.palette.text.disabled;
     }
-  }, [ relevantSuggestion, memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink, theme.palette.secondary.light ]);
+  }, [ wasSubmittedForConsideration, scoreIsRelevant, memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink, theme.palette.secondary.light ]);
 
   const buttonNormalBackgroundColor = useMemo(() => theme.palette.background.default, [theme.palette.background.default]);
 
   const sourceIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
-      if (isSelectedInEditedLink || !!relevantSuggestion) {
+      if (isSelectedInEditedLink || wasSubmittedForConsideration) {
         return buttonNormalBackgroundColor;
       }
       return buttonPrimaryColor;
@@ -364,7 +308,7 @@ export const ButtonToken = ({
         margin: iconMargin
       }}>
     </Box>);
-    if (relevantSuggestion) {
+    if (isMostRelevantSuggestion) {
       return (
         <Lightbulb
           {...{
@@ -396,7 +340,7 @@ export const ButtonToken = ({
     }
   },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
+    [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
       const color = (() => {
@@ -510,11 +454,11 @@ export const ButtonToken = ({
       component={'button'}
       sx={(theme) => ({
         textTransform: 'none',
-        color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
-        borderColor: ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isFirstSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`,
+        color: (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
+        borderColor: ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`,
         '&:hover': hoverSx,
         padding: '0 !important',
-        ...(isSelectedInEditedLink || isFirstSuggestion ? {
+        ...(isSelectedInEditedLink || isMostRelevantSuggestion ? {
           backgroundColor:  buttonPrimaryColor,
         } : {}),
         /**
@@ -587,7 +531,7 @@ export const ButtonToken = ({
                       display: 'flex',
                       width: '100%',
                       justifyContent: `${textJustification} !important`,
-                      color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
+                      color: (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
                     }}>
                     {token.gloss ?? '-'}
                   </Typography> : <></>}

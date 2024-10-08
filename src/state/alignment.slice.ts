@@ -68,12 +68,12 @@ const applySuggestions = (link: Draft<EditedLink>|EditedLink|null, suggestions?:
     const tokenRef = BCVWP.parseFromString(suggestion.tokenRef);
     switch (suggestion.side) {
       case AlignmentSide.SOURCE:
-        if (link.suggestedSources.map(BCVWP.parseFromString).some((ref) => BCVWP.compare(ref, tokenRef) === 0)) return;
-        link.suggestedSources = [ ...link.suggestedSources, suggestion.tokenRef ].sort(BCVWP.compareString);
+        if (link.suggestedSources.map(({ tokenRef }) => tokenRef).map(BCVWP.parseFromString).some((ref) => BCVWP.compare(ref, tokenRef) === 0)) return;
+        link.suggestedSources = [ ...link.suggestedSources, suggestion ].sort((a, b) => b.score - a.score);
         break;
       case AlignmentSide.TARGET:
-        if (link.suggestedTargets.map(BCVWP.parseFromString).some((ref) => BCVWP.compare(ref, tokenRef) === 0)) return;
-        link.suggestedTargets = [ ...link.suggestedTargets, suggestion.tokenRef ].sort(BCVWP.compareString);
+        if (link.suggestedTargets.map(({ tokenRef }) => tokenRef).map(BCVWP.parseFromString).some((ref) => BCVWP.compare(ref, tokenRef) === 0)) return;
+        link.suggestedTargets = [ ...link.suggestedTargets, suggestion ].sort((a, b) => b.score - a.score);
         break;
     }
   });

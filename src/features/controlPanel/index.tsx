@@ -62,9 +62,9 @@ export const ControlPanel = (): ReactElement => {
     if (inProgressLink) {
       const newLink = EditedLink.toLink(inProgressLink)!;
       if (Number(inProgressLink.suggestedSources.length) > 0 && inProgressLink.sources.length < 1) {
-        newLink.sources.push(inProgressLink.suggestedSources?.at(0)!)
+        newLink.sources.push(inProgressLink.suggestedSources?.at(0)!.tokenRef)
       } else if (Number(inProgressLink.suggestedTargets.length) > 0 && inProgressLink.targets.length < 1) {
-        newLink.targets.push(inProgressLink.suggestedTargets?.at(0)!)
+        newLink.targets.push(inProgressLink.suggestedTargets?.at(0)!.tokenRef)
       }
       saveLink(newLink);
     }
