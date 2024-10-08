@@ -89,7 +89,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
 
   const handleOnKeyDown = (e: { keyCode: number; }) => {
     if(e.keyCode === 13){
-      handleLogin()
+      void handleLogin()
     }
   }
 
