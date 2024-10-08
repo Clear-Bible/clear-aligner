@@ -82,7 +82,13 @@ export interface DatabaseApi {
    * @param itemLimit number of results to return
    * @param itemSkip number of items to skip when returning results (for paging)
    */
-  corporaGetLinksByAlignedWord: (sourceName: string, sourcesText?: string, targetsText?: string, sort?: GridSortItem | null, excludeRejected?: boolean, itemLimit?: number, itemSkip?: number) => Promise<Link[]>;
+  corporaGetLinksByAlignedWord: (sourceName: string,
+                                 sourcesText?: string,
+                                 targetsText?: string,
+                                 sort?: GridSortItem | null,
+                                 excludeRejected?: boolean,
+                                 itemLimit?: number,
+                                 itemSkip?: number) => Promise<Link[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
   findLinksByBCV: (sourceName: string, side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number) => Promise<Link[]>;
   findLinksByWordId: (sourceName: string, side: AlignmentSide, referenceString: string) => Promise<Link[]>;

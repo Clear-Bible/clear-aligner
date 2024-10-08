@@ -1409,16 +1409,26 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  corporaGetLinksByAlignedWord = async (sourceName: string, sourcesText?: string, targetsText?: string, sort?: GridSortItem|null, excludeRejected?: boolean, itemLimit?: number, itemSkip?: number) => {
+  corporaGetLinksByAlignedWord = async (sourceName: string,
+                                        sourcesText?: string,
+                                        targetsText?: string,
+                                        sort?: GridSortItem|null,
+                                        excludeRejected?: boolean,
+                                        itemLimit?: number,
+                                        itemSkip?: number) => {
     if (!sourcesText && !targetsText) return [];
     const dataSource = (await this.getDataSource(sourceName));
     const entityManager = dataSource.manager;
     const whereSourceTextClause = !!sourcesText ? 'l.sources_text = ?' : undefined;
     const whereTargetTextClause = !!targetsText ? 'l.targets_text = ?' : undefined;
 
-    const where = (!!whereSourceTextClause || !!whereTargetTextClause)
-      ? `WHERE ${[ whereSourceTextClause, whereTargetTextClause ].filter(v => !!v).join(' AND ')}`
-      : '';
+    const whereClauses = [
+      whereSourceTextClause,
+      whereTargetTextClause,
+      excludeRejected ? `l.status != 'rejected'` : undefined
+    ].filter(v => !!v);
+
+    const where = whereClauses && whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
     const params = [sourcesText, targetsText].filter(v => !!v) as string[];
 
     const linkIds = (await entityManager.query(`
@@ -1428,7 +1438,6 @@ export class ProjectRepository extends BaseRepository {
              INNER JOIN links__target_words ltw
                         ON ltw.link_id = l.id
       ${where}
-      ${excludeRejected ? `l.status != 'rejected` : ''}
       GROUP BY id
         ${this._buildOrderBy(sort, { ref: 'word_id' })}
         ${this._buildPaging(itemLimit, itemSkip)};`, params))

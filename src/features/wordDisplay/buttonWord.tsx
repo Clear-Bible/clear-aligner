@@ -1,6 +1,5 @@
 import {
   Corpus,
-  EditedLink,
   LanguageInfo,
   Link,
   LinkOriginManual,
@@ -22,7 +21,7 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
-import { useSuggestions } from '../../hooks/useSuggestions';
+import { useRelevantSuggestions } from '../../hooks/useSuggestions';
 import { ProtoLinkSuggestion } from '../../common/data/project/linkSuggestion';
 
 const alphaTransparencyValueForButtonTokens = '.12';
@@ -231,7 +230,6 @@ export const ButtonToken = ({
   // Allow the user to right-click on an alignment and change it's state
   const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink);
 
-
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
   /**
@@ -243,9 +241,7 @@ export const ButtonToken = ({
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
-  const staticEditedLink = useMemo(() => EditedLink.toLink(editedLink), [ editedLink ]);
-
-  const { relevantSuggestions } = useSuggestions(token, staticEditedLink);
+  const { relevantSuggestions } = useRelevantSuggestions(token);
 
   const relevantSuggestion = useMemo<ProtoLinkSuggestion|undefined>(() => {
     if (isMemberOfAnyLink) return undefined;

@@ -45,7 +45,7 @@ contextBridge.exposeInMainWorld('databaseApi', {
   languageFindByIds: (sourceName, languageIds) => ipcRenderer.invoke(`${ChannelPrefix}:languageFindByIds`, sourceName, languageIds),
   languageGetAll: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:languageGetAll`, sourceName),
   corporaGetAlignedWordsByPivotWord: (sourceName, side, normalizedText, sort) => ipcRenderer.invoke(`${ChannelPrefix}:corporaGetAlignedWordsByPivotWord`, sourceName, side, normalizedText, sort),
-  corporaGetLinksByAlignedWord: (sourceName, sourcesText, targetsText, sort) => ipcRenderer.invoke(`${ChannelPrefix}:corporaGetLinksByAlignedWord`, sourceName, sourcesText, targetsText, sort),
+  corporaGetLinksByAlignedWord: (sourceName, sourcesText, targetsText, sort, excludeRejected, itemLimit, itemSkip) => ipcRenderer.invoke(`${ChannelPrefix}:corporaGetLinksByAlignedWord`, sourceName, sourcesText, targetsText, sort, excludeRejected, itemLimit, itemSkip),
   updateLinkText: (database, linkIdOrIds) => ipcRenderer.invoke(`${ChannelPrefix}:updateLinkText`, database, linkIdOrIds),
   updateAllLinkText: (database) => ipcRenderer.invoke(`${ChannelPrefix}:updateAllLinkText`, database),
   findLinksByWordId: (database, side, wordId) => ipcRenderer.invoke(`${ChannelPrefix}:findLinksByWordId`, database, side, wordId),

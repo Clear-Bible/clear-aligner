@@ -1,6 +1,6 @@
 import { ProtoLinkSuggestion } from '../common/data/project/linkSuggestion';
 import { CorpusContainer, Link, LinkStatus, Word } from '../structs';
-import { useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { AppContext } from '../App';
 import { useCorpusContainers } from './useCorpusContainers';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
@@ -48,18 +48,17 @@ const makeSuggestionBasedOnLink = (container: CorpusContainer, knownSide: Alignm
 };
 
 /**
- * status returned by the {@link useSuggestions} hook
+ * status for {@link useProtoSuggestions}
  */
-export interface UseSuggestionsStatus {
-  relevantSuggestions?: ProtoLinkSuggestion[];
+export interface UseProtoSuggestionsStatus {
+  protoSuggestions?: ProtoLinkSuggestion[];
 }
 
 /**
  * hook to provide suggestions for the currently edited link
- * @param token to provide suggestions for
  * @param editedLink the currently edited link, can be undefined or null if not present
  */
-export const useSuggestions = (token: Word, editedLink?: Link | null): UseSuggestionsStatus => {
+export const useProtoSuggestions = (editedLink?: Link | null): UseProtoSuggestionsStatus => {
   const { sourceContainer, targetContainer } = useCorpusContainers();
   const dbApi = useDatabase();
   const { preferences, features: { enableTokenSuggestions } } = useContext(AppContext);
@@ -116,6 +115,7 @@ export const useSuggestions = (token: Word, editedLink?: Link | null): UseSugges
 
   const similarLinks = useMemoAsync<Link[] | undefined>(async () => {
     if (!enableTokenSuggestions || (!sourceWordText && !targetWordText)) return undefined;
+    console.time('dbApi.corporaGetLinksByAlignedWord');
     const tmpLinks = await dbApi.corporaGetLinksByAlignedWord(
       preferences?.currentProject ?? DefaultProjectId,
       sourceWordText,
@@ -123,6 +123,7 @@ export const useSuggestions = (token: Word, editedLink?: Link | null): UseSugges
       undefined,
       true,
       20);
+    console.timeEnd('dbApi.corporaGetLinksByAlignedWord');
     return tmpLinks
       .sort((a, b) => convertLinkStatusToRelevanceOrdinal(a.metadata.status) - convertLinkStatusToRelevanceOrdinal(b.metadata.status));
   }, [ enableTokenSuggestions, dbApi, preferences?.currentProject, sourceWordText, targetWordText ]);
@@ -139,12 +140,42 @@ export const useSuggestions = (token: Word, editedLink?: Link | null): UseSugges
       .filter((suggestion) => !!suggestion);
   }, [ similarLinks, knownSide, sourceContainer, targetContainer ]);
 
-  const relevantSuggestions = useMemo(() =>
-    protoSuggestions?.filter((s) => s.side === token.side && s.normalizedTokenText === token.normalizedText),
-  [ token.side, token.normalizedText, protoSuggestions ]);
+  return {
+    protoSuggestions
+  };
+};
 
+/**
+ * props of the SuggestionsContext
+ */
+export interface SuggestionsContextProps {
+  protoSuggestions?: ProtoLinkSuggestion[];
+}
+
+/**
+ * React Context for link suggestions
+ */
+export const SuggestionsContext = createContext<SuggestionsContextProps>({} as SuggestionsContextProps);
+
+/**
+ * status returned by the {@link useProtoSuggestions} hook
+ */
+export interface UseSuggestionsStatus {
+  relevantSuggestions?: ProtoLinkSuggestion[];
+}
+
+/**
+ * hook to provide relevant suggestions for the given token (requires use inside {@link SuggestionsContextProps})
+ * @param token to provide suggestions for
+ */
+export const useRelevantSuggestions = (token: Word): UseSuggestionsStatus => {
+  const { protoSuggestions } = useContext(SuggestionsContext);
+
+  const relevantSuggestions = useMemo(() =>
+      protoSuggestions?.filter((s) => s.side === token.side && s.normalizedTokenText === token.normalizedText),
+    [ token.side, token.normalizedText, protoSuggestions ]);
 
   return {
     relevantSuggestions
   };
-};
+}
