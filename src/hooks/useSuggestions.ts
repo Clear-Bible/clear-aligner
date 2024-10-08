@@ -9,7 +9,7 @@ import { useMemoAsync } from './useMemoAsync';
 import { DefaultProjectId } from '../state/links/tableManager';
 import { AlignmentSide } from '../common/data/project/corpus';
 import _ from 'lodash';
-import { useAppDispatch, useAppSelector } from '../app';
+import { useAppDispatch, useAppSelector } from '../app/index';
 import { submitSuggestionResolution } from '../state/alignment.slice';
 
 /**
