@@ -1,4 +1,5 @@
 import { Link, Word } from '../structs';
+import { ZERO_BCVWP } from '../features/bcvwp/BCVWPSupport';
 
 /**
  * Enumeration used to rank compressed words within the output.
@@ -23,6 +24,11 @@ export interface CompressedWord extends Word {
 const MaxContextWords = 2;
 
 /**
+ * Ellipsis character.
+ */
+const ELLIPSIS_CHAR = '\u2026';
+
+/**
  * Takes an array of word objects and 1-based indexes (IDs) and produces an array of compressed words
  * that include the following:
  * 1. The aligned words.
@@ -40,7 +46,10 @@ const MaxContextWords = 2;
  * word (usually 1:1).
  * @param linkMap Map of word IDs to links.
  */
-export const compressAlignedWords = (inputWords: Word[][], linkMap: Map<string, Link[]>): CompressedWord[][] => {
+export const compressAlignedWords = (
+  inputWords: Word[][],
+  linkMap: Map<string, Link[]>
+): CompressedWord[][] => {
   // compute 0-based indexes, to simplify implementation
   const workInputWords = inputWords.flat();
   const alignedWordIdxs = workInputWords
@@ -82,9 +91,13 @@ export const compressAlignedWords = (inputWords: Word[][], linkMap: Map<string, 
           const inputWord = workInputWords[nextCtr];
           workWords[nextCtr] = {
             ...inputWord,
-            text: targetType === WordType.Ellipsis ? '\u2026' : inputWord.text,
-            after: targetType === WordType.Ellipsis ? undefined : inputWord.after,
-            wordType: targetType
+            wordType: targetType,
+            ...(targetType === WordType.Ellipsis ? {
+              id: ZERO_BCVWP,
+              text: ELLIPSIS_CHAR,
+              normalizedText: ELLIPSIS_CHAR,
+              after: undefined
+            } : {})
           };
         }
       });

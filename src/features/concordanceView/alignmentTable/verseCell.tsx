@@ -12,6 +12,7 @@ import { AlignmentTableContext } from '../alignmentTable';
 import { useCorpusContainers } from '../../../hooks/useCorpusContainers';
 import { AlignmentSide } from '../../../common/data/project/corpus';
 import { useTheme } from '@mui/material';
+import { WordDisplayVariant } from '../../wordDisplay';
 
 /**
  * Render cells with verse text in the appropriate font and text orientation for the verse
@@ -64,6 +65,7 @@ export const VerseCell = (
           key={verse?.bcvId?.toReferenceString() ?? ''}
         >
           <VerseDisplay
+            variant={WordDisplayVariant.TEXT}
             key={verse?.bcvId?.toReferenceString() ?? ''}
             onlyLinkIds={row.row.id ? [row.row.id] : []}
             readonly

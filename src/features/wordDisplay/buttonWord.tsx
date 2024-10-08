@@ -63,6 +63,7 @@ export interface ButtonWordProps extends LimitedToLinks {
   corpus?: Corpus;
   suppressAfter?: boolean;
   disabled?: boolean;
+  fillWidth?: boolean;
 }
 
 /**
@@ -74,15 +75,17 @@ export interface ButtonWordProps extends LimitedToLinks {
  * @param enableGlossDisplay whether gloss display is toggled on
  * @param suppressAfter whether the after of tokens should be displayed or suppressed
  * @param disableHighlighting whether highlighting behavior is turned off, defaults to normal highlighting behavior
+ * @param fillWidth
  */
 export const ButtonWord = ({
-                            disabled,
-                            links,
-                            tokens,
-                            corpus,
-                            enableGlossDisplay,
-                            suppressAfter,
-                            disableHighlighting
+                             disabled,
+                             links,
+                             tokens,
+                             corpus,
+                             enableGlossDisplay,
+                             suppressAfter,
+                             disableHighlighting,
+                             fillWidth = false
                            }: ButtonWordProps) => {
   const { language: languageInfo } = useMemo(() => corpus ?? { language: undefined }, [corpus]);
 
@@ -92,16 +95,20 @@ export const ButtonWord = ({
                           languageInfo={languageInfo}
                           sx={{
                             borderStyle: 'none',
+                            ...(fillWidth ? { width: '100%' } : {}),
                             '.MuiButtonGroup-grouped': {
                               padding: '0px !important',
                               minWidth: '12px !important',
                               height: enableGlossDisplay ? '82px !important' : '62px !important'
-                            },
-                          }} >
-      {tokens?.map((token) => <ButtonToken key={token.id} token={token} completeWord={tokens} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={disableHighlighting} />)}
+                            }
+                          }}>
+      {tokens?.map((token) => <ButtonToken key={token.id} token={token} completeWord={tokens}
+                                           enableGlossDisplay={enableGlossDisplay} links={links}
+                                           languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled}
+                                           hoverHighlightingDisabled={disableHighlighting} fillWidth={fillWidth} />)}
     </LocalizedButtonGroup>
   );
-}
+};
 
 /**
  * props used by {@link ButtonToken}
@@ -131,6 +138,7 @@ export interface ButtonTokenProps {
    * whether hover highlighting behavior is enabled
    */
   hoverHighlightingDisabled?: boolean;
+  fillWidth?: boolean;
 }
 
 /**
@@ -144,6 +152,7 @@ export interface ButtonTokenProps {
  * @param showRejected whether rejected links should be displayed
  * @param suppressAfter whether the after string should be displayed
  * @param hoverHighlightingDisabled whether normal hover behavior is suppressed
+ * @param fillWidth True to use max available width.
  */
 export const ButtonToken = ({
                               disabled,
@@ -154,7 +163,8 @@ export const ButtonToken = ({
                               enableGlossDisplay,
                               showRejected,
                               suppressAfter,
-                              hoverHighlightingDisabled
+                              hoverHighlightingDisabled,
+                              fillWidth = false
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -171,6 +181,7 @@ export const ButtonToken = ({
         <stop offset={1} stopColor={gradientBottomColor} />
       </linearGradient>
     </svg>), [gradientSvgId]);
+
 
   /**
    * whether the current token is being hovered by the user
@@ -218,7 +229,8 @@ export const ButtonToken = ({
   const anchorEl = useRef();
 
   // Allow the user to right-click on an alignment and change it's state
-  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink );
+  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink);
+
 
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
@@ -391,47 +403,47 @@ export const ButtonToken = ({
     [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
-    const color = (() => {
-      if (isCurrentlyHoveredToken) return buttonPrimaryColor;
-      if (isSelectedInEditedLink) {
-        return buttonNormalBackgroundColor;
+      const color = (() => {
+        if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+        if (isSelectedInEditedLink) {
+          return buttonNormalBackgroundColor;
+        }
+        return buttonPrimaryColor;
+      })();
+      const baseSx: SxProps<Theme> = {
+        fontSize: iconSize,
+        margin: iconMargin,
+        color
+      };
+      switch (memberOfPrimaryLink?.metadata.status) {
+        case LinkStatus.APPROVED:
+          return (<CheckCircle sx={{
+            ...baseSx
+          }} />);
+        case LinkStatus.CREATED:
+          return (<InsertLink sx={{
+            ...baseSx
+          }} />);
+        case LinkStatus.NEEDS_REVIEW:
+          return (<Flag sx={(theme) => ({
+            ...baseSx
+          })} />);
+        case LinkStatus.REJECTED:
+          return (<Cancel sx={{
+            ...baseSx
+          }} />);
       }
-      return buttonPrimaryColor;
-    })();
-    const baseSx: SxProps<Theme> = {
-      fontSize: iconSize,
-      margin: iconMargin,
-      color
-    };
-    switch (memberOfPrimaryLink?.metadata.status) {
-      case LinkStatus.APPROVED:
-        return (<CheckCircle sx={{
-          ...baseSx,
-        }} />);
-      case LinkStatus.CREATED:
+      if (memberOfPrimaryLink) {
         return (<InsertLink sx={{
           ...baseSx
         }} />);
-      case LinkStatus.NEEDS_REVIEW:
-        return (<Flag sx={(theme) => ({
-          ...baseSx,
-        })} />);
-      case LinkStatus.REJECTED:
-        return (<Cancel sx={{
-          ...baseSx,
-        }} />);
-    }
-    if (memberOfPrimaryLink) {
-      return (<InsertLink sx={{
-          ...baseSx,
-        }} />);
-    }
-    return (<Box sx={{
-      height: iconSize,
-      margin: iconMargin
-    }}>
-    </Box>);
-  },
+      }
+      return (<Box sx={{
+        height: iconSize,
+        margin: iconMargin
+      }}>
+      </Box>);
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor]);
 
@@ -442,7 +454,7 @@ export const ButtonToken = ({
 
   const hoverSx: SxProps<Theme> = useMemo(() => {
     if (buttonPrimaryColor === theme.palette.text.disabled) {
-      const decomposedColor = decomposeColor(theme.palette.primary.main)
+      const decomposedColor = decomposeColor(theme.palette.primary.main);
       return ({
         backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
       });
@@ -459,7 +471,7 @@ export const ButtonToken = ({
     });
   }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
 
-  const wordPart = useMemo<number|undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
+  const wordPart = useMemo<number | undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
   const wordLength = useMemo<number>(() => completeWord.length, [completeWord.length]);
 
   const textJustification = useMemo<string>(() => {
@@ -469,7 +481,7 @@ export const ButtonToken = ({
     const end = languageInfo?.textDirection === TextDirection.LTR ? 'right' : 'left';
     if (wordPart === 1) return end;
     return beginning;
-  }, [languageInfo?.textDirection, wordPart, wordLength]);
+  }, [wordPart, wordLength, languageInfo?.textDirection]);
 
   const marginLeft = useMemo<string>(() => {
     if (!wordPart || wordLength < 2)
@@ -477,7 +489,7 @@ export const ButtonToken = ({
     if (wordPart > 1)
       return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
     return languageInfo?.textDirection === TextDirection.LTR ? defaultMargin : noMargin;
-  }, [languageInfo?.textDirection, wordPart, wordLength]);
+  }, [wordPart, wordLength, languageInfo?.textDirection]);
 
   const marginRight = useMemo<string>(() => {
     if (!wordPart || wordLength < 2)
@@ -493,6 +505,9 @@ export const ButtonToken = ({
     <Box
       onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
       ref={anchorEl}
+      sx={{
+        ...(fillWidth ? { width: '100%' } : {})
+      }}
     >
     <Button
       disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
@@ -509,7 +524,8 @@ export const ButtonToken = ({
         /**
          * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
          */
-        ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {})
+        ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {}),
+        ...(fillWidth ? { width: '100%' } : {})
       })}
       onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
@@ -522,6 +538,7 @@ export const ButtonToken = ({
       {gradientSvg}
       <LocalizedTextDisplay
         sx={{
+          width: '100%',
           height: '100%'
         }}
         languageInfo={languageInfo}>
@@ -554,50 +571,51 @@ export const ButtonToken = ({
               {/*
                 * word text display
                 */}
-              <LocalizedTextDisplay
-                languageInfo={languageInfo}
-                sx={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: `${textJustification} !important`,
-                  fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
-                }}>
-                {token.text}
-              </LocalizedTextDisplay>
-              {/*
-                * gloss display
-                */}
-              {enableGlossDisplay ?
-                <Typography
-                  variant={'caption'}
+                <LocalizedTextDisplay
+                  languageInfo={languageInfo}
                   sx={{
                     display: 'flex',
+                    width: '100%',
                     justifyContent: `${textJustification} !important`,
-                    color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text,
-                  }} >
-                  {token.gloss ?? '-'}
-                </Typography> : <></>}
-            </Stack>
+                    fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
+                  }}>
+                  {token.text}
+                </LocalizedTextDisplay>
+                {/*
+                * gloss display
+                */}
+                {enableGlossDisplay ?
+                  <Typography
+                    variant={'caption'}
+                    sx={{
+                      display: 'flex',
+                      width: '100%',
+                      justifyContent: `${textJustification} !important`,
+                      color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
+                    }}>
+                    {token.gloss ?? '-'}
+                  </Typography> : <></>}
+              </Stack>
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                width: '100%',
+                justifyContent: 'right',
+                m: 0
+              }}>
+              {statusIndicator}
+            </Box>
           </Box>
-          <Box
-            sx={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'right',
-              m: 0
-            }}>
-            {statusIndicator}
-          </Box>
-        </Box>
-      </LocalizedTextDisplay>
-    </Button>
+        </LocalizedTextDisplay>
+      </Button>
       <ContextMenuAlignmentState />
     </Box>
     {!!token.after && !suppressAfter
       ? <Button disabled={true}>
-          <LocalizedTextDisplay languageInfo={languageInfo}>
-            {token.after}
-          </LocalizedTextDisplay>
-        </Button> : ''}
+        <LocalizedTextDisplay languageInfo={languageInfo}>
+          {token.after}
+        </LocalizedTextDisplay>
+      </Button> : ''}
   </>);
-}
+};

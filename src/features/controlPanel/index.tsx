@@ -9,19 +9,14 @@ import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import { CorpusContainer, EditedLink } from '../../structs';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
-import BCVWP from '../bcvwp/BCVWPSupport';
 
 import uuid from 'uuid-random';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-interface ControlPanelProps {
-  containers: CorpusContainer[];
-  position: BCVWP;
-}
-
-export const ControlPanel = (props: ControlPanelProps): ReactElement => {
+export const ControlPanel = (): ReactElement => {
   useDebug('ControlPanel');
+
   const dispatch = useAppDispatch();
   const [linkRemoveState, setLinkRemoveState] = useState<{
     linkId?: string,
@@ -34,7 +29,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const {saveLink} = useSaveLink(true);
+  const { saveLink } = useSaveLink(true);
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
@@ -54,14 +49,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }
 
   const deleteLink = () => {
-      if (inProgressLink?.id) {
-        setLinkRemoveState({
-          linkId: inProgressLink.id,
-          removeKey: uuid()
-        });
-        dispatch(resetTextSegments());
-      }
-  }
+    if (inProgressLink?.id) {
+      setLinkRemoveState({
+        linkId: inProgressLink.id,
+        removeKey: uuid()
+      });
+      dispatch(resetTextSegments());
+    }
+  };
 
   const createLink = () => {
     if (inProgressLink) {
@@ -74,12 +69,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       saveLink(newLink);
     }
     dispatch(resetTextSegments());
-  }
+  };
 
   // keyboard shortcuts
-  useHotkeys('space', () => createLink())
-  useHotkeys('backspace', () => deleteLink())
-  useHotkeys('shift+esc', () => dispatch(resetTextSegments()))
+  useHotkeys('space', () => createLink(), {enabled: linkHasBothSides})
+  useHotkeys('backspace', () => deleteLink(), {enabled: !!inProgressLink?.id})
+  useHotkeys('shift+esc', () => dispatch(resetTextSegments()), {enabled: anySegmentsSelected})
 
   return (
     <>
@@ -89,11 +84,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         justifyContent="center"
         alignItems="baseline"
         style={{
-          marginTop: '16px',
-          marginBottom: '16px',
+          marginTop: '6px',
+          marginBottom: '6px',
           flexGrow: 0,
           flexShrink: 0
-        }} >
+        }}>
         <ButtonGroup>
           <Tooltip title="Create Link" arrow describeChild>
           <span>

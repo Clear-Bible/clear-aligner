@@ -212,11 +212,34 @@ export class CorpusContainer {
       ];
   }
 
+  wordByReference(reference: BCVWP): Word | undefined {
+    if (
+      !reference.hasFields(
+        BCVWPField.Book,
+        BCVWPField.Chapter,
+        BCVWPField.Verse,
+        BCVWPField.Word
+      )
+    ) {
+      return undefined;
+    }
+    const corpus = this.corpusAtReferenceString(reference.toReferenceString());
+    return corpus?.books[reference.book!]?.[reference.chapter!]?.[
+      reference.verse!]?.words?.find(word => word.id === reference.toReferenceString());
+  }
+
   verseByReferenceString(refString: string): Verse | undefined {
     if (!refString) {
       return undefined;
     }
     return this.verseByReference(BCVWP.parseFromString(refString));
+  }
+
+  wordByReferenceString(refString: string): Word | undefined {
+    if (!refString) {
+      return undefined;
+    }
+    return this.wordByReference(BCVWP.parseFromString(refString));
   }
 
   refExists(ref: BCVWP): boolean {
@@ -508,4 +531,24 @@ export interface SyntaxNode {
 
 export interface SyntaxRoot extends SyntaxNode {
   _syntaxType: SyntaxType;
+}
+
+/**
+ * Helper class that maintains a matched pair of corpus containers.
+ */
+export class NamedContainers {
+  sources?: CorpusContainer;
+  targets?: CorpusContainer;
+  all: CorpusContainer[];
+
+  constructor(inputContainers: CorpusContainer[]) {
+    this.sources = inputContainers.find(c => c.id === AlignmentSide.SOURCE);
+    this.targets = inputContainers.find(c => c.id === AlignmentSide.TARGET);
+    this.all = inputContainers;
+  }
+
+  /**
+   * Returns true if this contains both a source and target container.
+   */
+  isComplete = (): boolean => !!this.sources && !!this.targets;
 }
