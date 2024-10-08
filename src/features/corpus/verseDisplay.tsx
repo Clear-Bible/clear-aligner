@@ -24,7 +24,6 @@ export interface VerseDisplayProps extends LimitedToLinks {
   variant?: WordDisplayVariant;
   corpus?: Corpus;
   verse: Verse;
-  allowGloss?: boolean;
   apiRef?: React.MutableRefObject<GridApiCommunity>;
 }
 
@@ -48,7 +47,7 @@ export const VerseDisplay = ({
                                corpus,
                                verse,
                                onlyLinkIds,
-                               allowGloss = false, apiRef
+                               apiRef
                              }: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
@@ -139,7 +138,6 @@ export const VerseDisplay = ({
         onlyLinkIds={onlyLinkIds}
         corpus={corpus}
         parts={token}
-        allowGloss={allowGloss}
       />
     )}
   </>;

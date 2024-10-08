@@ -2,8 +2,8 @@
  * This file contains the WorkBench component which is used in the Alignment
  * Editor and wraps the Editor component.
  */
-import React, { ReactElement } from 'react';
-import { CorpusContainer } from 'structs';
+import React, { ReactElement, useMemo } from 'react';
+import { CorpusContainer, NamedContainers } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 import Editor from '../features/editor';
 
@@ -17,10 +17,14 @@ const Workbench: React.FC<WorkbenchProps> = ({
   corpora,
   currentPosition, usePaddingForEditorContainer = true,
 }: WorkbenchProps): ReactElement => {
+  const namedContainers = useMemo(() => {
+    return new NamedContainers(corpora ?? []);
+  }, [corpora]);
+
   return (
     <>
-      {corpora && (
-          <div
+      {namedContainers?.isComplete()
+        && (<div
             style={{
               display: 'flex',
               justifyContent: 'center',
@@ -32,12 +36,11 @@ const Workbench: React.FC<WorkbenchProps> = ({
             }}
           >
             <Editor
-              containers={corpora}
+              containers={namedContainers}
               position={currentPosition as BCVWP}
               usePaddingForEditorContainer={usePaddingForEditorContainer}
             />
-          </div>
-      )}
+          </div>)}
     </>
   );
 };
