@@ -161,12 +161,19 @@ export const useTokenSuggestionRelevancyScore = (token: Word, isAlreadyAligned?:
   const isTokenRelevantToSuggestions = useMemo(() =>
     enableTokenSuggestions
     && !isAlreadyAligned
+    && !!knownSide
     && token.side !== knownSide
     && !!token.normalizedText.trim(),
   [ enableTokenSuggestions, knownSide, token.side, token.normalizedText, isAlreadyAligned ]);
 
-  const searchSourceText = useMemo(() => sourceWordText ?? (token.side === AlignmentSide.SOURCE ? token.normalizedText : undefined), [ sourceWordText, token.side, token.normalizedText ]);
-  const searchTargetText = useMemo(() => targetWordText ?? (token.side === AlignmentSide.TARGET ? token.normalizedText : undefined), [ targetWordText, token.side, token.normalizedText ]);
+  const searchSourceText = useMemo(() =>
+    sourceWordText
+      ?? (token.side === AlignmentSide.SOURCE ? token.normalizedText : undefined),
+  [ sourceWordText, token.side, token.normalizedText ]);
+  const searchTargetText = useMemo(() =>
+    targetWordText
+      ?? (token.side === AlignmentSide.TARGET ? token.normalizedText : undefined),
+  [ targetWordText, token.side, token.normalizedText ]);
 
   const score = useMemoAsync<number|undefined>(async () => {
     if (!isTokenRelevantToSuggestions) return undefined;
@@ -183,7 +190,12 @@ export const useTokenSuggestionRelevancyScore = (token: Word, isAlreadyAligned?:
   /**
    * score is defined and non-zero
    */
-  const scoreIsRelevant = useMemo(() => !!score && score > 0 && knownSide && token.side !== knownSide, [ score, token.side, knownSide ]);
+  const scoreIsRelevant = useMemo(() =>
+    !!score
+    && score > 0
+    && knownSide
+    && token.side !== knownSide,
+  [ score, token.side, knownSide ]);
 
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
@@ -221,7 +233,13 @@ export const useTokenSuggestionRelevancyScore = (token: Word, isAlreadyAligned?:
                 && BCVWP.compareString(token.id, tgtTopScore?.tokenRef) === 0
                 && (score ?? 0) >= (tgtTopScore?.score ?? 0);
     }
-  }, [ editedLink, scoreIsRelevant, score, token.id, token.side ]);
+  }, [
+    editedLink,
+    scoreIsRelevant,
+    score,
+    token.id,
+    token.side
+  ]);
 
   return {
     wasSubmittedForConsideration,
