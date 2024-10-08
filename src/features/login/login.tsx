@@ -64,7 +64,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
         setSnackBarMessage("Signed in to ClearAligner Sync.")
         setIsSnackBarOpen(true);
       }
-
       else if (signInResponse.nextStep?.signInStep ===
         "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED" || signInResponse.nextStep?.signInStep ===
         "RESET_PASSWORD"){
@@ -152,7 +151,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                   marginX: '5px'
                 }}
                 startIcon={<LogoutIcon/>}
-
               >Sign In
               </Button>
               {showLoginError &&
