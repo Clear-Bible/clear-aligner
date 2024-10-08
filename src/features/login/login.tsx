@@ -87,6 +87,12 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
     setEmailAddress("");
   }
 
+  const handleOnKeyDown = (e: { keyCode: number; }) => {
+    if(e.keyCode === 13){
+      handleLogin()
+    }
+  }
+
   return (
     <Popover
       open={isLoginModalOpen}
@@ -100,6 +106,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
         vertical: 'top',
         horizontal: 'right',
       }}
+      onKeyDown={ handleOnKeyDown }
     >
       <Box>
         <DialogTitle>
