@@ -18,7 +18,7 @@ import '../../styles/theme.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { SuggestionsContext, useSuggestionsContextInitializer } from '../../hooks/useSuggestions';
-import { useAppSelector } from '../../app';
+import { useAppSelector } from '../../app/index';
 
 interface EditorProps {
   containers: NamedContainers;
