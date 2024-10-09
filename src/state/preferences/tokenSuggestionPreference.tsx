@@ -73,7 +73,7 @@ export const TokenSuggestionPreference = ({
   return (
     <Box
       sx={boxSx}>
-      <PreferenceToggle labelText={'Token Suggestions'}
+      <PreferenceToggle labelText={'Alignment Suggestions'}
                         value={tokenSuggestionEnabled}
                         onUpdateValue={setTokenSuggestionsEnabled} />
     </Box>
