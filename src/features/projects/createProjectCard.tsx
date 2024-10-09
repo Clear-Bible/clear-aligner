@@ -2,7 +2,11 @@ import React from 'react';
 import { Card, CardActionArea, CardContent, Grid } from '@mui/material';
 import ProjectSettings from './projectSettings';
 import { LibraryAdd } from '@mui/icons-material';
-import { projectCardHeight, projectCardMargin, projectCardWidth } from './index';
+import {
+  projectCardHeight,
+  projectCardMargin,
+  projectCardWidth
+} from './styleConstants';
 
 /**
  * card component which allows users to create projects

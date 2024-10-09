@@ -7,6 +7,7 @@ import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import { AddLink, LinkOff, RestartAlt } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
+import { EditedLink } from '../../structs';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 
 import uuid from 'uuid-random';
@@ -35,12 +36,12 @@ export const ControlPanel = (): ReactElement => {
   const linkHasBothSides = useMemo(
     () => {
       return (
-        Number(inProgressLink?.sources.length) > 0 &&
-        Number(inProgressLink?.targets.length) > 0
+        (Number(inProgressLink?.sources.length) > 0 || Number(inProgressLink?.suggestedSources.length) > 0) &&
+        (Number(inProgressLink?.targets.length) > 0 || Number(inProgressLink?.suggestedTargets.length) > 0)
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inProgressLink?.sources.length, inProgressLink?.targets.length]
+    [inProgressLink?.sources.length, inProgressLink?.targets.length, inProgressLink?.suggestedSources.length, inProgressLink?.suggestedTargets.length]
   );
 
   if (scrollLock && !formats.includes('scroll-lock')) {
@@ -58,7 +59,15 @@ export const ControlPanel = (): ReactElement => {
   };
 
   const createLink = () => {
-    inProgressLink && saveLink(inProgressLink);
+    if (inProgressLink) {
+      const newLink = EditedLink.toLink(inProgressLink)!;
+      if (Number(inProgressLink.suggestedSources.length) > 0 && inProgressLink.sources.length < 1) {
+        newLink.sources.push(inProgressLink.suggestedSources?.at(0)!.tokenRef)
+      } else if (Number(inProgressLink.suggestedTargets.length) > 0 && inProgressLink.targets.length < 1) {
+        newLink.targets.push(inProgressLink.suggestedTargets?.at(0)!.tokenRef)
+      }
+      saveLink(newLink);
+    }
     dispatch(resetTextSegments());
   };
 

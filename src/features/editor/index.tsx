@@ -17,6 +17,8 @@ import { CorpusContainer, NamedContainers, Verse } from 'structs';
 import '../../styles/theme.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { SuggestionsContext, useSuggestionsContextInitializer } from '../../hooks/useSuggestions';
+import { useAppSelector } from '../../app/index';
 
 interface EditorProps {
   containers: NamedContainers;
@@ -43,25 +45,32 @@ const Editor = ({
     }
   }, [visibleSourceVerses]);
 
+  const inProgressLink = useAppSelector(state => state.alignment.present.inProgressLink);
+
+  const suggestionsContextValues = useSuggestionsContextInitializer(inProgressLink);
+
   return (
-    <Container maxWidth={false} disableGutters sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      flexShrink: 1,
-      marginBottom: '1rem',
-      px: usePaddingForEditorContainer ? '12px' : '0px'
-    }}>
-      <Polyglot
-        containers={containers}
-        position={position}
-        setNewVisibleVerses={setNewVisibleVerses} />
-      <ControlPanel />
-      <ContextPanel
-        containers={containers}
-        position={position}
-        visibleSourceVerses={visibleSourceVerses} />
-    </Container>
+    <SuggestionsContext.Provider
+      value={suggestionsContextValues}>
+      <Container maxWidth={false} disableGutters sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+        flexShrink: 1,
+        marginBottom: '1rem',
+        px: usePaddingForEditorContainer ? '12px' : '0px'
+      }}>
+        <Polyglot
+          containers={containers}
+          position={position}
+          setNewVisibleVerses={setNewVisibleVerses} />
+        <ControlPanel />
+        <ContextPanel
+          containers={containers}
+          position={position}
+          visibleSourceVerses={visibleSourceVerses} />
+      </Container>
+    </SuggestionsContext.Provider>
   );
 };
 

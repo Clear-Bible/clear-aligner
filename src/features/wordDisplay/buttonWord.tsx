@@ -1,4 +1,12 @@
-import { Corpus, LanguageInfo, Link, LinkOriginManual, LinkStatus, TextDirection, Word } from '../../structs';
+import {
+  Corpus,
+  LanguageInfo,
+  Link,
+  LinkOriginManual,
+  LinkStatus,
+  TextDirection,
+  Word
+} from '../../structs';
 import { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -7,12 +15,13 @@ import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink } from '@mui/icons-material';
+import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
+import { useTokenSuggestionRelevancyScore } from '../../hooks/useSuggestions';
 
 const alphaTransparencyValueForButtonTokens = '.12';
 /**
@@ -220,7 +229,6 @@ export const ButtonToken = ({
   // Allow the user to right-click on an alignment and change it's state
   const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink);
 
-
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
   /**
@@ -232,20 +240,18 @@ export const ButtonToken = ({
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
-  const isSelectedInEditedLink = useAppSelector((state) => {
+  const { wasSubmittedForConsideration, isMostRelevantSuggestion, scoreIsRelevant } = useTokenSuggestionRelevancyScore(token, isMemberOfAnyLink);
+
+  const isSelectedInEditedLink = useMemo<boolean>(() => {
     switch (token.side) {
       case AlignmentSide.SOURCE:
-        return !!state.alignment.present.inProgressLink?.sources.includes(
-          BCVWP.sanitize(token.id)
-        );
+        return !!editedLink?.sources.includes( BCVWP.sanitize(token.id) );
       case AlignmentSide.TARGET:
-        return !!state.alignment.present.inProgressLink?.targets.includes(
-          BCVWP.sanitize(token.id)
-        );
+        return !!editedLink?.targets.includes( BCVWP.sanitize(token.id) );
     }
-  });
+  }, [ token.id, token.side, editedLink?.sources, editedLink?.targets ]);
 
-  const isCurrentlyHoveredToken = useMemo<boolean>(() => token?.side === currentlyHoveredToken?.side && token?.id === currentlyHoveredToken?.id, [currentlyHoveredToken, token?.id, token?.side]);
+  const isCurrentlyHoveredToken = useMemo<boolean>(() => token?.side === currentlyHoveredToken?.side && token?.id === currentlyHoveredToken?.id, [ token.id, token.side, currentlyHoveredToken?.id, currentlyHoveredToken?.side ]);
 
   /**
    * whether this token is a member of an alignment that the currently hovered token is a member of
@@ -263,6 +269,7 @@ export const ButtonToken = ({
    */
   const buttonPrimaryColor = useMemo(() => {
     if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) return theme.palette.primary.main;
+    if (wasSubmittedForConsideration && scoreIsRelevant) return theme.palette.secondary.light;
     if (!memberOfPrimaryLink?.metadata.status) return theme.palette.text.disabled;
     switch (memberOfPrimaryLink?.metadata.status) {
       case LinkStatus.APPROVED:
@@ -276,54 +283,64 @@ export const ButtonToken = ({
       default:
         return theme.palette.text.disabled;
     }
-  }, [memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink]);
+  }, [ wasSubmittedForConsideration, scoreIsRelevant, memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink, theme.palette.secondary.light ]);
 
   const buttonNormalBackgroundColor = useMemo(() => theme.palette.background.default, [theme.palette.background.default]);
 
   const sourceIndicator = useMemo<JSX.Element>(() => {
-      const color = (() => {
-        if (isCurrentlyHoveredToken) return buttonPrimaryColor;
-        if (isSelectedInEditedLink) {
-          return buttonNormalBackgroundColor;
-        }
-        return buttonPrimaryColor;
-      })();
-      const iconProps: SvgIconOwnProps = {
-        sx: {
-          fontSize: iconSize,
-          margin: iconMargin,
-          color
-        }
-      };
-      const emptyBox = (<Box
-        sx={{
-          height: iconSize,
-          margin: iconMargin
-        }}>
-      </Box>);
-      if (!memberOfPrimaryLink) {
-        return emptyBox;
+    const color = (() => {
+      if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isSelectedInEditedLink || wasSubmittedForConsideration) {
+        return buttonNormalBackgroundColor;
       }
-      /* eslint-disable no-fallthrough */
-      switch (memberOfPrimaryLink?.metadata.origin) {
-        case LinkOriginManual:
-          return emptyBox;
-        default:
-          return (<AutoAwesome {...{
+      return buttonPrimaryColor;
+    })();
+    const iconProps: SvgIconOwnProps = {
+      sx: {
+        fontSize: iconSize,
+        margin: iconMargin,
+        color,
+      }
+    };
+    const emptyBox = (<Box
+      sx={{
+        height: iconSize,
+        margin: iconMargin
+      }}>
+    </Box>);
+    if (isMostRelevantSuggestion) {
+      return (
+        <Lightbulb
+          {...{
             ...iconProps,
-            sx: {
-              ...iconProps?.sx,
-              ...(memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
-                ? {
-                  color: undefined,
-                  fill: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : gradientSvgUrl
-                } : {})
-            }
-          }} />);
-      }
-    },
+            sx: iconProps?.sx,
+          }}
+        />
+      );
+    }
+    if (!memberOfPrimaryLink) {
+      return emptyBox;
+    }
+    /* eslint-disable no-fallthrough */
+    switch (memberOfPrimaryLink?.metadata.origin) {
+      case LinkOriginManual:
+        return emptyBox;
+      default:
+        return (<AutoAwesome {...{
+          ...iconProps,
+          sx: {
+            ...iconProps?.sx,
+            ...(memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
+              ? {
+                color: undefined,
+                fill: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : gradientSvgUrl
+              } : {})
+          }
+        }} />);
+    }
+  },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
+    [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
       const color = (() => {
@@ -432,71 +449,66 @@ export const ButtonToken = ({
         ...(fillWidth ? { width: '100%' } : {})
       }}
     >
-      <Button
-        disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
-        component={'button'}
-        sx={(theme) => ({
-          textTransform: 'none',
-          color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
-          borderColor: isSpecialMachineLearningCase && isSelectedInEditedLink ? 'transparent !important' : `${buttonPrimaryColor} !important`,
-          '&:hover': hoverSx,
-          padding: '0 !important',
-          ...(isSelectedInEditedLink ? {
-            backgroundColor: buttonPrimaryColor
-          } : {}),
-          /**
-           * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
-           */
-          ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {}),
-          ...(fillWidth ? { width: '100%' } : {})
-        })}
-        onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {
-        } : () => dispatch(hover(token))}
-        onMouseLeave={!!hoverHighlightingDisabled ? () => {
-        } : () => dispatch(hover(null))}
-        onClick={() => dispatch(toggleTextSegment({
-          foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v),
-          word: token
-        }))}
-        onKeyDown={(e) => {
-          if (e.key === ' ') { // prevent the spacebar from triggering a click action so it can be used for control panel actions
-            e.preventDefault();
-          }
-        }}>
-        {gradientSvg}
-        <LocalizedTextDisplay
+    <Button
+      disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
+      component={'button'}
+      sx={(theme) => ({
+        textTransform: 'none',
+        color: (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
+        borderColor: ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`,
+        '&:hover': hoverSx,
+        padding: '0 !important',
+        ...(isSelectedInEditedLink || isMostRelevantSuggestion ? {
+          backgroundColor:  buttonPrimaryColor,
+        } : {}),
+        /**
+         * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
+         */
+        ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {}),
+        ...(fillWidth ? { width: '100%' } : {})
+      })}
+      onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
+      onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
+      onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}
+      onKeyDown={(e) => {
+        if (e.key === ' ') { // prevent the spacebar from triggering a click action so it can be used for control panel actions
+          e.preventDefault();
+        }
+      }} >
+      {gradientSvg}
+      <LocalizedTextDisplay
+        sx={{
+          width: '100%',
+          height: '100%'
+        }}
+        languageInfo={languageInfo}>
+        <Box
           sx={{
-            width: '100%',
-            height: '100%'
-          }}
-          languageInfo={languageInfo}>
+            display: 'flex',
+            height: '100%',
+            flexDirection: 'column'
+          }}>
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'left',
+              m: 0
+            }}>
+            {sourceIndicator}
+          </Box>
           <Box
             sx={{
               display: 'flex',
-              height: '100%',
-              flexDirection: 'column'
+              marginLeft,
+              marginRight,
+              alignItems: 'center',
+              justifyContent: `${textJustification} !important`,
+              minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
+              flexGrow: 1,
             }}>
-            <Box
-              sx={{
-                display: 'flex',
-                width: '100%',
-                justifyContent: 'left',
-                m: 0
-              }}>
-              {sourceIndicator}
-            </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                marginLeft,
-                marginRight,
-                alignItems: 'center',
-                justifyContent: `${textJustification} !important`,
-                minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
-                flexGrow: 1
-              }}>
-              <Stack>
-                {/*
+            <Stack>
+              {/*
                 * word text display
                 */}
                 <LocalizedTextDisplay
@@ -519,7 +531,7 @@ export const ButtonToken = ({
                       display: 'flex',
                       width: '100%',
                       justifyContent: `${textJustification} !important`,
-                      color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
+                      color: (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
                     }}>
                     {token.gloss ?? '-'}
                   </Typography> : <></>}

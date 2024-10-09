@@ -2,13 +2,12 @@
  * This file contains the ProjectsView Component which is responsible for the
  * Project Mode of the CA application.
  */
-import { Button, FormControl, Grid, InputLabel, MenuItem, Select, Stack, Theme, Typography } from '@mui/material';
+import { Button, Grid, Stack, Theme, Typography } from '@mui/material';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Project } from '../../state/projects/tableManager';
 import { DefaultProjectId } from '../../state/links/tableManager';
 import { AppContext, THEME_PREFERENCE } from '../../App';
 import { LayoutContext } from '../../AppLayout';
-import { Box } from '@mui/system';
 import { Refresh } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
 import { Progress } from '../../api/ApiModels';
@@ -17,10 +16,15 @@ import { useCurrentUserGroups, useIsSignedIn } from '../../hooks/userInfoHooks';
 import uuid from 'uuid-random';
 import { CreateProjectCard } from './createProjectCard';
 import { ProjectCard } from './projectCard';
+import { FeaturePreferences } from '../../common/data/featurePreferences';
+import { projectCardMargin } from './styleConstants';
+import { PreferencesButton } from '../../state/preferences/preferencesDialog';
 
 export interface ProjectsViewProps {
-  preferredTheme: 'night' | 'day' | 'auto';
-  setPreferredTheme: Function;
+  preferredTheme: THEME_PREFERENCE;
+  setPreferredTheme: React.Dispatch<React.SetStateAction<THEME_PREFERENCE>>;
+  features: FeaturePreferences;
+  setFeatures: React.Dispatch<React.SetStateAction<FeaturePreferences>>;
 }
 
 const getPaletteFromProgress = (progress: Progress, theme: Theme) => {
@@ -36,7 +40,12 @@ const getPaletteFromProgress = (progress: Progress, theme: Theme) => {
   }
 };
 
-const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferredTheme }) => {
+const ProjectsView: React.FC<ProjectsViewProps> = ({
+                                                    preferredTheme,
+                                                    setPreferredTheme,
+                                                    features,
+                                                    setFeatures
+}) => {
   useContext(LayoutContext);
   const { preferences, projects: initialProjects, userStatus } = useContext(AppContext);
   const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
@@ -177,52 +186,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
 
         <Stack direction={'row'}>
           {/* Theme Preference */}
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            paddingTop: '8px',
-            paddingBottom: projectCardMargin,
-            paddingLeft: projectCardMargin
-          }}>
-            <FormControl sx={{ width: 175 }}>
-              <InputLabel id={'theme-label'}>Theme</InputLabel>
-              <Select
-                labelId={'theme-label'}
-                id={'theme-select'}
-                value={preferredTheme}
-                label={'Theme'}
-                onChange={({ target: { value } }) =>
-                  setPreferredTheme(value as THEME_PREFERENCE)
-                }
-              >
-                <MenuItem value={'auto' as THEME_PREFERENCE}>
-                  Follow System
-                </MenuItem>
-                <MenuItem value={'night' as THEME_PREFERENCE}>Dark</MenuItem>
-                <MenuItem value={'day' as THEME_PREFERENCE}>Light</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+          <PreferencesButton
+            preferredTheme={preferredTheme}
+            setPreferredTheme={setPreferredTheme}/>
         </Stack>
       </Grid>
     </>
   );
 };
-
-/**
- * margin used by project cards
- */
-export const projectCardMargin = '4px';
-/**
- * width of project cards
- */
-export const projectCardWidth = 391;
-/**
- * height of project cards
- */
-export const projectCardHeight = 320;
-
-export const currentProjectBorderIndicatorHeight = '4px';
 
 export default ProjectsView;

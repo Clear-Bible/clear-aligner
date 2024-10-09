@@ -67,6 +67,16 @@ function createWindow() {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   setUpIpcMain();
+  if (isDev) {
+    const { default: install, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer');
+    install(REACT_DEVELOPER_TOOLS)
+      .then(() => {
+        install(REDUX_DEVTOOLS)
+          .then(console.log)
+          .catch(console.error);
+      })
+      .catch(console.error);
+  }
   createWindow();
 });
 

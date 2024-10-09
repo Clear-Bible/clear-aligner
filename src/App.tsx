@@ -18,6 +18,7 @@ import { CustomSnackbar } from './features/snackbar';
 import { NetworkState } from '@uidotdev/usehooks';
 import { setUpAmplify } from './server/amplifySetup';
 import { InitializationStates } from './workbench/query';
+import { FeaturePreferences } from './common/data/featurePreferences';
 
 
 export interface AppContextProps {
@@ -40,6 +41,8 @@ export interface AppContextProps {
   setIsProjectDialogOpen: Function;
   isBusyDialogOpen: boolean;
   setIsBusyDialogOpen: Function;
+  features: FeaturePreferences;
+  setFeatures: React.Dispatch<React.SetStateAction<FeaturePreferences>>;
 }
 
 export type THEME = 'night' | 'day';
@@ -104,6 +107,8 @@ const App = () => {
           element: <ProjectsView
             preferredTheme={preferredTheme}
             setPreferredTheme={setPreferredTheme}
+            features={appContext.features}
+            setFeatures={appContext.setFeatures}
           />
         }
       ]

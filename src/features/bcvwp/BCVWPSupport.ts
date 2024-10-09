@@ -99,6 +99,10 @@ export default class BCVWP {
     return this.book ? findBookByNumber(this.book) : undefined;
   }
 
+  equals(other: BCVWP): boolean {
+    return this.toReferenceString() === other.toReferenceString();
+  }
+
   /**
    * checks whether the given BCVWP match at the given level of truncation
    * @param other BCVWP to check for a match
@@ -218,5 +222,9 @@ export default class BCVWP {
       return (a?.part ?? 0) - (b?.part ?? 0);
     }
     return 0;
+  }
+
+  static compareString(a?: string, b?: string): number {
+    return BCVWP.compare(BCVWP.parseFromString(a ?? ''), BCVWP.parseFromString(b ?? ''));
   }
 }
