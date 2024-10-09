@@ -21,7 +21,7 @@ import { LinksTable } from '../state/links/tableManager';
 import { isLoadingAnyCorpora } from '../workbench/query';
 import { Close } from '@mui/icons-material';
 
-const BusyRefreshTimeInMs = 500;
+const BusyRefreshTimeInMs = 250;
 const DefaultBusyMessage = 'Please wait...';
 
 export interface UseBusyDialogStatus {
@@ -38,6 +38,15 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
   }>();
   const [numProjects, setNumProjects] = useState<number>();
   const [isLoadingCorpora, setIsLoadingCorpora] = useState<boolean>();
+
+  const [ busyCount, setBusyCount ] = useState<{
+    projects: number,
+    links: number
+  }>({
+    projects: 0,
+    links: 0
+  });
+
   useInterval(() => {
     const newLinkStatus = LinksTable.getLatestDatabaseStatus();
     const newProjectStatus = projectState?.projectTable.getDatabaseStatus();
@@ -46,6 +55,10 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
         projects: newProjectStatus,
         links: newLinkStatus
       });
+      setBusyCount((cc) => ({
+        projects: newProjectStatus?.busyInfo.isBusy ? cc.projects + 1 : 0,
+        links: newLinkStatus?.busyInfo.isBusy ? cc.links + 1 : 0
+      }));
     }
     projectState?.projectTable?.getProjects(false)
       .then(newProjects => {
@@ -58,6 +71,12 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
       setIsLoadingCorpora(newIsLoadingCorpora);
     }
   }, BusyRefreshTimeInMs);
+
+  const busyCountAtLeastTwo = useMemo<boolean>(() =>
+    [ busyCount.projects, busyCount.links ]
+      .some((count): boolean => count > 1),
+    [ busyCount.projects, busyCount.links ]);
+
   const spinnerParams = useMemo<{
     isBusy?: boolean,
     text?: string,
@@ -78,14 +97,14 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
         && progressMax >= progressCtr) {
         const percentProgress = Math.round((progressCtr / progressMax) * 100.0);
         return {
-          isBusy: true,
+          isBusy: busyCountAtLeastTwo,
           text: busyInfo?.userText ?? DefaultBusyMessage,
           variant: percentProgress < 100 ? 'determinate' : 'indeterminate',
           value: percentProgress < 100 ? percentProgress : undefined
         };
       } else {
         return {
-          isBusy: true,
+          isBusy: busyCountAtLeastTwo,
           text: busyInfo?.userText ?? DefaultBusyMessage,
           variant: 'indeterminate',
           value: undefined
@@ -117,7 +136,7 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
       variant: 'indeterminate',
       value: undefined
     };
-  }, [databaseStatus, isLoadingCorpora, numProjects, customStatus]);
+  }, [isLoadingCorpora, numProjects, customStatus, busyCountAtLeastTwo, databaseStatus?.links, databaseStatus?.projects]);
 
   useEffect(() => {
     setCancel(false);
