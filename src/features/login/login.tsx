@@ -84,7 +84,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
   const handleResetPassword = () => {
     setShowPasswordResetURL(false);
     setPassword("");
-    setEmailAddress("");
   }
 
   const handleOnKeyDown = (e: { keyCode: number; }) => {
