@@ -43,11 +43,6 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         const wordText = (values[headerMap['text']] || values[headerMap['lemma']] || '');
-        // filter out punctuation in content
-        if (wordText.match(/^[\p{P}\s]*$/gu)) {
-          // skip punctuation
-          return;
-        }
 
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['id']];
