@@ -10,6 +10,7 @@ import { StateWithHistory } from 'redux-undo';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 import { ResolvedLinkSuggestion } from '../common/data/project/linkSuggestion';
 import { AlignmentSide } from '../common/data/project/corpus';
+import { LinkNote } from '../common/data/project/linkNote';
 
 enum ToggleOperation {
   Undefined,
@@ -106,6 +107,24 @@ const alignmentSlice = createSlice({
       applySuggestions(state.inProgressLink, action.payload.suggestions);
     },
 
+    createOrModifyNote: (
+      state,
+      action: PayloadAction<{
+        note: LinkNote
+      }>
+    ) => {
+      if (!state.inProgressLink) return;
+      state.inProgressLink.metadata.note = [ action.payload.note ];
+    },
+
+    removeNote: (
+      state,
+      action: PayloadAction<{}>
+    ) => {
+      if (!state.inProgressLink) return;
+      state.inProgressLink.metadata.note = [];
+    },
+
     toggleTextSegment: (
       state,
       action: PayloadAction<{
@@ -172,7 +191,7 @@ const alignmentSlice = createSlice({
   },
 });
 
-export const { loadInProgressLink, submitSuggestionResolution, toggleTextSegment, resetTextSegments } =
+export const { loadInProgressLink, submitSuggestionResolution, createOrModifyNote, removeNote, toggleTextSegment, resetTextSegments } =
   alignmentSlice.actions;
 
 export default alignmentSlice.reducer;

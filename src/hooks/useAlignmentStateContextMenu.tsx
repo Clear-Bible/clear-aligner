@@ -6,16 +6,18 @@ import { Box, Menu, MenuItem, Typography, useTheme } from '@mui/material';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import LinkIcon from '@mui/icons-material/Link';
 import CheckIcon from '@mui/icons-material/Check';
-import { Cancel, CheckCircle, Flag } from '@mui/icons-material';
+import { Cancel, CheckCircle, CommentOutlined, Flag } from '@mui/icons-material';
 import React from 'react';
 import { Link } from '../structs';
 import { useSaveLink } from '../state/links/tableManager';
+import ListItemText from '@mui/material/ListItemText';
+import { useLinkNotes } from '../features/linkNotes/useLinkNotes';
 
 /**
  * useAlignmentStateContextMenu hook
  * allow users to change the link state by right-clicking on an alignment
  */
-const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<undefined>, link?: Link ): any => {
+const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<undefined>, link?: Link, openNoteEditor?: () => void ): any => {
   const [isLinkStateMenuOpen, setIsLinkStateMenuOpen] = React.useState(false);
   const [linkState ,setLinkState ] = React.useState("")
   const [localLink, setLocalLink] = React.useState<Link>();
@@ -56,7 +58,7 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
     handleClose()
   },[saveLink, localLink])
 
-  const CheckIconStyle = {width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}
+  const CheckIconStyle = {width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check};
 
   const ContextMenu = () => {
     return(
@@ -74,6 +76,20 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
             horizontal: 'right',
           }}
         >
+          <MenuItem
+            onClick={(e) => {
+              e.preventDefault();
+              openNoteEditor?.();
+              handleClose();
+            }}>
+            <ListItemIcon>
+              <CommentOutlined/>
+            </ListItemIcon>
+            <ListItemText>
+              <Typography
+                sx={{fontSize: '13px'}}>Notes</Typography>
+            </ListItemText>
+          </MenuItem>
           <MenuItem
             data-link-state={'created'}
             onClick={(e) => handleMenuClick( e, wordPartID)}

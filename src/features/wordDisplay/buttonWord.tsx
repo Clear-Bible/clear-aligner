@@ -22,6 +22,7 @@ import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
 import { useTokenSuggestionRelevancyScore } from '../../hooks/useSuggestions';
+import { useLinkNotes } from '../linkNotes/useLinkNotes';
 
 const alphaTransparencyValueForButtonTokens = '.12';
 /**
@@ -226,9 +227,6 @@ export const ButtonToken = ({
 
   const anchorEl = useRef();
 
-  // Allow the user to right-click on an alignment and change it's state
-  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink);
-
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
   /**
@@ -239,6 +237,11 @@ export const ButtonToken = ({
    * indicates whether this token was a member of the link which is currently being edited (does not indicate if if it currently selected in the edited link, just that it was a member of that link before it was opened for editing)
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
+
+  const { onOpenEditor, editorDialog } = useLinkNotes({ token, memberOfLink: memberOfPrimaryLink });
+
+  // Allow the user to right-click on an alignment and change it's state
+  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink, onOpenEditor);
 
   const { wasSubmittedForConsideration, isMostRelevantSuggestion, scoreIsRelevant } = useTokenSuggestionRelevancyScore(token, isMemberOfAnyLink);
 
@@ -535,6 +538,7 @@ export const ButtonToken = ({
                     }}>
                     {token.gloss ?? '-'}
                   </Typography> : <></>}
+                {isMemberOfAnyLink && editorDialog}
               </Stack>
             </Box>
             <Box
