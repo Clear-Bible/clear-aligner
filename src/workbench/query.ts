@@ -60,7 +60,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           text: wordText,
           position: pos,
           sourceVerse: values[headerMap['source_verse']] || '',
-          normalizedText
+          normalizedText,
+          exclude: false,
         };
 
         wordKey = normalizedText;

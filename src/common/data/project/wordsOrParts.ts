@@ -9,6 +9,7 @@ export interface WordOrPartDTO {
   after?: string;
   gloss?: string;
   sourceVerseBcv?: string;
+  exclude?: boolean;
 }
 
 export const mapWordOrPartToWordOrPartDTO = (wordOrPart: Word): WordOrPartDTO => ({
@@ -19,6 +20,7 @@ export const mapWordOrPartToWordOrPartDTO = (wordOrPart: Word): WordOrPartDTO =>
   after: wordOrPart.after,
   gloss: wordOrPart.gloss,
   sourceVerseBcv: wordOrPart.sourceVerse,
+  exclude: wordOrPart.exclude
 });
 
 export const mapWordOrPartDtoToWordOrPart = (wordOrPart: WordOrPartDTO): Word => ({
@@ -30,5 +32,6 @@ export const mapWordOrPartDtoToWordOrPart = (wordOrPart: WordOrPartDTO): Word =>
   gloss: wordOrPart.gloss,
   sourceVerse: wordOrPart.sourceVerseBcv,
   position: 0,
-  normalizedText: wordOrPart.text?.toLowerCase() ?? ''
+  normalizedText: wordOrPart.text?.toLowerCase() ?? '',
+  exclude: wordOrPart.exclude
 });
