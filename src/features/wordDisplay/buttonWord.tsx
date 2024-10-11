@@ -15,7 +15,7 @@ import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
+import { AutoAwesome, Cancel, CheckCircle, EditOutlined, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
@@ -238,7 +238,7 @@ export const ButtonToken = ({
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
-  const { onOpenEditor, editorDialog } = useLinkNotes({ token, memberOfLink: memberOfPrimaryLink });
+  const { onOpenEditor, editorDialog, hasNote } = useLinkNotes({ token, memberOfLink: memberOfPrimaryLink });
 
   // Allow the user to right-click on an alignment and change it's state
   const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink, onOpenEditor);
@@ -344,6 +344,34 @@ export const ButtonToken = ({
   },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
+
+  const upperRightHandCornerIndicator = useMemo<JSX.Element>(() => {
+    const color = (() => {
+      if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isSelectedInEditedLink) {
+        return buttonNormalBackgroundColor;
+      }
+      return buttonPrimaryColor;
+    })();
+    const iconProps: SvgIconOwnProps = {
+      sx: {
+        fontSize: iconSize,
+        margin: iconMargin,
+        color,
+      }
+    };
+    if (hasNote) {
+      return (<EditOutlined
+                {...{
+                  iconProps,
+                  sx: {
+                    ...iconProps?.sx
+                  }
+                }} />);
+    }
+    return (<>
+    </>);
+  }, [ isCurrentlyHoveredToken, buttonPrimaryColor, isSelectedInEditedLink, buttonNormalBackgroundColor, hasNote ]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
       const color = (() => {

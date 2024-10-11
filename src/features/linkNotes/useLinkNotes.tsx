@@ -1,9 +1,9 @@
 import { Link, Word } from '../../structs';
-import { useAppDispatch, useAppSelector } from '../../app/index';
 import { useUserEmail } from '../../hooks/userInfoHooks';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { LinkNoteEditorDialog } from './linkNoteEditor';
-import { createOrModifyNote, removeNote, toggleTextSegment } from '../../state/alignment.slice';
+import { LinkNote } from '../../common/data/project/linkNote';
+import { AppContext } from '../../App';
 
 /**
  * props for {@link useLinkNotes}
@@ -19,6 +19,7 @@ export interface UseLinkNotesProps {
 export interface UseLinkNotesState {
   editorDialog: JSX.Element;
   onOpenEditor: () => void;
+  hasNote: boolean;
 }
 
 export const useLinkNotes = ({
@@ -26,20 +27,52 @@ export const useLinkNotes = ({
                                memberOfLink
 }: UseLinkNotesProps): UseLinkNotesState => {
 
-  const dispatch = useAppDispatch();
+  const { projectState: { linksTable } } = useContext(AppContext);
 
-  const editedLinkNote = useAppSelector((state) => (state.alignment.present.inProgressLink?.metadata.note ?? []).at(0));
+  const editedLinkNote = useMemo<LinkNote|undefined>(() => memberOfLink?.metadata?.note?.at(0), [ memberOfLink?.metadata?.note ]);
 
   const email = useUserEmail({});
 
   const [ isEditorOpen, setIsEditorOpen ] = useState<boolean>(false);
 
   const onOpenEditor = useCallback(() => {
-    if (!editedLinkNote) {
-      dispatch(toggleTextSegment({ foundRelatedLinks: [ memberOfLink ].filter((v) => !!v), word: token }))
-    }
     setIsEditorOpen(true);
-  }, [ editedLinkNote, dispatch, memberOfLink, token, setIsEditorOpen ]);
+  }, [ setIsEditorOpen ]);
+
+  const removeNote = useCallback(() => {
+    if (!memberOfLink || !linksTable) return;
+    const remove = async () => {
+      await linksTable.save({
+        ...memberOfLink,
+        metadata: {
+          ...memberOfLink.metadata,
+          note: []
+        }
+      });
+    };
+    void remove();
+  }, [ memberOfLink, linksTable ]);
+
+  const createOrModifyNote = useCallback((note: LinkNote) => {
+    if (!memberOfLink || !linksTable) return;
+    if (!note) {
+      removeNote();
+      return;
+    }
+    const save = async () => {
+      await linksTable.save({
+        ...memberOfLink,
+        metadata: {
+          ...memberOfLink.metadata,
+          note: [ {
+            ...note,
+            authorEmail: email ?? note.authorEmail
+          } ]
+        }
+      });
+    };
+    void save();
+  }, [ linksTable, email, memberOfLink, removeNote ]);
 
   const editorDialog = useMemo<JSX.Element>(() => {
     if (!memberOfLink) {
@@ -52,24 +85,23 @@ export const useLinkNotes = ({
         note={editedLinkNote}
         onClose={() => setIsEditorOpen(false)}
         onSave={(n) => {
-          dispatch(createOrModifyNote({
-            note: {
-              ...n,
-              authorEmail: email ?? n.authorEmail
-            }
-          }));
+          createOrModifyNote({
+            ...n,
+            authorEmail: email ?? n.authorEmail
+          });
           setIsEditorOpen(false);
         }}
         onDelete={() => {
-          dispatch(removeNote({}));
+          removeNote();
           setIsEditorOpen(false);
         }}
       />
     );
-  }, [ memberOfLink, editedLinkNote, isEditorOpen, setIsEditorOpen, dispatch, email ]);
+  }, [ memberOfLink, editedLinkNote, isEditorOpen, setIsEditorOpen, email, createOrModifyNote, removeNote ]);
 
   return {
     editorDialog,
-    onOpenEditor
+    onOpenEditor,
+    hasNote: !!editedLinkNote
   };
 }

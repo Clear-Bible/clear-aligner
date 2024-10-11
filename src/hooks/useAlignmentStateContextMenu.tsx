@@ -2,7 +2,7 @@
  * This file contains the useAlignmentStateContextMenu hook used in the Alignment
  * Editor to allow users to change the link state by right-clicking on an alignment
  */
-import { Box, Menu, MenuItem, Typography, useTheme } from '@mui/material';
+import { Box, Divider, Menu, MenuItem, Typography, useTheme } from '@mui/material';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import LinkIcon from '@mui/icons-material/Link';
 import CheckIcon from '@mui/icons-material/Check';
@@ -11,7 +11,6 @@ import React from 'react';
 import { Link } from '../structs';
 import { useSaveLink } from '../state/links/tableManager';
 import ListItemText from '@mui/material/ListItemText';
-import { useLinkNotes } from '../features/linkNotes/useLinkNotes';
 
 /**
  * useAlignmentStateContextMenu hook
@@ -87,9 +86,10 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
             </ListItemIcon>
             <ListItemText>
               <Typography
-                sx={{fontSize: '13px'}}>Notes</Typography>
+                sx={{fontSize: '13px'}}>Edit Note</Typography>
             </ListItemText>
           </MenuItem>
+          <Divider />
           <MenuItem
             data-link-state={'created'}
             onClick={(e) => handleMenuClick( e, wordPartID)}

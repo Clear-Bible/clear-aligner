@@ -158,7 +158,7 @@ export const LinkNoteEditorDialog = ({
 
   useEffect(() => {
     setMode('view');
-  }, [ setMode ]);
+  }, [ setMode, isOpen ]);
 
   return (
     <Dialog
@@ -174,7 +174,10 @@ export const LinkNoteEditorDialog = ({
           <LinkNoteEditor
             note={tmpNote}
             onChange={setTmpNote}
-            onCancel={() => setMode('view')}
+            onCancel={() => {
+              setTmpNote(note);
+              setMode('view');
+            }}
             onSave={() => {
               if (tmpNote) onSave?.(tmpNote);
               setMode('view');
