@@ -19,17 +19,20 @@ _ClearAligner is developed iteratively. The roadmap plans are subject to change.
 * Create local projects
 * Switch between local projects
 * Keyboard shortcuts for repetitive actions
+* Multi-User Project Collaboration (aka ClearAligner Sync)
+* Alignment Suggestions
+* Live Interlinear
 
 ### Current Focus
 
-1. Pilot testing and gathering user feedback.
-2. Multi-User Project Collaboration (aka ClearAligner **Sync)**
+1. Guided Alignment
+2. Additional Concordance Features
 
 ### Potential Upcoming Features
 
 _To be prioritized based on user feedback_
 
-* UX redesign w/more responsive layout
+* Project progress tracking
 * Sub-word target text tokenization
 * Target text punctuation display
 * Guided alignment
