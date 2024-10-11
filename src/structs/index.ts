@@ -6,6 +6,7 @@ import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { ServerAlignmentLinkDTO } from '../common/data/serverAlignmentLinkDTO';
 import { AlignmentSide } from '../common/data/project/corpus';
 import { ResolvedLinkSuggestion } from '../common/data/project/linkSuggestion';
+import { LinkNote } from '../common/data/project/linkNote';
 
 /**
  * Parameters common to Project Repository functions
@@ -406,6 +407,7 @@ export enum LinkStatus {
 export interface LinkMetadata {
   origin: LinkOrigin;
   status: LinkStatus;
+  note: LinkNote[];
 }
 
 // An instance of alignment
@@ -414,7 +416,8 @@ export class Link extends DatabaseRecord {
     super();
     this.metadata = {
       origin: 'manual',
-      status: LinkStatus.CREATED
+      status: LinkStatus.CREATED,
+      note: []
     };
     this.sources = [];
     this.targets = [];

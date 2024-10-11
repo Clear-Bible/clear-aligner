@@ -130,7 +130,8 @@ const alignmentSlice = createSlice({
           const { ...createdObject } = EditedLink.fromLink({
             metadata: {
               origin: LinkOriginManual,
-              status: LinkStatus.CREATED
+              status: LinkStatus.CREATED,
+              note: []
             },
             sources: [],
             targets: [],
