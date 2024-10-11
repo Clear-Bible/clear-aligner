@@ -15,7 +15,16 @@ import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import { AutoAwesome, Cancel, CheckCircle, EditOutlined, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
+import {
+  AutoAwesome,
+  Cancel,
+  CheckCircle,
+  CommentOutlined,
+  EditOutlined,
+  Flag,
+  InsertLink,
+  Lightbulb
+} from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
@@ -238,7 +247,7 @@ export const ButtonToken = ({
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
-  const { onOpenEditor, editorDialog, hasNote } = useLinkNotes({ token, memberOfLink: memberOfPrimaryLink });
+  const { onOpenEditor, editorDialog, hasNote, isEditorOpen } = useLinkNotes({ token, memberOfLink: memberOfPrimaryLink });
 
   // Allow the user to right-click on an alignment and change it's state
   const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink, onOpenEditor);
@@ -361,7 +370,7 @@ export const ButtonToken = ({
       }
     };
     if (hasNote) {
-      return (<EditOutlined
+      return (<CommentOutlined
                 {...{
                   iconProps,
                   sx: {
@@ -500,7 +509,13 @@ export const ButtonToken = ({
       })}
       onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
-      onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}
+      onClick={() => {
+        if (isEditorOpen) return;
+        return dispatch(toggleTextSegment({
+          foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v),
+          word: token
+        }));
+      }}
       onKeyDown={(e) => {
         if (e.key === ' ') { // prevent the spacebar from triggering a click action so it can be used for control panel actions
           e.preventDefault();
@@ -523,10 +538,11 @@ export const ButtonToken = ({
             sx={{
               width: '100%',
               display: 'flex',
-              justifyContent: 'left',
+              justifyContent: 'space-between',
               m: 0
             }}>
             {sourceIndicator}
+            {upperRightHandCornerIndicator}
           </Box>
           <Box
             sx={{

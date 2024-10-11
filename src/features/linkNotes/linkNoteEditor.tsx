@@ -9,13 +9,25 @@ import {
   Typography
 } from '@mui/material';
 import { LinkNote } from '../../common/data/project/linkNote';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box } from '@mui/system';
 import { DeleteOutlined, EditOutlined, MoreVertOutlined } from '@mui/icons-material';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import uuid from 'uuid-random';
 import { useUserEmail } from '../../hooks/userInfoHooks';
+
+//@ts-ignore
+const LinkNoteDisplayButtonView = ({ children }) => {
+  return (<Box
+  sx={{
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'right'
+  }}>
+    {children}
+  </Box>);
+}
 
 interface LinkNoteEditorProps {
   note?: LinkNote;
@@ -26,26 +38,42 @@ interface LinkNoteEditorProps {
 
 const LinkNoteEditor = ({
                           note,
-                          onChange
+                          onChange,
+                          onCancel,
+                          onSave
                         }: LinkNoteEditorProps) => {
   return (
-    <>
-      <Typography>CommentEditor</Typography>
-      <TextField
+      <Box
         sx={{
-          width: '100%',
-          height: '100%'
-        }}
-        value={note?.note ?? ''}
-        onChange={(e) => {
-          const updatedNote: LinkNote = {
-            ...(note!),
-            note: e.currentTarget.value ?? ''
-          };
-          onChange?.(updatedNote);
-        }}
-        multiline/>
-    </>
+          height: '100%',
+          flexGrow: 1,
+          flexDirection: 'column',
+          display: 'flex'
+        }}>
+        <Typography>Comment</Typography>
+        <TextField
+          sx={{
+            width: '100%',
+            flexGrow: 1
+          }}
+          multiline
+          fullWidth
+          focused
+          variant={'outlined'}
+          value={note?.note ?? ''}
+          onChange={(e) => {
+            const updatedNote: LinkNote = {
+              ...(note!),
+              note: e.currentTarget.value ?? ''
+            };
+            onChange?.(updatedNote);
+          }}
+        />
+        <LinkNoteDisplayButtonView>
+          <Button variant={'text'} onClick={onCancel}>Cancel</Button>
+          <Button variant={'text'} onClick={onSave}>Save</Button>
+        </LinkNoteDisplayButtonView>
+      </Box>
   );
 }
 
@@ -117,7 +145,12 @@ const LinkNoteViewer = ({
                           onDelete,
                           onClose
 }: LinkNoteViewerProps) => {
-  return (<>
+  return (<Box
+    sx={{
+      flexGrow: 1,
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
     <Box
       sx={{
         display: 'flex',
@@ -127,9 +160,17 @@ const LinkNoteViewer = ({
       <Typography>Comment</Typography>
       <NoteViewerMenu onEdit={onEdit} onDelete={onDelete} />
     </Box>
-    <Typography color={theme => theme.palette.text.disabled}>{note?.note}</Typography>
-    <Button onClick={onClose}>Okay</Button>
-  </>);
+    <Typography
+      sx={{
+        flexGrow: 1
+      }}
+      color={theme => theme.palette.text.disabled}>{note?.note}</Typography>
+    <LinkNoteDisplayButtonView>
+      <Button
+        variant={'text'}
+        onClick={onClose}>Okay</Button>
+    </LinkNoteDisplayButtonView>
+  </Box>);
 }
 
 export interface LinkNoteEditorDialogProps {
@@ -158,6 +199,7 @@ export const LinkNoteEditorDialog = ({
 
   useEffect(() => {
     setMode('view');
+    setTmpNote(note);
   }, [ setMode, isOpen ]);
 
   return (
@@ -168,7 +210,9 @@ export const LinkNoteEditorDialog = ({
       <DialogContent
         sx={{
           minWidth: '400px',
-          minHeight: '272px'
+          minHeight: '272px',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
         {mode === 'edit' ?
           <LinkNoteEditor

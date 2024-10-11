@@ -19,6 +19,7 @@ export interface UseLinkNotesProps {
 export interface UseLinkNotesState {
   editorDialog: JSX.Element;
   onOpenEditor: () => void;
+  isEditorOpen: boolean;
   hasNote: boolean;
 }
 
@@ -102,6 +103,7 @@ export const useLinkNotes = ({
   return {
     editorDialog,
     onOpenEditor,
-    hasNote: !!editedLinkNote
+    hasNote: !!editedLinkNote,
+    isEditorOpen
   };
 }
