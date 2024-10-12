@@ -78,6 +78,16 @@ export const useDownloadProject = (): SyncState => {
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
       });
+      if (!projectResponse.success) { // failure, perform cleanup
+        appCtx.setSnackBarMessage('Project is not available for download as the current user');
+        appCtx.setIsSnackBarOpen(true);
+        setProgress(ProjectDownloadProgress.FAILED);
+        // perform cleanup
+        await projectState.projectTable?.remove(projectId);
+        const refreshedProjectList = Array.from( (await projectState.projectTable?.getProjects(true))?.values() ?? [] );
+        setProjects(refreshedProjectList);
+        return;
+      }
       const projectData = projectResponse.body;
       const tmpProject = mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!;
       tmpProject.lastSyncServerTime = tmpProject.serverUpdatedAt;

@@ -76,7 +76,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           await projectState.projectTable?.update?.(removedProject, false);
         }
 
-        const remoteProjectsRemovedFromServerOrNoLongerVisibleToUser = Array.from((await projectState.projectTable?.getProjects?.(false))?.values() ?? [])
+        const remoteProjectsRemovedFromServerOrNoLongerVisibleToUser = Array.from((await projectState.projectTable?.getProjects?.(true))?.values() ?? [])
           .filter((p) => p.location === ProjectLocation.REMOTE) // just find the remote ones
           .filter((remoteProject) => !projectDtos.find((projectFromServer) => projectFromServer.id === remoteProject.id));
 
