@@ -9,7 +9,6 @@ import {
   DeleteParams,
   InsertParams,
   Link,
-  LinkMetadata,
   LinkOrigin,
   LinkStatus,
   SaveParams

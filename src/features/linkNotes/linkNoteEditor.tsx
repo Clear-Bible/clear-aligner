@@ -1,21 +1,21 @@
 import {
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogTitle,
+  Divider,
   IconButton, MenuItem, MenuList,
   Popover, TextField,
   Typography
 } from '@mui/material';
 import { LinkNote } from '../../common/data/project/linkNote';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box } from '@mui/system';
-import { DeleteOutlined, EditOutlined, MoreVertOutlined } from '@mui/icons-material';
+import { DeleteOutlined, EditOutlined, MoreVertOutlined, StarOutlined } from '@mui/icons-material';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import uuid from 'uuid-random';
 import { useUserEmail } from '../../hooks/userInfoHooks';
+import { RemovableTooltip } from '../../components/removableTooltip';
 
 //@ts-ignore
 const LinkNoteDisplayButtonView = ({ children }) => {
@@ -48,7 +48,8 @@ const LinkNoteEditor = ({
           height: '100%',
           flexGrow: 1,
           flexDirection: 'column',
-          display: 'flex'
+          display: 'flex',
+          userSelect: 'none'
         }}>
         <Typography>Comment</Typography>
         <TextField
@@ -58,7 +59,8 @@ const LinkNoteEditor = ({
           }}
           multiline
           fullWidth
-          focused
+          autoFocus
+          tabIndex={0}
           variant={'outlined'}
           value={note?.note ?? ''}
           onChange={(e) => {
@@ -78,11 +80,12 @@ const LinkNoteEditor = ({
 }
 
 interface NoteViewerMenuProps {
-  onEdit: () => void;
-  onDelete: () => void;
+  onCreate?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-const NoteViewerMenu = ({ onEdit, onDelete }: NoteViewerMenuProps) => {
+const NoteViewerMenu = ({ onCreate, onEdit, onDelete }: NoteViewerMenuProps) => {
   const [ isMenuOpen, setIsMenuOpen ] = useState(false);
   const [ menuRef, setMenuRef ] = useState<Element>();
   const closeMenu = useCallback(() => setIsMenuOpen(false), [ setIsMenuOpen ]);
@@ -106,7 +109,17 @@ const NoteViewerMenu = ({ onEdit, onDelete }: NoteViewerMenuProps) => {
         open={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}>
         <MenuList>
-          <MenuItem
+          {onCreate && <MenuItem
+            onClick={() => {
+              closeMenu();
+              onCreate();
+            }}>
+            <ListItemIcon>
+              <StarOutlined/>
+            </ListItemIcon>
+            <ListItemText>Create</ListItemText>
+          </MenuItem>}
+          {onEdit && <MenuItem
             onClick={() => {
               closeMenu();
               onEdit();
@@ -115,17 +128,24 @@ const NoteViewerMenu = ({ onEdit, onDelete }: NoteViewerMenuProps) => {
               <EditOutlined/>
             </ListItemIcon>
             <ListItemText>Edit</ListItemText>
-          </MenuItem>
-          <MenuItem
+          </MenuItem>}
+          {(onDelete && (onCreate || onEdit)) ? <Divider/> : <></>}
+          {onDelete && <MenuItem
             onClick={() => {
               closeMenu();
               onDelete();
             }}>
             <ListItemIcon>
-              <DeleteOutlined/>
+              <DeleteOutlined
+                sx={(theme) => ({
+                  color: theme.palette.error.main
+                })}/>
             </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
-          </MenuItem>
+            <ListItemText
+              sx={(theme) => ({
+                color: theme.palette.error.dark
+              })} >Delete</ListItemText>
+          </MenuItem>}
         </MenuList>
       </Popover>
     </>
@@ -134,6 +154,7 @@ const NoteViewerMenu = ({ onEdit, onDelete }: NoteViewerMenuProps) => {
 
 interface LinkNoteViewerProps {
   note?: LinkNote;
+  onCreate: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onClose: () => void;
@@ -141,6 +162,7 @@ interface LinkNoteViewerProps {
 
 const LinkNoteViewer = ({
                           note,
+                          onCreate,
                           onEdit,
                           onDelete,
                           onClose
@@ -155,16 +177,27 @@ const LinkNoteViewer = ({
       sx={{
         display: 'flex',
         flexDirection: 'row',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        userSelect: 'none'
       }}>
       <Typography>Comment</Typography>
-      <NoteViewerMenu onEdit={onEdit} onDelete={onDelete} />
+      <NoteViewerMenu
+        onCreate={!note ? onCreate : undefined}
+        onEdit={onEdit}
+        onDelete={note ? onDelete : undefined} />
     </Box>
-    <Typography
-      sx={{
-        flexGrow: 1
-      }}
-      color={theme => theme.palette.text.disabled}>{note?.note}</Typography>
+    <RemovableTooltip title={`double click to ${!!note ? 'edit' : 'create'}`}>
+      <Typography
+        onDoubleClick={onEdit}
+        sx={{
+          flexGrow: 1,
+          userSelect: 'none',
+          whiteSpace: 'pre-wrap'
+        }}
+        color={theme => theme.palette.text.disabled}>
+        {note?.note}
+      </Typography>
+    </RemovableTooltip>
     <LinkNoteDisplayButtonView>
       <Button
         variant={'text'}
@@ -185,7 +218,8 @@ export const LinkNoteEditorDialog = ({
                                        isOpen,
                                        note,
                                        onClose,
-                                       onSave
+                                       onSave,
+                                       onDelete
 }: LinkNoteEditorDialogProps) => {
   const email = useUserEmail({});
 
@@ -200,13 +234,12 @@ export const LinkNoteEditorDialog = ({
   useEffect(() => {
     setMode('view');
     setTmpNote(note);
-  }, [ setMode, isOpen ]);
+  }, [ note, setMode, isOpen ]);
 
   return (
     <Dialog
       open={!!isOpen}
       onClose={() => onClose?.()}>
-      { /*<DialogTitle>Comment</DialogTitle>*/ }
       <DialogContent
         sx={{
           minWidth: '400px',
@@ -228,7 +261,15 @@ export const LinkNoteEditorDialog = ({
             }} /> : <></>}
         {mode === 'view' ?
           <LinkNoteViewer
-            note={tmpNote}
+            note={note}
+            onCreate={() => {
+              setTmpNote({
+                id: uuid(),
+                authorEmail: email ?? '',
+                note: ''
+              });
+              setMode('edit');
+            }}
             onEdit={() => {
               if (!tmpNote) {
                 setTmpNote({
@@ -239,7 +280,10 @@ export const LinkNoteEditorDialog = ({
               }
               setMode('edit');
             }}
-            onDelete={() => {/* TODO: DELETE */}}
+            onDelete={() => {
+              onDelete();
+              onClose?.();
+            }}
             onClose={() => onClose?.()} /> : <></>}
       </DialogContent>
     </Dialog>

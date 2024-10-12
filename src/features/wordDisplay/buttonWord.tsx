@@ -20,7 +20,6 @@ import {
   Cancel,
   CheckCircle,
   CommentOutlined,
-  EditOutlined,
   Flag,
   InsertLink,
   Lightbulb
@@ -489,8 +488,9 @@ export const ButtonToken = ({
         ...(fillWidth ? { width: '100%' } : {})
       }}
     >
+    {isMemberOfAnyLink && editorDialog}
     <Button
-      disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
+      disabled={isEditorOpen || disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
       component={'button'}
       sx={(theme) => ({
         textTransform: 'none',
@@ -535,6 +535,7 @@ export const ButtonToken = ({
             flexDirection: 'column'
           }}>
           <Box
+            dir={'ltr'}
             sx={{
               width: '100%',
               display: 'flex',
@@ -582,7 +583,6 @@ export const ButtonToken = ({
                     }}>
                     {token.gloss ?? '-'}
                   </Typography> : <></>}
-                {isMemberOfAnyLink && editorDialog}
               </Stack>
             </Box>
             <Box

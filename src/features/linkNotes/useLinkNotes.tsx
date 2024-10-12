@@ -76,7 +76,7 @@ export const useLinkNotes = ({
   }, [ linksTable, email, memberOfLink, removeNote ]);
 
   const editorDialog = useMemo<JSX.Element>(() => {
-    if (!memberOfLink) {
+    if (!memberOfLink || !isEditorOpen) {
       return (<>
       </>);
     }
@@ -86,10 +86,14 @@ export const useLinkNotes = ({
         note={editedLinkNote}
         onClose={() => setIsEditorOpen(false)}
         onSave={(n) => {
-          createOrModifyNote({
-            ...n,
-            authorEmail: email ?? n.authorEmail
-          });
+          if (n.note) {
+            createOrModifyNote({
+              ...n,
+              authorEmail: email ?? n.authorEmail
+            });
+          } else {
+            removeNote();
+          }
           setIsEditorOpen(false);
         }}
         onDelete={() => {
