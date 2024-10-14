@@ -1,4 +1,4 @@
-import { Link, Word } from '../../structs';
+import { Link } from '../../structs';
 import { useUserEmail } from '../../hooks/userInfoHooks';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { LinkNoteEditorDialog } from './linkNoteEditor';
@@ -9,7 +9,6 @@ import { AppContext } from '../../App';
  * props for {@link useLinkNotes}
  */
 export interface UseLinkNotesProps {
-  token: Word;
   memberOfLink?: Link;
 }
 
@@ -23,10 +22,7 @@ export interface UseLinkNotesState {
   hasNote: boolean;
 }
 
-export const useLinkNotes = ({
-                               token,
-                               memberOfLink
-}: UseLinkNotesProps): UseLinkNotesState => {
+export const useLinkNotes = ({ memberOfLink }: UseLinkNotesProps): UseLinkNotesState => {
 
   const { projectState: { linksTable } } = useContext(AppContext);
 

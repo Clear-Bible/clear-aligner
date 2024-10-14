@@ -47,6 +47,7 @@ import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { grey } from '@mui/material/colors';
 import { PerRowLinkStateSelector } from './perRowLinkStateSelector';
+import { useLinkNotes } from '../linkNotes/useLinkNotes';
 
 /**
  * Interface for the AlignmentTableContext Component
@@ -145,8 +146,14 @@ export const LinkCell = ({ row, onClick }: {
     setIsMenuOpen(false);
     setAnchorEl(null);
   }
+
+  const { hasNote, editorDialog, onOpenEditor } = useLinkNotes({ memberOfLink: row.row });
+
   return (
-    <>
+    <Box
+      sx={(theme) => (hasNote ? {
+        background: `linear-gradient(45deg, rgba(0,0,0,0) 42px, ${theme.palette.info.dark} 0)`
+      } : {})}>
       <IconButton onClick={(event) => handleMoreVertIconClick(event)} >
         <MoreVertIcon/>
       </IconButton>
@@ -168,8 +175,16 @@ export const LinkCell = ({ row, onClick }: {
         >
           Verse Editor
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            onOpenEditor();
+            handleClose();
+          }}>
+          Edit Notes
+        </MenuItem>
       </Menu>
-    </>
+      {editorDialog}
+    </Box>
   );
 };
 

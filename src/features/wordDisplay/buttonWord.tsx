@@ -246,7 +246,7 @@ export const ButtonToken = ({
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
-  const { onOpenEditor, editorDialog, hasNote, isEditorOpen } = useLinkNotes({ token, memberOfLink: memberOfPrimaryLink });
+  const { onOpenEditor, editorDialog, hasNote, isEditorOpen } = useLinkNotes({ memberOfLink: memberOfPrimaryLink });
 
   // Allow the user to right-click on an alignment and change it's state
   const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink, onOpenEditor);
