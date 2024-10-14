@@ -86,6 +86,7 @@ const LinkNoteEditor = ({
           multiline
           fullWidth
           autoFocus
+          minRows={5}
           tabIndex={0}
           variant={'outlined'}
           value={note?.note ?? ''}
