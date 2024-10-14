@@ -76,7 +76,7 @@ const LinkNoteEditor = ({
         <Typography sx={{
           fontWeight: 'bold',
           fontSize: '24px'
-        }}>Comment</Typography>
+        }}>Note</Typography>
         {lastModifiedBy}
         <TextField
           sx={{
@@ -207,7 +207,7 @@ const LinkNoteViewer = ({
         justifyContent: 'space-between',
         userSelect: 'none'
       }}>
-      <Typography>Comment</Typography>
+      <Typography>Note</Typography>
       <NoteViewerMenu
         onCreate={!note ? onCreate : undefined}
         onEdit={onEdit}
