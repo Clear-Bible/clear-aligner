@@ -4,11 +4,11 @@ import {
   DialogContent,
   Divider,
   IconButton, MenuItem, MenuList,
-  Popover, TextField,
+  Popover, SxProps, TextField, Theme,
   Typography
 } from '@mui/material';
 import { LinkNote } from '../../common/data/project/linkNote';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/system';
 import { DeleteOutlined, EditOutlined, MoreVertOutlined, StarOutlined } from '@mui/icons-material';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -42,6 +42,28 @@ const LinkNoteEditor = ({
                           onCancel,
                           onSave
                         }: LinkNoteEditorProps) => {
+
+  const lastModifiedBy = useMemo<JSX.Element>(() => {
+    if (!note?.authorEmail)
+      return (<>
+      </>);
+    const typographyStyle: SxProps<Theme> = { fontSize: '14px' };
+    return (
+      <Box
+        sx={{
+          marginBottom: '8px'
+        }}>
+        <Typography
+          sx={{ fontWeight: 'bold', ...typographyStyle }}
+          component={'span'}
+          display={'inline'}>Last modified by </Typography>
+        <Typography
+          sx={typographyStyle}
+          component={'span'}
+          display={'inline'}>{note?.authorEmail}</Typography>
+      </Box>);
+  }, [note?.authorEmail]);
+
   return (
       <Box
         sx={{
@@ -51,7 +73,11 @@ const LinkNoteEditor = ({
           display: 'flex',
           userSelect: 'none'
         }}>
-        <Typography>Comment</Typography>
+        <Typography sx={{
+          fontWeight: 'bold',
+          fontSize: '24px'
+        }}>Comment</Typography>
+        {lastModifiedBy}
         <TextField
           sx={{
             width: '100%',
@@ -225,16 +251,11 @@ export const LinkNoteEditorDialog = ({
 
   const [ tmpNote, setTmpNote ] = useState<LinkNote>();
 
-  const [ mode, setMode ] = useState<'edit'|'view'>('view');
+  const [ mode, setMode ] = useState<'edit'|'view'>('edit');
 
   useEffect(() => {
     setTmpNote(note);
   }, [ note, setTmpNote ]);
-
-  useEffect(() => {
-    setMode('view');
-    setTmpNote(note);
-  }, [ note, setMode, isOpen ]);
 
   return (
     <Dialog
@@ -253,11 +274,11 @@ export const LinkNoteEditorDialog = ({
             onChange={setTmpNote}
             onCancel={() => {
               setTmpNote(note);
-              setMode('view');
+              onClose?.();
             }}
             onSave={() => {
               if (tmpNote) onSave?.(tmpNote);
-              setMode('view');
+              onClose?.();
             }} /> : <></>}
         {mode === 'view' ?
           <LinkNoteViewer

@@ -83,10 +83,7 @@ export const useLinkNotes = ({ memberOfLink }: UseLinkNotesProps): UseLinkNotesS
         onClose={() => setIsEditorOpen(false)}
         onSave={(n) => {
           if (n.note) {
-            createOrModifyNote({
-              ...n,
-              authorEmail: email ?? n.authorEmail
-            });
+            createOrModifyNote(n);
           } else {
             removeNote();
           }
@@ -98,7 +95,7 @@ export const useLinkNotes = ({ memberOfLink }: UseLinkNotesProps): UseLinkNotesS
         }}
       />
     );
-  }, [ memberOfLink, editedLinkNote, isEditorOpen, setIsEditorOpen, email, createOrModifyNote, removeNote ]);
+  }, [ memberOfLink, editedLinkNote, isEditorOpen, setIsEditorOpen, createOrModifyNote, removeNote ]);
 
   return {
     editorDialog,

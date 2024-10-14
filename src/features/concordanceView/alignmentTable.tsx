@@ -180,7 +180,7 @@ export const LinkCell = ({ row, onClick }: {
             onOpenEditor();
             handleClose();
           }}>
-          Edit Notes
+          Note Editor
         </MenuItem>
       </Menu>
       {editorDialog}
