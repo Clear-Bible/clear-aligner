@@ -87,7 +87,7 @@ export interface Word {
   gloss?: string;
   normalizedText: string;
   sourceVerse?: string;
-  exclude?: boolean;
+  exclude?: number;
 }
 
 export interface CorpusViewport {

@@ -9,7 +9,7 @@ export interface WordOrPartDTO {
   after?: string;
   gloss?: string;
   sourceVerseBcv?: string;
-  exclude?: boolean;
+  exclude?: number;
 }
 
 export const mapWordOrPartToWordOrPartDTO = (wordOrPart: Word): WordOrPartDTO => ({
