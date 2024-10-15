@@ -26,6 +26,7 @@ import uuid from 'uuid-random';
 import { createPatch, Operation } from 'rfc6902';
 import { mapLinkEntityToServerAlignmentLink, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import {
+  JournalEntry,
   JournalEntryDTO,
   JournalEntryType,
   mapJournalEntryEntityToJournalEntryDTO
@@ -396,8 +397,7 @@ export class ProjectRepository extends BaseRepository {
   };
 
   removeTargetWordsOrParts = async (sourceName: string) => {
-    // @ts-ignore
-    await (await this.getDataSource(sourceName))
+    await (await this.getDataSource(sourceName))!
       .createQueryBuilder()
       .delete()
       .from(WordsOrParts)
@@ -430,10 +430,10 @@ export class ProjectRepository extends BaseRepository {
   updateSourceFromProject = async (project: ProjectDto) => {
     try {
       const corpora = project.corpora.map(this.convertCorpusToDataSource);
-      const dataSource = await this.getDataSource(project.id!);
-      const corporaRepository = dataSource!.getRepository(CorporaTableName);
+      const dataSource = (await this.getDataSource(project.id!))!;
+      const corporaRepository = dataSource.getRepository(CorporaTableName);
       await corporaRepository.save(corpora);
-      await dataSource!.getRepository(LanguageTableName).upsert(project.corpora.filter(c => c.language).map(c => ({
+      await dataSource.getRepository(LanguageTableName).upsert(project.corpora.filter(c => c.language).map(c => ({
         code: c.language.code, text_direction: c.language.textDirection, font_family: c.language.fontFamily
       })), ['code']);
       const sources = await dataSource!.getRepository(CorporaTableName)
@@ -710,8 +710,7 @@ export class ProjectRepository extends BaseRepository {
           break;
         default:
           await dataSource.getRepository(table)
-            // @ts-ignore
-            .save(itemOrItems);
+            .save(itemOrItems as { [x: string]: any });
           break;
       }
       this.logDatabaseTimeLog('save()', projectId, table);
@@ -745,12 +744,11 @@ export class ProjectRepository extends BaseRepository {
       return [];
     }
     const results = [];
-    // @ts-ignore
     let currLink: Link = {
       id: undefined,
       sources: [],
       targets: []
-    };
+    } as unknown as Link;
     const linkIds: string[] = linkRows.map(({ link_id }) => link_id);
     const linkMetaDataRows: LinkEntity[] = [];
     for (const linkIdChunk of _.chunk(linkIds, 100)) {
@@ -1047,14 +1045,11 @@ export class ProjectRepository extends BaseRepository {
   };
 
   getJournalEntryDTOFromJournalEntryEntity = (projectId: string, journalEntryEntity: JournalEntryEntity, dontDeleteFiles = false): JournalEntryDTO => {
-    //@ts-ignore
-    if (journalEntryEntity.type !== JournalEntryType.BULK_INSERT) return mapJournalEntryEntityToJournalEntryDTO(journalEntryEntity);
-    //@ts-ignore
-    const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, journalEntryEntity.bulkInsertFile);
+    if (journalEntryEntity.type !== JournalEntryType.BULK_INSERT) return mapJournalEntryEntityToJournalEntryDTO(journalEntryEntity as JournalEntry);
+    const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, journalEntryEntity.bulkInsertFile!);
     const serverAlignmentLinks = JSON.parse(fs.readFileSync(bulkInsertFilePath, 'utf8')) as ServerAlignmentLinkDTO[];
     if (!dontDeleteFiles) {
-      //@ts-ignore
-      this.rmBulkInsertFile(projectId, journalEntryEntity.bulkInsertFile, true);
+      this.rmBulkInsertFile(projectId, journalEntryEntity.bulkInsertFile!, true);
     }
     return {
       id: journalEntryEntity.id,

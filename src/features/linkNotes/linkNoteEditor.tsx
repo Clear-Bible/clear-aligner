@@ -17,8 +17,11 @@ import uuid from 'uuid-random';
 import { useUserEmail } from '../../hooks/userInfoHooks';
 import { RemovableTooltip } from '../../components/removableTooltip';
 
-//@ts-ignore
-const LinkNoteDisplayButtonView = ({ children }) => {
+interface LinkNoteDisplayButtonViewProps {
+  children: React.ReactNode;
+}
+
+const LinkNoteDisplayButtonView = ({ children }: LinkNoteDisplayButtonViewProps) => {
   return (<Box
   sx={{
     display: 'flex',
@@ -27,7 +30,7 @@ const LinkNoteDisplayButtonView = ({ children }) => {
   }}>
     {children}
   </Box>);
-}
+};
 
 interface LinkNoteEditorProps {
   note?: LinkNote;
