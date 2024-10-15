@@ -83,7 +83,6 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
     corpus_id = metadata.get('id')
     corpus_side = metadata.get('side')
     language_id = metadata.get('language').get('code')
-    total_rows = 0
     with open(tsv_file) as tsvFd:
         total_rows = len(tsvFd.readlines())
     with open(tsv_file) as tsvFd:
