@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS "words_or_parts"
     position_part      integer,
     normalized_text    TEXT    not null,
     source_verse_bcvid TEXT,
-    exclude            integer not null
+    exclude            integer
 );
 CREATE TABLE IF NOT EXISTS "links__target_words"
 (

@@ -8,7 +8,7 @@ import regex as re
 
 prefixed_bcvwp = re.compile("^[onON]\d")
 gloss_needing_cleanup = re.compile('^(.+\..+)+$')
-punctuation_or_whitespace_only = re.compile('^[\p{P}\s]*$', re.U)
+whitespace_only = re.compile('^[\s]*$', re.U)
 
 
 def sanitize_bcvwp(bcv_id):
@@ -102,13 +102,13 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
         for row in corpus:
             row_id = sanitize_bcvwp(row[idx_id])
             text = row[idx_text] or row[idx_lemma]
-            if corpus_side == 'targets' and (text is None or punctuation_or_whitespace_only.match(text)):
+            if corpus_side == 'targets' and (text is None or whitespace_only.match(text)):
                 continue
             after = row[idx_after] if idx_after >= 0 else ""
             gloss = cleanup_gloss(row[idx_gloss] or row[idx_english]) if idx_gloss >= 0 or idx_english >= 0 else ""
             bcvwp = parse_bcvwp(row[idx_id])
             source_verse = sanitize_bcvwp(row[idx_source_verse]) if idx_source_verse >= 0 else ""
-            exclude = sanitize_exclude(row[idx_exclude]) if idx_exclude >= 0 else "x"
+            exclude = sanitize_exclude(row[idx_exclude]) if idx_exclude >= 0 else ""
             insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, {
                 'id': f'{metadata.get("side")}:{row_id}',
                 'corpus_id': corpus_id,
