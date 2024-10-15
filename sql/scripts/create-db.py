@@ -6,9 +6,9 @@ import os
 import sqlite3
 import regex as re
 
-prefixed_bcvwp = re.compile("^[onON]\d")
-gloss_needing_cleanup = re.compile('^(.+\..+)+$')
-whitespace_only = re.compile('^[\s]*$', re.U)
+prefixed_bcvwp = re.compile("^[onON]\\d")
+gloss_needing_cleanup = re.compile('^(.+\\..+)+$')
+whitespace_only = re.compile('^[\\s]*$', re.U)
 
 
 def sanitize_bcvwp(bcv_id):
