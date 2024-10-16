@@ -9,9 +9,9 @@ import {
   DeleteParams,
   InsertParams,
   RepositoryLink,
-  LinkOrigin,
   LinkStatus,
-  SaveParams, Corpus
+  SaveParams,
+  Corpus
 } from '../../structs';
 import { PivotWordFilter } from '../../features/concordanceView/concordanceView';
 import { Column, DataSource, Entity, EntityManager, EntitySchema, In, PrimaryColumn } from 'typeorm';
