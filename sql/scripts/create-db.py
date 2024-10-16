@@ -107,7 +107,7 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
             gloss = cleanup_gloss(row[idx_gloss] or row[idx_english]) if idx_gloss >= 0 or idx_english >= 0 else ""
             bcvwp = parse_bcvwp(row[idx_id])
             source_verse = sanitize_bcvwp(row[idx_source_verse]) if idx_source_verse >= 0 else ""
-            exclude = sanitize_exclude(row[idx_exclude]) if idx_exclude >= 0 else ""
+            exclude = sanitize_exclude(row[idx_exclude]) if idx_exclude >= 0 else "0"
             insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, {
                 'id': f'{metadata.get("side")}:{row_id}',
                 'corpus_id': corpus_id,

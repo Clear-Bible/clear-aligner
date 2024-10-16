@@ -148,15 +148,11 @@ export class ProjectTable extends VirtualTable {
   };
 
   insertWordsOrParts = async (project: Project) => {
-    // so the exclude property exists in project
-    console.log('project is: ', project)
     try {
       this.incrDatabaseBusyCtr();
       const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
         .flatMap(corpus => (corpus.words ?? [])
           .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
-      //but exclude does not exist in wordsOrParts
-      console.log('wordsOrParts is: ', wordsOrParts)
 
       // @ts-ignore
       await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
@@ -289,7 +285,8 @@ export class ProjectTable extends VirtualTable {
       normalized_text: word.normalizedText,
       source_verse_bcvid: word.sourceVerse,
       language_id: corpus.language.code,
-      side: word.side
+      side: word.side,
+      exclude: word.exclude
     });
   };
 

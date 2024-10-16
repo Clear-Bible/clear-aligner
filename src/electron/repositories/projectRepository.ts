@@ -289,7 +289,7 @@ const wordsOrPartsSchema = new EntitySchema({
     }, source_verse_bcvid: {
       type: 'text'
     }, exclude: {
-      type: 'boolean'
+      type: 'integer'
     }
 
   }
