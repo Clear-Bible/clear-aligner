@@ -265,18 +265,6 @@ export const ButtonToken = ({
   );
 
   /**
-   * This is the computed color for the sx object for the Button
-   */
-  const computedButtonColor = useMemo(() => {
-    // If this token is excluded, then make sure it gets the specific excluded color from the theme.
-    // !important ensures it overrides the color it gets as a result of disabled being true.
-    if(isTokenExcluded){
-      return `${theme.palette.tokenButtons.excludedTokenButtons.text} !important`
-    }
-    return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
-  },[])
-
-  /**
    * this is the color used for the iconography and borders in an unselected state
    * when the token is selected, this is the background/fill color
    */
@@ -299,6 +287,19 @@ export const ButtonToken = ({
   }, [ wasSubmittedForConsideration, scoreIsRelevant, memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink, theme.palette.secondary.light ]);
 
   const buttonNormalBackgroundColor = useMemo(() => theme.palette.background.default, [theme.palette.background.default]);
+
+  /**
+   * This is the computed color for the sx object for the Button
+   */
+  const computedButtonColor = useMemo(() => {
+    // If this token is excluded, then make sure it gets the specified excluded color from the theme.
+    // !important ensures it overrides the color it gets as a result of disabled being set to true.
+    if(isTokenExcluded){
+      return `${theme.palette.tokenButtons.excludedTokenButtons.text} !important`
+    }
+    return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
+  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme.palette.text.primary, theme.palette.tokenButtons.excludedTokenButtons.text])
+
 
   const sourceIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
