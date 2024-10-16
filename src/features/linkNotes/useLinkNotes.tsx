@@ -1,4 +1,4 @@
-import { Link } from '../../structs';
+import { RepositoryLink } from '../../structs';
 import { useUserEmail } from '../../hooks/userInfoHooks';
 import { useCallback, useContext, useMemo, useState } from 'react';
 import { LinkNoteEditorDialog } from './linkNoteEditor';
@@ -9,7 +9,7 @@ import { AppContext } from '../../App';
  * props for {@link useLinkNotes}
  */
 export interface UseLinkNotesProps {
-  memberOfLink?: Link;
+  memberOfLink?: RepositoryLink;
 }
 
 /**

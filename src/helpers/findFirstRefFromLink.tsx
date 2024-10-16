@@ -2,12 +2,12 @@
  * This file contains the findFirstRefFromLink helper function which is used in
  * the AlignmentTable component in the Concordance View.
  */
-import { Link } from '../structs';
+import { RepositoryLink } from '../structs';
 import _ from 'lodash';
 import { AlignmentSide } from '../common/data/project/corpus';
 
 export const findFirstRefFromLink = (
-  row: Link,
+  row: RepositoryLink,
   wordSource?: AlignmentSide
 ): string | undefined => {
   let rowByWordSource: string[];

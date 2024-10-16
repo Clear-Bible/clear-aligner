@@ -8,7 +8,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import CheckIcon from '@mui/icons-material/Check';
 import { Cancel, CheckCircle, CommentOutlined, Flag } from '@mui/icons-material';
 import React from 'react';
-import { Link } from '../structs';
+import { RepositoryLink } from '../structs';
 import { useSaveLink } from '../state/links/tableManager';
 import ListItemText from '@mui/material/ListItemText';
 
@@ -16,10 +16,10 @@ import ListItemText from '@mui/material/ListItemText';
  * useAlignmentStateContextMenu hook
  * allow users to change the link state by right-clicking on an alignment
  */
-const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<undefined>, link?: Link, openNoteEditor?: () => void ): any => {
+const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<undefined>, link?: RepositoryLink, openNoteEditor?: () => void ): any => {
   const [isLinkStateMenuOpen, setIsLinkStateMenuOpen] = React.useState(false);
   const [linkState ,setLinkState ] = React.useState("")
-  const [localLink, setLocalLink] = React.useState<Link>();
+  const [localLink, setLocalLink] = React.useState<RepositoryLink>();
   const [wordPartID, setWordPartID] = React.useState("");
   const theme = useTheme();
   const {saveLink} = useSaveLink();
@@ -52,7 +52,7 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
       }
     }
     // save link
-    saveLink(updatedLink as Link);
+    saveLink(updatedLink as RepositoryLink);
 
     handleClose()
   },[saveLink, localLink])

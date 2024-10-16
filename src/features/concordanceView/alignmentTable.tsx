@@ -2,7 +2,7 @@
  * This file contains the AlignmentTable component which is the third table
  * in the ConcordanceView component
  */
-import { Link, LinkStatus } from '../../structs';
+import { RepositoryLink, LinkStatus } from '../../structs';
 import {
   DataGrid,
   GridColDef,
@@ -68,7 +68,7 @@ export const AlignmentTableContext = createContext({} as AlignmentTableContextPr
  * @param row rendering params for this RefCell entry
  */
 export const RefCell = (
-  row: GridRenderCellParams<Link, any, any>
+  row: GridRenderCellParams<RepositoryLink, any, any>
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
@@ -125,8 +125,8 @@ export const RefCell = (
  * @param onClick Callback on button click
  */
 export const LinkCell = ({ row, onClick }: {
-  row: GridRenderCellParams<Link, any, any>,
-  onClick: (tableCtx: AlignmentTableContextProps, link: Link) => void;
+  row: GridRenderCellParams<RepositoryLink, any, any>,
+  onClick: (tableCtx: AlignmentTableContextProps, link: RepositoryLink) => void;
 }) => {
   const tableCtx = useContext(AlignmentTableContext);
   const[isMenuOpen, setIsMenuOpen] = useState(false);
@@ -192,7 +192,7 @@ export const LinkCell = ({ row, onClick }: {
  * Props for the StateCellIcon Component
  */
 export interface StateCellIconProps {
-  state: Link;
+  state: RepositoryLink;
 }
 /**
  * Render the cell with its corresponding state icon
@@ -227,9 +227,9 @@ export const StateCellIcon = ({
  */
 export interface StateCellProps {
   setSaveButtonDisabled: Function;
-  state: Link;
+  state: RepositoryLink;
   setLinksPendingUpdate: Function;
-  linksPendingUpdate: Map<string, Link>;
+  linksPendingUpdate: Map<string, RepositoryLink>;
   isRowSelected: boolean;
   alignmentTableControlPanelLinkState: LinkStatus | null;
 }
@@ -331,13 +331,13 @@ export interface AlignmentTableProps {
   wordSource: AlignmentSide;
   pivotWord?: PivotWord | null;
   alignedWord?: AlignedWord;
-  chosenAlignmentLink: Link | null;
-  onChooseAlignmentLink: (alignmentLink: Link) => void;
+  chosenAlignmentLink: RepositoryLink | null;
+  onChooseAlignmentLink: (alignmentLink: RepositoryLink) => void;
   updateAlignments: (resetState: boolean) => void;
   setSelectedRowsCount: Function,
   setSaveButtonDisabled: Function,
   setLinksPendingUpdate: Function,
-  linksPendingUpdate: Map<string, Link>;
+  linksPendingUpdate: Map<string, RepositoryLink>;
   setSelectedRows: Function;
   rowSelectionModel: GridInputRowSelectionModel;
   setRowSelectionModel: Function;
@@ -427,7 +427,7 @@ export const AlignmentTable = ({
   },[alignmentTableControlPanelLinkState, alignments, setRowSelectionModel, setSelectedRows,
   setSelectedRowsCount, setUpdatedSelectedRows])
 
-  const onRowClick = useCallback((clickEvent: GridRowParams<Link>) => {
+  const onRowClick = useCallback((clickEvent: GridRowParams<RepositoryLink>) => {
     if (onChooseAlignmentLink) {
       onChooseAlignmentLink(clickEvent.row);
     }
@@ -481,7 +481,7 @@ export const AlignmentTable = ({
     {
       field: 'ref',
       headerName: 'Bible Ref',
-      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+      renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
           <RefCell {...row} />
       )
     },
@@ -490,7 +490,7 @@ export const AlignmentTable = ({
       headerName: 'Verse Text',
       flex: 1,
       sortable: false,
-      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+      renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
         <VerseCell {...row}  />
       )
     },
@@ -500,7 +500,7 @@ export const AlignmentTable = ({
       disableColumnMenu: true,
       width: 1,
       sortable: false,
-      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+      renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
         <LinkCell row={row} onClick={() => {
           setSelectedAlignment(BCVWP.parseFromString(findFirstRefFromLink(row.row, AlignmentSide.TARGET) ?? ''));
         }} />

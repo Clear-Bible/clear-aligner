@@ -3,7 +3,7 @@
  * in the AlignmentTable
  */
 import { GridRenderCellParams, useGridApiContext } from '@mui/x-data-grid';
-import { Link, Verse } from '../../../structs';
+import { RepositoryLink, Verse } from '../../../structs';
 import { useContext } from 'react';
 import _ from 'lodash';
 import BCVWP, { BCVWPField } from '../../bcvwp/BCVWPSupport';
@@ -19,7 +19,7 @@ import { WordDisplayVariant } from '../../wordDisplay';
  * @param row rendering params for this Link entry
  */
 export const VerseCell = (
-  row: GridRenderCellParams<Link, any, any>
+  row: GridRenderCellParams<RepositoryLink, any, any>
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();

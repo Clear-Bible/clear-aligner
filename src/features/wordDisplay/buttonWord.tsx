@@ -1,7 +1,7 @@
 import {
   Corpus,
   LanguageInfo,
-  Link,
+  RepositoryLink,
   LinkOriginManual,
   LinkStatus,
   TextDirection,
@@ -66,7 +66,7 @@ export interface ButtonWordProps extends LimitedToLinks {
   /**
    * link data
    */
-  links?: Map<string, Link[]>;
+  links?: Map<string, RepositoryLink[]>;
   corpus?: Corpus;
   suppressAfter?: boolean;
   disabled?: boolean;
@@ -137,7 +137,7 @@ export interface ButtonTokenProps {
   /**
    * link data
    */
-  links?: Map<string, Link[]>;
+  links?: Map<string, RepositoryLink[]>;
   languageInfo?: LanguageInfo;
   suppressAfter?: boolean;
   disabled?: boolean;
@@ -209,13 +209,13 @@ export const ButtonToken = ({
   /**
    * links currently being hovered over by the user, if any
    */
-  const currentlyHoveredLinks = useMemo<Link[]>(() => {
+  const currentlyHoveredLinks = useMemo<RepositoryLink[]>(() => {
     if (!links
       || !currentlyHoveredToken?.id) {
       return [];
     }
     const sanitized = BCVWP.sanitize(currentlyHoveredToken.id);
-    const result = [...links.values()].flatMap((a) => a).find((link: Link) => link[currentlyHoveredToken.side].includes(sanitized));
+    const result = [...links.values()].flatMap((a) => a).find((link: RepositoryLink) => link[currentlyHoveredToken.side].includes(sanitized));
     return result ? [result] : [];
   }, [links, currentlyHoveredToken?.id, currentlyHoveredToken?.side]);
 

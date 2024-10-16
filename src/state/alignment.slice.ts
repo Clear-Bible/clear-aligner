@@ -2,7 +2,7 @@
  * This file creates the alignmentSlice for use with Redux state management.
  */
 import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
-import { LinkOriginManual, Link, LinkStatus, Word, EditedLink } from 'structs';
+import { LinkOriginManual, RepositoryLink, LinkStatus, Word, EditedLink } from 'structs';
 import { AlignmentMode } from './alignmentState';
 import { AppState } from './app.slice';
 import { TextSegmentState } from './textSegmentHover.slice';
@@ -84,7 +84,7 @@ const alignmentSlice = createSlice({
   name: 'alignment',
   initialState,
   reducers: {
-    loadInProgressLink: (state, action: PayloadAction<Link>) => {
+    loadInProgressLink: (state, action: PayloadAction<RepositoryLink>) => {
       const { ...tmp } = EditedLink.fromLink(action.payload);
       state.inProgressLink = tmp;
     },
@@ -128,7 +128,7 @@ const alignmentSlice = createSlice({
     toggleTextSegment: (
       state,
       action: PayloadAction<{
-        foundRelatedLinks: Link[];
+        foundRelatedLinks: RepositoryLink[];
         word: Word;
       }>
     ) => {

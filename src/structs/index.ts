@@ -410,8 +410,12 @@ export interface LinkMetadata {
   note: LinkNote[];
 }
 
-// An instance of alignment
-export class Link extends DatabaseRecord {
+/**
+ * Link returned from and sent to the {@link ProjectRepository}
+ * This is an instance of a link which is assembled from several tables and is closest to the Link
+ * that is inserted directly into the database
+ */
+export class RepositoryLink extends DatabaseRecord {
   constructor() {
     super();
     this.metadata = {
@@ -431,7 +435,7 @@ export class Link extends DatabaseRecord {
 /**
  * alignment link for edited states
  */
-export class EditedLink extends Link {
+export class EditedLink extends RepositoryLink {
   constructor() {
     super();
     this.suggestedSources = [];
@@ -445,7 +449,7 @@ export class EditedLink extends Link {
    * generate an edited link from an input link
    * @param link link to generate the edited variation from
    */
-  public static fromLink(link?: Link): EditedLink|undefined|null {
+  public static fromLink(link?: RepositoryLink): EditedLink|undefined|null {
     if (!link) return link;
     const l = new EditedLink();
     l.id = link.id;
@@ -461,9 +465,9 @@ export class EditedLink extends Link {
    * converts the given link to a database-ready one
    * @param link
    */
-  public static toLink(link?: EditedLink|null): Link|undefined|null {
+  public static toLink(link?: EditedLink|null): RepositoryLink|undefined|null {
     if (!link) return link;
-    const l = new Link();
+    const l = new RepositoryLink();
     l.id = link.id;
     l.sources = [ ...link.sources ];
     l.targets = [ ...link.targets ];
@@ -496,7 +500,7 @@ export type AlignmentPolarity =
 
 export interface Alignment {
   polarity: AlignmentPolarity;
-  links: Link[];
+  links: RepositoryLink[];
 }
 
 export interface SyntaxContent {
