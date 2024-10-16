@@ -147,7 +147,7 @@ class WordsOrParts {
   normalized_text?: string;
   source_verse_bcvid?: string;
   language_id?: string;
-  exclude?: boolean;
+  exclude?: number;
 
   constructor() {
     this.id = undefined;
@@ -977,7 +977,7 @@ export class ProjectRepository extends BaseRepository {
                                                          w.position_part                   as position,
                                                          w.source_verse_bcvid              as sourceVerse,
                                                          w.normalized_text                 as normalizedText,
-                                                         CASE WHEN w.exclude = 1 THEN 'true' ELSE 'false' END AS exclude
+                                                         CASE WHEN w.exclude = 1 THEN 1 ELSE 0 END AS exclude
                                                   from words_or_parts w
                                                   where w.side = ?
                                                     and w.corpus_id = ?
