@@ -171,7 +171,8 @@ export class LinksTable extends VirtualTable {
           id: preserveFileIds ? record.meta?.id : uuid(),
           metadata: {
             origin: record.meta.origin,
-            status: record.meta.status
+            status: record.meta.status,
+            note: record.meta.note
           },
           sources: record.source,
           targets: record.target
