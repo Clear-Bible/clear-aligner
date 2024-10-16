@@ -7,7 +7,7 @@ import {
   TextDirection,
   Word
 } from '../../structs';
-import { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
@@ -166,6 +166,7 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const isTokenExcluded = token.exclude === 1 ? true : false;
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
@@ -262,6 +263,18 @@ export const ButtonToken = ({
     },
     [memberOfLinks, currentlyHoveredLinks]
   );
+
+  /**
+   * This is the computed color for the sx object for the Button
+   */
+  const computedButtonColor = useMemo(() => {
+    // If this token is excluded, then make sure it gets the specific excluded color from the theme.
+    // !important ensures it overrides the color it gets as a result of disabled being true.
+    if(isTokenExcluded){
+      return `${theme.palette.tokenButtons.excludedTokenButtons.text} !important`
+    }
+    return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
+  },[])
 
   /**
    * this is the color used for the iconography and borders in an unselected state
@@ -450,11 +463,11 @@ export const ButtonToken = ({
       }}
     >
     <Button
-      disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
+      disabled={isTokenExcluded || disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
       component={'button'}
       sx={(theme) => ({
         textTransform: 'none',
-        color: (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
+        color: computedButtonColor,
         borderColor: ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`,
         '&:hover': hoverSx,
         padding: '0 !important',
