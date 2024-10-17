@@ -471,6 +471,10 @@ export const useSaveLink = (updateNonManualLinksToApproveOnSave?: boolean) => {
     const linksToSave = (() => {
       if (!!linkOrLinks && updateNonManualLinksToApproveOnSave) {
         return (Array.isArray(linkOrLinks) ? linkOrLinks : [ linkOrLinks ])
+          .map((link): RepositoryLink => {
+            if (!link.metadata.note) link.metadata.note = [];
+            return link;
+          })
           .map((link) => {
             if (link.metadata.origin !== LinkOriginManual) {
               return {

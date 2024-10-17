@@ -4,6 +4,7 @@ import { useCallback, useContext, useMemo, useState } from 'react';
 import { LinkNoteEditorDialog } from './linkNoteEditor';
 import { LinkNote } from '../../common/data/project/linkNote';
 import { AppContext } from '../../App';
+import { useSaveLink } from '../../state/links/tableManager';
 
 /**
  * props for {@link useLinkNotes}
@@ -32,44 +33,40 @@ export const useLinkNotes = ({ memberOfLink }: UseLinkNotesProps): UseLinkNotesS
 
   const [ isEditorOpen, setIsEditorOpen ] = useState<boolean>(false);
 
+  const { saveLink } = useSaveLink();
+
   const onOpenEditor = useCallback(() => {
     setIsEditorOpen(true);
   }, [ setIsEditorOpen ]);
 
   const removeNote = useCallback(() => {
-    if (!memberOfLink || !linksTable) return;
-    const remove = async () => {
-      await linksTable.save({
-        ...memberOfLink,
-        metadata: {
-          ...memberOfLink.metadata,
-          note: []
-        }
-      });
-    };
-    void remove();
-  }, [ memberOfLink, linksTable ]);
+    if (!memberOfLink || !saveLink) return;
+    saveLink({
+      ...memberOfLink,
+      metadata: {
+        ...memberOfLink.metadata,
+        note: []
+      }
+    });
+  }, [ memberOfLink, saveLink ]);
 
   const createOrModifyNote = useCallback((note: LinkNote) => {
-    if (!memberOfLink || !linksTable) return;
+    if (!memberOfLink || !saveLink) return;
     if (!note) {
       removeNote();
       return;
     }
-    const save = async () => {
-      await linksTable.save({
-        ...memberOfLink,
-        metadata: {
-          ...memberOfLink.metadata,
-          note: [ {
-            ...note,
-            authorEmail: email ?? note.authorEmail
-          } ]
-        }
-      });
-    };
-    void save();
-  }, [ linksTable, email, memberOfLink, removeNote ]);
+    saveLink({
+      ...memberOfLink,
+      metadata: {
+        ...memberOfLink.metadata,
+        note: [{
+          ...note,
+          authorEmail: email ?? note.authorEmail
+        }]
+      }
+    });
+  }, [ saveLink, email, memberOfLink, removeNote ]);
 
   const editorDialog = useMemo<JSX.Element>(() => {
     if (!memberOfLink || !isEditorOpen) {

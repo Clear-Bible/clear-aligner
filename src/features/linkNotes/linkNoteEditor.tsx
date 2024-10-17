@@ -13,7 +13,7 @@ import { Box } from '@mui/system';
 import { DeleteOutlined, EditOutlined, MoreVertOutlined, StarOutlined } from '@mui/icons-material';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import uuid from 'uuid-random';
+import { v4 as uuid } from 'uuid';
 import { useUserEmail } from '../../hooks/userInfoHooks';
 import { RemovableTooltip } from '../../components/removableTooltip';
 
@@ -67,6 +67,14 @@ const LinkNoteEditor = ({
       </Box>);
   }, [note?.authorEmail]);
 
+  useEffect(() => {
+    if (!note || !!note.id) return;
+    onChange?.({
+      ...note,
+      id: note.id ?? uuid()
+    });
+  }, [ note ]);
+
   return (
       <Box
         sx={{
@@ -99,6 +107,9 @@ const LinkNoteEditor = ({
               note: e.currentTarget.value ?? ''
             };
             onChange?.(updatedNote);
+          }}
+          inputProps={{
+            maxLength: 2_000
           }}
         />
         <LinkNoteDisplayButtonView>
