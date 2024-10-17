@@ -26,6 +26,9 @@ export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
  function that handles any input from the exclude column in the tsv files
  */
 function sanitizeExclude(inputExclude: string){
+  if(!inputExclude){
+    return 0
+  }
   let workingExclude = inputExclude.trim().toLowerCase();
   if (workingExclude.length < 1){
     return 0
