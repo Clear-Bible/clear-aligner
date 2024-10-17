@@ -135,6 +135,9 @@ declare module '@mui/material/styles' {
         iconsReversed?: string;
         iconsContrast?: string;
       },
+      excludedTokenButtons: {
+        text: string;
+      }
     },
     background: {
       paper: string;

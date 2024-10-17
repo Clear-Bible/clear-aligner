@@ -147,6 +147,7 @@ class WordsOrParts {
   normalized_text?: string;
   source_verse_bcvid?: string;
   language_id?: string;
+  exclude?: number;
 
   constructor() {
     this.id = undefined;
@@ -163,6 +164,7 @@ class WordsOrParts {
     this.normalized_text = '';
     this.source_verse_bcvid = undefined;
     this.language_id = undefined;
+    this.exclude = undefined;
   }
 }
 
@@ -286,7 +288,10 @@ const wordsOrPartsSchema = new EntitySchema({
       type: 'text'
     }, source_verse_bcvid: {
       type: 'text'
+    }, exclude: {
+      type: 'integer'
     }
+
   }
 });
 
@@ -320,6 +325,7 @@ export class ProjectRepository extends BaseRepository {
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
     };
   }
+
 
   convertCorpusToDataSource = (corpus: any) => ({
     id: corpus.id,
@@ -970,7 +976,8 @@ export class ProjectRepository extends BaseRepository {
                                                          w.after                           as after,
                                                          w.position_part                   as position,
                                                          w.source_verse_bcvid              as sourceVerse,
-                                                         w.normalized_text                 as normalizedText
+                                                         w.normalized_text                 as normalizedText,
+                                                         CASE WHEN w.exclude = 1 THEN 1 ELSE 0 END AS exclude
                                                   from words_or_parts w
                                                   where w.side = ?
                                                     and w.corpus_id = ?

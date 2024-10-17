@@ -140,6 +140,9 @@ const lightTheme: Theme = createTheme({
         icons: orange[600],
         iconsReversed: orange[50]
       },
+      excludedTokenButtons : {
+        text: '#999999'
+      }
     },
     background :{
       paper: '#FAFAFA',
@@ -338,6 +341,9 @@ const darkTheme = createTheme({
         icons: orange[400],
         iconsReversed: orange[800],
       },
+      excludedTokenButtons : {
+        text: '#999999'
+      }
     },
     background : {
       paper: '#1E1E1E',
