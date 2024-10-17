@@ -9,7 +9,7 @@ import {
   DeleteParams,
   InsertParams,
   LanguageInfo,
-  Link, LinkStatus,
+  RepositoryLink, LinkStatus,
   SaveParams, Word
 } from '../structs';
 import { PivotWordFilter } from '../features/concordanceView/concordanceView';
@@ -88,7 +88,7 @@ export interface DatabaseApi {
                                  sort?: GridSortItem | null,
                                  excludeRejected?: boolean,
                                  itemLimit?: number,
-                                 itemSkip?: number) => Promise<Link[]>;
+                                 itemSkip?: number) => Promise<RepositoryLink[]>;
   /**
    * find link statuses given an aligned word
    * @param sourceName source being queried
@@ -101,8 +101,8 @@ export interface DatabaseApi {
                                   targetsText?: string,
                                   excludeRejected?: boolean) => Promise<{ status: LinkStatus, count: number }[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
-  findLinksByBCV: (sourceName: string, side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number) => Promise<Link[]>;
-  findLinksByWordId: (sourceName: string, side: AlignmentSide, referenceString: string) => Promise<Link[]>;
+  findLinksByBCV: (sourceName: string, side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number) => Promise<RepositoryLink[]>;
+  findLinksByWordId: (sourceName: string, side: AlignmentSide, referenceString: string) => Promise<RepositoryLink[]>;
   languageGetAll: (sourceName: string) => Promise<LanguageInfo[]>;
   languageFindByIds: (sourceName: string, languageIds: string[]) => Promise<LanguageInfo[]>;
   getAllWordsByCorpus: (sourceName: string, linkSide: AlignmentSide, corpusId: string, wordLimit: number, wordSkip: number) => Promise<Word[]>;

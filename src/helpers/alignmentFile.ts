@@ -3,10 +3,10 @@
  * Projects Mode to save alignment data.
  */
 import { AlignmentFile, AlignmentRecord } from '../structs/alignmentFile';
-import { Link, LinkStatus } from '../structs';
+import { RepositoryLink, LinkStatus } from '../structs';
 
 
-export const saveAlignmentFile = (links: Link[] | undefined) => {
+export const saveAlignmentFile = (links: RepositoryLink[] | undefined) => {
   if (!links) return;
   // create starting instance
   const alignmentExport: AlignmentFile = {

@@ -2,7 +2,7 @@
  * This file creates the alignmentSlice for use with Redux state management.
  */
 import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
-import { LinkOriginManual, Link, LinkStatus, Word, EditedLink } from 'structs';
+import { LinkOriginManual, RepositoryLink, LinkStatus, Word, EditedLink } from 'structs';
 import { AlignmentMode } from './alignmentState';
 import { AppState } from './app.slice';
 import { TextSegmentState } from './textSegmentHover.slice';
@@ -10,6 +10,7 @@ import { StateWithHistory } from 'redux-undo';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 import { ResolvedLinkSuggestion } from '../common/data/project/linkSuggestion';
 import { AlignmentSide } from '../common/data/project/corpus';
+import { LinkNote } from '../common/data/project/linkNote';
 
 enum ToggleOperation {
   Undefined,
@@ -83,7 +84,7 @@ const alignmentSlice = createSlice({
   name: 'alignment',
   initialState,
   reducers: {
-    loadInProgressLink: (state, action: PayloadAction<Link>) => {
+    loadInProgressLink: (state, action: PayloadAction<RepositoryLink>) => {
       const { ...tmp } = EditedLink.fromLink(action.payload);
       state.inProgressLink = tmp;
     },
@@ -106,10 +107,28 @@ const alignmentSlice = createSlice({
       applySuggestions(state.inProgressLink, action.payload.suggestions);
     },
 
+    createOrModifyNote: (
+      state,
+      action: PayloadAction<{
+        note: LinkNote
+      }>
+    ) => {
+      if (!state.inProgressLink) return;
+      state.inProgressLink.metadata.note = [ action.payload.note ];
+    },
+
+    removeNote: (
+      state,
+      action: PayloadAction<{}>
+    ) => {
+      if (!state.inProgressLink) return;
+      state.inProgressLink.metadata.note = [];
+    },
+
     toggleTextSegment: (
       state,
       action: PayloadAction<{
-        foundRelatedLinks: Link[];
+        foundRelatedLinks: RepositoryLink[];
         word: Word;
       }>
     ) => {
@@ -130,7 +149,8 @@ const alignmentSlice = createSlice({
           const { ...createdObject } = EditedLink.fromLink({
             metadata: {
               origin: LinkOriginManual,
-              status: LinkStatus.CREATED
+              status: LinkStatus.CREATED,
+              note: []
             },
             sources: [],
             targets: [],
@@ -171,7 +191,7 @@ const alignmentSlice = createSlice({
   },
 });
 
-export const { loadInProgressLink, submitSuggestionResolution, toggleTextSegment, resetTextSegments } =
+export const { loadInProgressLink, submitSuggestionResolution, createOrModifyNote, removeNote, toggleTextSegment, resetTextSegments } =
   alignmentSlice.actions;
 
 export default alignmentSlice.reducer;

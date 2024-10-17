@@ -2,7 +2,7 @@
  * This file contains the VerseDisplay component which is used inside the
  * CorpusComponent
  */
-import { Corpus, Link, Verse, Word } from '../../structs';
+import { Corpus, RepositoryLink, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay, WordDisplayVariant } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
@@ -73,8 +73,8 @@ export const VerseDisplay = ({
       && !onlyLink) {
       return;
     }
-    const result = new Map<string, Link[]>();
-    (allLinks ?? [onlyLink as Link])
+    const result = new Map<string, RepositoryLink[]>();
+    (allLinks ?? [onlyLink as RepositoryLink])
       .filter(link => onlyLinkIds?.includes(link!.id!) ?? true)
       .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
         ? link!.sources

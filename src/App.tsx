@@ -20,6 +20,8 @@ import { setUpAmplify } from './server/amplifySetup';
 import { InitializationStates } from './workbench/query';
 import { FeaturePreferences } from './common/data/featurePreferences';
 
+export type THEME = 'night' | 'day';
+export type THEME_PREFERENCE = THEME | 'auto';
 
 export interface AppContextProps {
   projectState: ProjectState;
@@ -44,9 +46,6 @@ export interface AppContextProps {
   features: FeaturePreferences;
   setFeatures: React.Dispatch<React.SetStateAction<FeaturePreferences>>;
 }
-
-export type THEME = 'night' | 'day';
-export type THEME_PREFERENCE = THEME | 'auto';
 export const AppContext = createContext({} as AppContextProps);
 
 setUpAmplify();

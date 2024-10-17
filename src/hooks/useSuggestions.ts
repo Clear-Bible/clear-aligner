@@ -1,5 +1,5 @@
 import { ProtoLinkSuggestion } from '../common/data/project/linkSuggestion';
-import { CorpusContainer, Link, LinkStatus, Word } from '../structs';
+import { CorpusContainer, RepositoryLink, LinkStatus, Word } from '../structs';
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import { AppContext } from '../App';
 import { useCorpusContainers } from './useCorpusContainers';
@@ -20,7 +20,7 @@ import { submitSuggestionResolution } from '../state/alignment.slice';
  * @param knownSide which side is known
  * @param l the link to make suggestions based on
  */
-const makeSuggestionBasedOnLink = (container: CorpusContainer, knownSide: AlignmentSide, l: Link): ProtoLinkSuggestion|undefined => {
+const makeSuggestionBasedOnLink = (container: CorpusContainer, knownSide: AlignmentSide, l: RepositoryLink): ProtoLinkSuggestion|undefined => {
   const tokenId = knownSide === AlignmentSide.TARGET ? l.sources.at(0)! : l.targets.at(0)!;
   const verse = container.verseByReferenceString(tokenId);
   if (!verse) return undefined;
@@ -36,7 +36,7 @@ const makeSuggestionBasedOnLink = (container: CorpusContainer, knownSide: Alignm
  * hook to provide suggestions for the currently edited link
  * @param editedLink the currently edited link, can be undefined or null if not present
  */
-export const useSuggestionsContextInitializer = (editedLink?: Link | null): SuggestionsContextProps => {
+export const useSuggestionsContextInitializer = (editedLink?: RepositoryLink | null): SuggestionsContextProps => {
   const { sourceContainer, targetContainer } = useCorpusContainers();
   const { features: { enableTokenSuggestions } } = useContext(AppContext);
 
@@ -270,7 +270,7 @@ export const useRelevantSuggestions = (token: Word, isAlreadyAligned?: boolean):
   const searchSourceText = useMemo(() => sourceWordText ?? (token.side === AlignmentSide.SOURCE ? token.normalizedText : undefined), [ sourceWordText, token.side, token.normalizedText ]);
   const searchTargetText = useMemo(() => targetWordText ?? (token.side === AlignmentSide.TARGET ? token.normalizedText : undefined), [ targetWordText, token.side, token.normalizedText ]);
 
-  const similarLinks = useMemoAsync<Link[] | undefined>(async () => {
+  const similarLinks = useMemoAsync<RepositoryLink[] | undefined>(async () => {
     if (!isTokenRelevantToSuggestions || (!searchSourceText && !searchTargetText)) return undefined;
     console.time('dbApi.corporaGetLinksByAlignedWord');
     const tmpLinks = await dbApi.corporaGetLinksByAlignedWord(

@@ -4,7 +4,7 @@
  */
 import { AlignedWord } from './structs';
 import { GridSortItem } from '@mui/x-data-grid';
-import { Link } from '../../structs';
+import { RepositoryLink } from '../../structs';
 import { useContext, useEffect, useState } from 'react';
 import { useDatabase } from '../../hooks/useDatabase';
 import { DefaultProjectId, useDataLastUpdated } from '../../state/links/tableManager';
@@ -15,11 +15,11 @@ import { AppContext } from '../../App';
  * @param alignedWord - AlignedWord object that is the currently selected aligned word
  * @param sort GridSortItem that contains the sort direction
  */
-export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem | null): Link[] | undefined => {
+export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem | null): RepositoryLink[] | undefined => {
   const { preferences } = useContext(AppContext);
   const db = useDatabase();
   const lastUpdate = useDataLastUpdated();
-  const [links, setLinks] = useState<Link[] | undefined>(undefined);
+  const [links, setLinks] = useState<RepositoryLink[] | undefined>(undefined);
   const [currentAlignedWord, setCurrentAlignedWord] = useState<AlignedWord | undefined>();
 
 

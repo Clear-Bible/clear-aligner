@@ -1,7 +1,7 @@
 /**
  * This file contains the LinksTable Class and supporting functions.
  */
-import { Link, LinkOriginManual, LinkStatus } from '../../structs';
+import { RepositoryLink, LinkOriginManual, LinkStatus } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { DatabaseStatus, InitialDatabaseStatus, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
@@ -62,7 +62,7 @@ export class LinksTable extends VirtualTable {
 
   getSourceName = () => this.sourceName ?? DefaultProjectId;
 
-  save = async (linkOrLinks: Link | Link[],
+  save = async (linkOrLinks: RepositoryLink | RepositoryLink[],
                 suppressOnUpdate = false,
                 isForced = false): Promise<boolean> => {
     if (!isForced && this.isDatabaseBusy()) {
@@ -72,7 +72,7 @@ export class LinksTable extends VirtualTable {
     this.logDatabaseTime('save()');
     try {
       const links = Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks];
-      const [linksToPersist, linksToUpdate]: Link[][] = _.partition(links, (l) => !l.id || l.id.trim().length < 1);
+      const [linksToPersist, linksToUpdate]: RepositoryLink[][] = _.partition(links, (l) => !l.id || l.id.trim().length < 1);
       let allResult = false;
       const linkIds = linksToUpdate.map(({ id }) => id!);
       await this.checkDatabase();
@@ -171,15 +171,16 @@ export class LinksTable extends VirtualTable {
           id: preserveFileIds ? record.meta?.id : uuid(),
           metadata: {
             origin: record.meta.origin,
-            status: record.meta.status
+            status: record.meta.status,
+            note: record.meta.note
           },
           sources: record.source,
           targets: record.target
-        } as Link)
+        } as RepositoryLink)
     ), suppressOnUpdate, isForced, disableJournaling, removeAllFirst);
   };
 
-  saveAll = async (inputLinks: Link[],
+  saveAll = async (inputLinks: RepositoryLink[],
                    suppressOnUpdate = false,
                    isForced = false,
                    disableJournaling = false,
@@ -207,7 +208,7 @@ export class LinksTable extends VirtualTable {
           metadata: link.metadata,
           sources: (link.sources ?? []).map(BCVWP.sanitize),
           targets: (link.targets ?? []).map(BCVWP.sanitize)
-        } as Link));
+        } as RepositoryLink));
       outputLinks.sort((l1, l2) =>
         (l1.id ?? EmptyWordId)
           .localeCompare(l2.id ?? EmptyWordId));
@@ -280,7 +281,7 @@ export class LinksTable extends VirtualTable {
       .map(link => link.id)
       .filter(Boolean) as string[]);
 
-  findByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
+  findByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<RepositoryLink[]> => {
     const referenceString = wordId.toReferenceString();
     const cacheKey = [side, referenceString, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByWordIdCache.wrap(cacheKey, async () => {
@@ -288,7 +289,7 @@ export class LinksTable extends VirtualTable {
     });
   };
 
-  findByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
+  findByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<RepositoryLink[]> => {
     const cacheKey = [side, bookNum, chapterNum, verseNum, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByBCVCache.wrap(cacheKey, async () => {
       return dbApi.findLinksByBCV(this.getSourceName(), side, bookNum, chapterNum, verseNum);
@@ -301,7 +302,7 @@ export class LinksTable extends VirtualTable {
     }
   };
 
-  getAll = async (isForced = false): Promise<Link[]> => {
+  getAll = async (isForced = false): Promise<RepositoryLink[]> => {
     if (!isForced && this.isDatabaseBusy()) {
       return [];
     }
@@ -310,10 +311,10 @@ export class LinksTable extends VirtualTable {
     this.incrDatabaseBusyCtr();
     this.setDatabaseBusyText('Saving links...');
     try {
-      const results: Link[] = [];
+      const results: RepositoryLink[] = [];
       let offset = 0;
       while (true) {
-        const links = ((await dbApi.getAll<Link>(this.getSourceName(), LinkTableName, DatabaseSelectChunkSize, offset)) ?? []);
+        const links = ((await dbApi.getAll<RepositoryLink>(this.getSourceName(), LinkTableName, DatabaseSelectChunkSize, offset)) ?? []);
         this.logDatabaseTimeLog('getAll()', DatabaseSelectChunkSize, offset, links?.length ?? 0);
         if (!links
           || links.length < 1) {
@@ -338,7 +339,7 @@ export class LinksTable extends VirtualTable {
     }
   };
 
-  get = async (id?: string): Promise<Link | undefined> => {
+  get = async (id?: string): Promise<RepositoryLink | undefined> => {
     if (!id) return undefined;
     const cacheKey = [id, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByLinkIdCache.wrap(cacheKey, async () => {
@@ -426,7 +427,7 @@ export class LinksTable extends VirtualTable {
     return verseNumbers;
   }
 
-  static createLinkTitle = (link: Link): string => {
+  static createLinkTitle = (link: RepositoryLink): string => {
     const bcvwp = BCVWP.parseFromString(link?.targets?.[0] ?? EmptyWordId);
     return `${bcvwp?.getBookInfo()?.ParaText ?? '???'} ${bcvwp.chapter ?? 1}:${bcvwp.verse ?? 1}`;
   };
@@ -437,7 +438,7 @@ export class LinksTable extends VirtualTable {
    * Creates a prefixed link ID that allows for prefix-based searches.
    * @param link Input link (required).
    */
-  static createLinkId = (link: Link): string =>
+  static createLinkId = (link: RepositoryLink): string =>
     LinksTable.createIdFromWordId(link?.targets?.[0] ?? EmptyWordId);
 }
 
@@ -463,13 +464,17 @@ export const useSaveLink = (updateNonManualLinksToApproveOnSave?: boolean) => {
     result?: boolean | undefined;
   }>({});
 
-  const saveLink = React.useCallback((linkOrLinks?: Link | Link[]) => {
+  const saveLink = React.useCallback((linkOrLinks?: RepositoryLink | RepositoryLink[]) => {
     if (!linkOrLinks) {
       return;
     }
     const linksToSave = (() => {
       if (!!linkOrLinks && updateNonManualLinksToApproveOnSave) {
         return (Array.isArray(linkOrLinks) ? linkOrLinks : [ linkOrLinks ])
+          .map((link): RepositoryLink => {
+            if (!link.metadata.note) link.metadata.note = [];
+            return link;
+          })
           .map((link) => {
             if (link.metadata.origin !== LinkOriginManual) {
               return {
@@ -697,7 +702,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
 export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoPreload = false, findKey?: string) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
-    result?: Link[];
+    result?: RepositoryLink[];
   }>({});
   const prevFindKey = useRef<string | undefined>();
 
@@ -747,7 +752,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
 export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
-    result?: Link[];
+    result?: RepositoryLink[];
   }>({});
   const prevFindKey = useRef<string | undefined>();
 
@@ -793,7 +798,7 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
 export const useGetAllLinks = (projectId?: string, getKey?: string) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
-    result?: Link[];
+    result?: RepositoryLink[];
   }>({});
   const prevGetKey = useRef<string | undefined>();
   const linksTable = useMemo(() => {
@@ -838,7 +843,7 @@ export const useGetAllLinks = (projectId?: string, getKey?: string) => {
 export const useGetLink = (linkId?: string, getKey?: string) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
-    result?: Link | undefined;
+    result?: RepositoryLink | undefined;
   }>({});
   const prevGetKey = useRef<string | undefined>();
 
