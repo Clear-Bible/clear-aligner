@@ -44,7 +44,7 @@
   "scripts": {
     "start": "craco start",
     "clean": "rm -rf build app dist ui",
-    "build": "BUILD_PATH=ui craco build && tsc && mkdir -p ./cache/electron{-builder,}-cache && export ELECTRON_SKIP_BINARY_DOWNLOAD=true; export ELECTRON_CACHE=./cache/electron-cache; export ELECTRON_BUILDER_CACHE=./cache/electron-builder-cache; electron-builder -p never",
+    "build": "BUILD_PATH=ui craco build && tsc && bash -c 'mkdir -p ./cache/electron{-builder,}-cache' && export ELECTRON_SKIP_BINARY_DOWNLOAD=true; export ELECTRON_CACHE=./cache/electron-cache; export ELECTRON_BUILDER_CACHE=./cache/electron-builder-cache; electron-builder -p never",
     "build:mac": "sql/scripts/create-db.sh && yarn build -m",
     "build:linux": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
     "build:win": "sql/scripts/create-db.sh && docker run --rm -v $(pwd):/project electronuserland/builder:20-wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
