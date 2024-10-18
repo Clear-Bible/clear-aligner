@@ -15,6 +15,7 @@
 /build
 /app
 /ui
+/cache
 
 # Prevent the npm package lock files
 package-lock.json
