@@ -47,7 +47,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({
                                                     setFeatures
 }) => {
   useContext(LayoutContext);
-  const { preferences, projects: initialProjects, userStatus } = useContext(AppContext);
+  const { preferences, projects: initialProjects, setProjects, userStatus } = useContext(AppContext);
   const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
     enabled: false // Prevents immediate and useEffect-based requerying
   });

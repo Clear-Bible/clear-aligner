@@ -1,8 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { Progress } from '../ApiModels';
 import { ApiUtils } from '../utils';
+import { AppContext } from '../../App';
+import { ProjectLocation } from '../../common/data/project/project';
 import ResponseObject = ApiUtils.ResponseObject;
+import { deleteLocalProject } from './useDeleteProjectFromLocalWithDialog';
 
 /**
  * Return values for hook {@link useDeleteProject}
@@ -17,6 +20,7 @@ export interface DeleteState {
  * hook to delete a specified project from the server.
  */
 export const useDeleteProject = (): DeleteState => {
+  const { projectState, preferences, setPreferences, projects, setProjects } = useContext(AppContext);
   const [ progress, setProgress ] = useState<Progress>(Progress.IDLE);
   const abortController = useRef<AbortController|undefined>();
 
@@ -25,15 +29,24 @@ export const useDeleteProject = (): DeleteState => {
     abortController.current = undefined;
   }, []);
 
-  const deleteProject = async (projectId: string) => {
+  const deleteProject = useCallback(async (projectId: string) => {
     try {
+      const project = (await projectState.projectTable.getProjects(true))?.get(projectId); //projects.find((p) => p.id === projectId);
       setProgress(Progress.IN_PROGRESS);
+      debugger;
       const res = await ApiUtils.generateRequest<{}>({
         requestPath: `/api/projects/${projectId}`,
         requestType: ApiUtils.RequestType.DELETE,
         signal: abortController.current?.signal
       });
       setProgress(res.success ? Progress.SUCCESS : Progress.FAILED);
+      if (!project) return res;
+
+      if (project.location === ProjectLocation.REMOTE) { // remove from db
+        debugger;
+        await deleteLocalProject(projectId, { projectState, preferences, setPreferences, setProjects });
+      }
+
       return res;
     } catch (x) {
       cleanupRequest();
@@ -43,7 +56,7 @@ export const useDeleteProject = (): DeleteState => {
       }, 5000);
     }
     return undefined;
-  };
+  }, [cleanupRequest, projectState, preferences, setPreferences, setProjects]);
 
   const dialog = useMemo(() => (
     <Dialog

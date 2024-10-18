@@ -208,7 +208,9 @@ export class ProjectTable extends VirtualTable {
 
   getProjectTableData = async (): Promise<ProjectEntity[]> => {
     try {
-      return (await dbApi.getProjects()) ?? [];
+      const dbProjects = (await dbApi.getProjects());
+      debugger;
+      return dbProjects ?? [];
     } catch (ex) {
       console.error('Unable to convert data source to project: ', ex);
       return [];
@@ -234,12 +236,14 @@ export class ProjectTable extends VirtualTable {
       }
       this.projects = new Map<string, Project>(projectEntities.map((entity) => {
         const p: Project | undefined = dataSources?.find(src => src.id === entity.id);
-        return [entity.id!, {
+        const project = {
           ...(p ?? {}),
           ...entity,
           name: entity.name,
           members: JSON.parse(entity.members ?? '[]')
-        } as Project];
+        } as Project;
+        debugger;
+        return [entity.id!, project];
       }));
     }
     return this.projects;
