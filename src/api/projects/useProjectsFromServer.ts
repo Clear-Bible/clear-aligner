@@ -38,7 +38,8 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         requestPath: '/api/projects',
         requestType: RequestType.GET
       });
-      const projectDtos = (projectsResponse.body ?? []) as ProjectDTO[];
+      if (!projectsResponse.success) return undefined;
+      const projectDtos = (projectsResponse.body) as ProjectDTO[];
 
       const projects = (
         Array.isArray(projectDtos)
@@ -73,6 +74,14 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           removedProject.lastSyncTime = 0;
           removedProject.updatedAt = DateTime.now().toMillis();
           await projectState.projectTable?.update?.(removedProject, false);
+        }
+
+        const remoteProjectsRemovedFromServerOrNoLongerVisibleToUser = Array.from((await projectState.projectTable?.getProjects?.(true))?.values() ?? [])
+          .filter((p) => p.location === ProjectLocation.REMOTE) // just find the remote ones
+          .filter((remoteProject) => !projectDtos.find((projectFromServer) => projectFromServer.id === remoteProject.id));
+
+        for (const projectRecordToDelete of remoteProjectsRemovedFromServerOrNoLongerVisibleToUser) {
+          await projectState.projectTable?.remove(projectRecordToDelete.id);
         }
       }
       const updatedProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
