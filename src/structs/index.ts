@@ -5,6 +5,7 @@
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { ServerAlignmentLinkDTO } from '../common/data/serverAlignmentLinkDTO';
 import { AlignmentSide } from '../common/data/project/corpus';
+import { ResolvedLinkSuggestion } from '../common/data/project/linkSuggestion';
 
 /**
  * Parameters common to Project Repository functions
@@ -212,11 +213,34 @@ export class CorpusContainer {
       ];
   }
 
+  wordByReference(reference: BCVWP): Word | undefined {
+    if (
+      !reference.hasFields(
+        BCVWPField.Book,
+        BCVWPField.Chapter,
+        BCVWPField.Verse,
+        BCVWPField.Word
+      )
+    ) {
+      return undefined;
+    }
+    const corpus = this.corpusAtReferenceString(reference.toReferenceString());
+    return corpus?.books[reference.book!]?.[reference.chapter!]?.[
+      reference.verse!]?.words?.find(word => word.id === reference.toReferenceString());
+  }
+
   verseByReferenceString(refString: string): Verse | undefined {
     if (!refString) {
       return undefined;
     }
     return this.verseByReference(BCVWP.parseFromString(refString));
+  }
+
+  wordByReferenceString(refString: string): Word | undefined {
+    if (!refString) {
+      return undefined;
+    }
+    return this.wordByReference(BCVWP.parseFromString(refString));
   }
 
   refExists(ref: BCVWP): boolean {
@@ -401,6 +425,52 @@ export class Link extends DatabaseRecord {
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
 
+/**
+ * alignment link for edited states
+ */
+export class EditedLink extends Link {
+  constructor() {
+    super();
+    this.suggestedSources = [];
+    this.suggestedTargets = [];
+  }
+
+  suggestedSources: ResolvedLinkSuggestion[];
+  suggestedTargets: ResolvedLinkSuggestion[];
+
+  /**
+   * generate an edited link from an input link
+   * @param link link to generate the edited variation from
+   */
+  public static fromLink(link?: Link): EditedLink|undefined|null {
+    if (!link) return link;
+    const l = new EditedLink();
+    l.id = link.id;
+    l.sources = [ ...link.sources ];
+    l.targets = [ ...link.targets ];
+    l.metadata = {
+      ...link.metadata
+    };
+    return l;
+  }
+
+  /**
+   * converts the given link to a database-ready one
+   * @param link
+   */
+  public static toLink(link?: EditedLink|null): Link|undefined|null {
+    if (!link) return link;
+    const l = new Link();
+    l.id = link.id;
+    l.sources = [ ...link.sources ];
+    l.targets = [ ...link.targets ];
+    l.metadata = {
+      ...link.metadata
+    };
+    return l;
+  }
+}
+
 export interface AlignmentPolarityBase {
   type: 'primary' | 'secondary';
 }
@@ -462,4 +532,24 @@ export interface SyntaxNode {
 
 export interface SyntaxRoot extends SyntaxNode {
   _syntaxType: SyntaxType;
+}
+
+/**
+ * Helper class that maintains a matched pair of corpus containers.
+ */
+export class NamedContainers {
+  sources?: CorpusContainer;
+  targets?: CorpusContainer;
+  all: CorpusContainer[];
+
+  constructor(inputContainers: CorpusContainer[]) {
+    this.sources = inputContainers.find(c => c.id === AlignmentSide.SOURCE);
+    this.targets = inputContainers.find(c => c.id === AlignmentSide.TARGET);
+    this.all = inputContainers;
+  }
+
+  /**
+   * Returns true if this contains both a source and target container.
+   */
+  isComplete = (): boolean => !!this.sources && !!this.targets;
 }

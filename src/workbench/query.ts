@@ -177,11 +177,11 @@ export const getCorpusFromDatabase = async (
   inputCorpus.words = [];
   let offset = 0;
   while (true) {
-    const words = ((await dbApi.getAllWordsByCorpus(
+    const words = (await dbApi.getAllWordsByCorpus(
       projectId ?? DefaultProjectId,
       inputCorpus.side,
       inputCorpus.id,
-      WordQueryBatchSize, offset)) as Word[]);
+      WordQueryBatchSize, offset));
     if (!words
       || words.length < 1) {
       break;
@@ -223,8 +223,7 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
 
   IsLoadingAnyCorpora = true;
   try {
-    // @ts-ignore
-    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject)) as Corpus[]) ?? []);
+    const inputCorpora: Corpus[] = ((await dbApi.getAllCorpora(appCtx.preferences?.currentProject)) ?? []);
     const corpusPromises: Promise<Corpus>[] = inputCorpora
       .map(inputCorpus =>
         getCorpusFromDatabase({

@@ -7,21 +7,16 @@ import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import { AddLink, LinkOff, RestartAlt } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer } from '../../structs';
+import { EditedLink } from '../../structs';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
-import BCVWP from '../bcvwp/BCVWPSupport';
 
 import uuid from 'uuid-random';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-interface ControlPanelProps {
-  containers: CorpusContainer[];
-  position: BCVWP;
-}
-
-export const ControlPanel = (props: ControlPanelProps): ReactElement => {
+export const ControlPanel = (): ReactElement => {
   useDebug('ControlPanel');
+
   const dispatch = useAppDispatch();
   const [linkRemoveState, setLinkRemoveState] = useState<{
     linkId?: string,
@@ -34,19 +29,19 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const {saveLink} = useSaveLink(true);
+  const { saveLink } = useSaveLink(true);
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
   const linkHasBothSides = useMemo(
     () => {
       return (
-        Number(inProgressLink?.sources.length) > 0 &&
-        Number(inProgressLink?.targets.length) > 0
+        (Number(inProgressLink?.sources.length) > 0 || Number(inProgressLink?.suggestedSources.length) > 0) &&
+        (Number(inProgressLink?.targets.length) > 0 || Number(inProgressLink?.suggestedTargets.length) > 0)
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inProgressLink?.sources.length, inProgressLink?.targets.length]
+    [inProgressLink?.sources.length, inProgressLink?.targets.length, inProgressLink?.suggestedSources.length, inProgressLink?.suggestedTargets.length]
   );
 
   if (scrollLock && !formats.includes('scroll-lock')) {
@@ -54,19 +49,27 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }
 
   const deleteLink = () => {
-      if (inProgressLink?.id) {
-        setLinkRemoveState({
-          linkId: inProgressLink.id,
-          removeKey: uuid()
-        });
-        dispatch(resetTextSegments());
-      }
-  }
+    if (inProgressLink?.id) {
+      setLinkRemoveState({
+        linkId: inProgressLink.id,
+        removeKey: uuid()
+      });
+      dispatch(resetTextSegments());
+    }
+  };
 
   const createLink = () => {
-    inProgressLink && saveLink(inProgressLink);
+    if (inProgressLink) {
+      const newLink = EditedLink.toLink(inProgressLink)!;
+      if (Number(inProgressLink.suggestedSources.length) > 0 && inProgressLink.sources.length < 1) {
+        newLink.sources.push(inProgressLink.suggestedSources?.at(0)!.tokenRef)
+      } else if (Number(inProgressLink.suggestedTargets.length) > 0 && inProgressLink.targets.length < 1) {
+        newLink.targets.push(inProgressLink.suggestedTargets?.at(0)!.tokenRef)
+      }
+      saveLink(newLink);
+    }
     dispatch(resetTextSegments());
-  }
+  };
 
   // keyboard shortcuts
   useHotkeys('space', () => createLink(), {enabled: linkHasBothSides})
@@ -81,11 +84,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         justifyContent="center"
         alignItems="baseline"
         style={{
-          marginTop: '16px',
-          marginBottom: '16px',
+          marginTop: '6px',
+          marginBottom: '6px',
           flexGrow: 0,
           flexShrink: 0
-        }} >
+        }}>
         <ButtonGroup>
           <Tooltip title="Create Link" arrow describeChild>
           <span>

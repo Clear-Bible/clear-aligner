@@ -58,13 +58,12 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
         password: password,
       })
 
-      if(signInResponse.isSignedIn === true){
+      if(signInResponse.isSignedIn){
         setUserStatus(userState.LoggedIn);
         setShowLoginError(false)
         setSnackBarMessage("Signed in to ClearAligner Sync.")
         setIsSnackBarOpen(true);
       }
-
       else if (signInResponse.nextStep?.signInStep ===
         "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED" || signInResponse.nextStep?.signInStep ===
         "RESET_PASSWORD"){
@@ -85,7 +84,12 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
   const handleResetPassword = () => {
     setShowPasswordResetURL(false);
     setPassword("");
-    setEmailAddress("");
+  }
+
+  const handleOnKeyDown = (e: { keyCode: number; }) => {
+    if(e.keyCode === 13){
+      void handleLogin()
+    }
   }
 
   return (
@@ -101,6 +105,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
         vertical: 'top',
         horizontal: 'right',
       }}
+      onKeyDown={ handleOnKeyDown }
     >
       <Box>
         <DialogTitle>
@@ -152,7 +157,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                   marginX: '5px'
                 }}
                 startIcon={<LogoutIcon/>}
-
               >Sign In
               </Button>
               {showLoginError &&

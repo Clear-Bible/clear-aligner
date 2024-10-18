@@ -6,7 +6,7 @@ import { ButtonGroup, Tooltip, useTheme } from '@mui/material';
 import React from 'react';
 import LinkIcon from '@mui/icons-material/Link';
 import { Cancel, CheckCircle, Flag } from '@mui/icons-material';
-import { ToggleButton } from './toggleButton';
+import { HighlightedButton } from './highlightedButton';
 
 /**
  * props for the SingleSelectStateButtonGroup
@@ -37,50 +37,50 @@ export const SingleSelectStateButtonGroup = ({
       >
         <Tooltip title={'Created'}>
           <span>
-            <ToggleButton
+            <HighlightedButton
               onSelect={onSelect}
               variant={value === 'created' ? 'contained' : undefined}
               backgroundColor={theme.palette.primary.main}
               buttonAction={'created'}
             >
               <LinkIcon />
-            </ToggleButton>
+            </HighlightedButton>
           </span>
         </Tooltip>
         <Tooltip title={'Rejected'}>
           <span>
-            <ToggleButton
+            <HighlightedButton
               onSelect={onSelect}
               variant={value === 'rejected' ? 'contained' : undefined}
               backgroundColor={theme.palette.error.main}
               buttonAction={'rejected'}
             >
               <Cancel />
-            </ToggleButton>
+            </HighlightedButton>
           </span>
         </Tooltip>
         <Tooltip title={'Approved'}>
           <span>
-            <ToggleButton
+            <HighlightedButton
               onSelect={onSelect}
               variant={value === 'approved' ? 'contained' : undefined}
               backgroundColor={theme.palette.success.main}
               buttonAction={'approved'}
             >
               <CheckCircle />
-            </ToggleButton>
+            </HighlightedButton>
           </span>
         </Tooltip>
         <Tooltip title={'Needs Review'}>
           <span>
-            <ToggleButton
+            <HighlightedButton
               onSelect={onSelect}
               variant={value === 'needsReview' ? 'contained' : undefined}
               backgroundColor={theme.palette.warning.main}
               buttonAction={'needsReview'}
             >
               <Flag />
-            </ToggleButton>
+            </HighlightedButton>
           </span>
         </Tooltip>
       </ButtonGroup>

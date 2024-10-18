@@ -44,6 +44,7 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:corporaGetAlignedWordsByPivotWord`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetAlignedWordsByPivotWord(...args));
     ipcMain.handle(`${ChannelPrefix}:languageGetAll`, async (event, ...args) => await ProjectRepositoryInstance.languageGetAll(...args));
     ipcMain.handle(`${ChannelPrefix}:corporaGetLinksByAlignedWord`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetLinksByAlignedWord(...args));
+    ipcMain.handle(`${ChannelPrefix}:findLinkStatusesByAlignedWord`, async (event, ...args) => await ProjectRepositoryInstance.findLinkStatusesByAlignedWord(...args));
     ipcMain.handle(`${ChannelPrefix}:updateSourceFromProject`, async (event, ...args) => {return await ProjectRepositoryInstance.updateSourceFromProject(...args);});
     ipcMain.handle(`${ChannelPrefix}:removeSource`, async (event, ...args) => {return await ProjectRepositoryInstance.removeSource(...args);});
     ipcMain.handle(`${ChannelPrefix}:createBulkInsertJournalEntry`, async (event, ...args) => await ProjectRepositoryInstance.createBulkInsertJournalEntry(...args));

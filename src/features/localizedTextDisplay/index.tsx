@@ -4,8 +4,8 @@
  */
 import { LanguageInfo } from '../../structs';
 import { Typography } from '@mui/material';
-import { PropsWithChildren } from 'react';
 import * as React from 'react';
+import { PropsWithChildren } from 'react';
 
 export interface LocalizedTextDisplayProps
   extends React.ComponentProps<typeof Typography> {
@@ -19,13 +19,14 @@ export interface LocalizedTextDisplayProps
  * @param typographyProps set of parameters from `<Typography>` to be applied to this localized text display
  */
 export const LocalizedTextDisplay = ({
-  children,
-  languageInfo,
-  ...typographyProps
-}: PropsWithChildren<LocalizedTextDisplayProps>) => {
+                                       children,
+                                       languageInfo,
+                                       ...typographyProps
+                                     }: PropsWithChildren<LocalizedTextDisplayProps>) => {
   return (
     <Typography
       component={'span'}
+      noWrap={true}
       {...typographyProps}
       sx={theme => ({
         ...(languageInfo?.fontFamily
