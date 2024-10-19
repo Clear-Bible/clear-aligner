@@ -73,7 +73,7 @@ const LinkNoteEditor = ({
       ...note,
       id: note.id ?? uuid()
     });
-  }, [ note ]);
+  }, [ note, onChange ]);
 
   return (
       <Box

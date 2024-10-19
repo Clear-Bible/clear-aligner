@@ -1,9 +1,8 @@
 import { RepositoryLink } from '../../structs';
 import { useUserEmail } from '../../hooks/userInfoHooks';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { LinkNoteEditorDialog } from './linkNoteEditor';
 import { LinkNote } from '../../common/data/project/linkNote';
-import { AppContext } from '../../App';
 import { useSaveLink } from '../../state/links/tableManager';
 
 /**
@@ -24,8 +23,6 @@ export interface UseLinkNotesState {
 }
 
 export const useLinkNotes = ({ memberOfLink }: UseLinkNotesProps): UseLinkNotesState => {
-
-  const { projectState: { linksTable } } = useContext(AppContext);
 
   const editedLinkNote = useMemo<LinkNote|undefined>(() => memberOfLink?.metadata?.note?.at(0), [ memberOfLink?.metadata?.note ]);
 
