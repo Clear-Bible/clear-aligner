@@ -10,6 +10,7 @@ export class AddNotesToLinks1728604421335 implements MigrationInterface {
         isNullable: true,
         type: 'TEXT'
       }));
+      await queryRunner.query(`UPDATE ${LINKS_TABLE_NAME} SET ${NOTES_COLUMN_NAME} = '[]' WHERE ${NOTES_COLUMN_NAME} IS NULL`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
