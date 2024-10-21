@@ -152,7 +152,6 @@ export class ProjectTable extends VirtualTable {
       this.incrDatabaseBusyCtr();
       const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
         .flatMap(corpus => (corpus.words ?? [])
-          .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
           .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
       // @ts-ignore
@@ -286,7 +285,8 @@ export class ProjectTable extends VirtualTable {
       normalized_text: word.normalizedText,
       source_verse_bcvid: word.sourceVerse,
       language_id: corpus.language.code,
-      side: word.side
+      side: word.side,
+      exclude: word.exclude
     });
   };
 

@@ -7,7 +7,7 @@ import {
   TextDirection,
   Word
 } from '../../structs';
-import { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
@@ -166,6 +166,7 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const isTokenExcluded = token.exclude === 1 ? true : false;
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
@@ -291,8 +292,13 @@ export const ButtonToken = ({
    * This is the computed color for the sx object for the Button.
    */
   const computedButtonColor = useMemo(() => {
+    // If this token is excluded, then make sure it gets the specified excluded color from the theme.
+    // !important ensures it overrides the color it gets as a result of disabled being set to true.
+    if(isTokenExcluded){
+      return `${theme.palette.tokenButtons.excludedTokenButtons.text} !important`
+    }
     return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
-  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme.palette.text.primary])
+  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme.palette.text.primary, theme.palette.tokenButtons.excludedTokenButtons.text])
 
   const sourceIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
@@ -448,6 +454,18 @@ export const ButtonToken = ({
 
   const isSpecialMachineLearningCase = useMemo<boolean>(() => memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED, [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]);
 
+  /**
+   * This is the computed border color for the sx object for the Button.
+   */
+  const computedBorderColor = useMemo(() => {
+    // If this token is excluded, make sure it has no border
+    if(isTokenExcluded){
+      return `transparent !important`
+    }
+    return ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`
+
+  },[buttonPrimaryColor, isMostRelevantSuggestion, isSelectedInEditedLink, isSpecialMachineLearningCase, isTokenExcluded])
+
   return (<>
     <Box
       onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
@@ -457,12 +475,12 @@ export const ButtonToken = ({
       }}
     >
     <Button
-      disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
+      disabled={isTokenExcluded || disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
       component={'button'}
       sx={(theme) => ({
         textTransform: 'none',
         color: computedButtonColor,
-        borderColor: ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`,
+        borderColor: computedBorderColor,
         '&:hover': hoverSx,
         padding: '0 !important',
         ...(isSelectedInEditedLink || isMostRelevantSuggestion ? {
