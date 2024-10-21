@@ -500,7 +500,7 @@ export const ButtonToken = ({
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
       onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}
       onKeyDown={(e) => {
-        if (e.key === ' ') { // prevent the spacebar from triggering a click action so it can be used for control panel actions
+        if (e.key === ' ') { // prevent the space bar from triggering a click action so it can be used for control panel actions
           e.preventDefault();
         }
       }} >
