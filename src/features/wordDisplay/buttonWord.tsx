@@ -166,7 +166,7 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const isTokenExcluded = token.exclude === 1 ? true : false;
+  const isTokenExcluded = token.exclude === 1;
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
@@ -496,7 +496,7 @@ export const ButtonToken = ({
         ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {}),
         ...(fillWidth ? { width: '100%' } : {})
       })}
-      onMouseEnter={!!hoverHighlightingDisabled || (!editedLink && !!isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
+      onMouseEnter={!!hoverHighlightingDisabled || (!editedLink && isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
       onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}
       onKeyDown={(e) => {
