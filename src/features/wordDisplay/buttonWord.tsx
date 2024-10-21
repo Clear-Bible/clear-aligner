@@ -287,6 +287,13 @@ export const ButtonToken = ({
 
   const buttonNormalBackgroundColor = useMemo(() => theme.palette.background.default, [theme.palette.background.default]);
 
+  /**
+   * This is the computed color for the sx object for the Button.
+   */
+  const computedButtonColor = useMemo(() => {
+    return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
+  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme.palette.text.primary])
+
   const sourceIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
@@ -454,7 +461,7 @@ export const ButtonToken = ({
       component={'button'}
       sx={(theme) => ({
         textTransform: 'none',
-        color: (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
+        color: computedButtonColor,
         borderColor: ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`,
         '&:hover': hoverSx,
         padding: '0 !important',
