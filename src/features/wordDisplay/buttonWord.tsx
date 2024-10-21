@@ -382,7 +382,7 @@ export const ButtonToken = ({
             ...baseSx
           }} />);
         case LinkStatus.NEEDS_REVIEW:
-          return (<Flag sx={(theme) => ({
+          return (<Flag sx={() => ({
             ...baseSx
           })} />);
         case LinkStatus.REJECTED:
@@ -481,7 +481,7 @@ export const ButtonToken = ({
     <Button
       disabled={isTokenExcluded || disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
       component={'button'}
-      sx={(theme) => ({
+      sx={() => ({
         textTransform: 'none',
         color: computedButtonColor,
         borderColor: computedBorderColor,
