@@ -230,6 +230,10 @@ export const ButtonToken = ({
   // Allow the user to right-click on an alignment and change it's state
   const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink);
 
+  /**
+   * editedLink is an object representing the currently selected tokens that comprise an
+   * inProgressLink
+   */
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
   /**
@@ -237,7 +241,7 @@ export const ButtonToken = ({
    */
   const isMemberOfAnyLink = useMemo(() => !!memberOfPrimaryLink, [memberOfPrimaryLink]);
   /**
-   * indicates whether this token was a member of the link which is currently being edited (does not indicate if if it currently selected in the edited link, just that it was a member of that link before it was opened for editing)
+   * indicates whether this token was a member of the link which is currently being edited (does not indicate if it is currently selected in the edited link, just that it was a member of that link before it was opened for editing)
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
@@ -265,7 +269,7 @@ export const ButtonToken = ({
   );
 
   /**
-   * this is the color used for the iconography and borders in an unselected state
+   * This is the color used for the iconography and borders in an unselected state
    * when the token is selected, this is the background/fill color
    */
   const buttonPrimaryColor = useMemo(() => {
