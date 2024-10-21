@@ -474,7 +474,7 @@ export const ButtonToken = ({
         ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {}),
         ...(fillWidth ? { width: '100%' } : {})
       })}
-      onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
+      onMouseEnter={!!hoverHighlightingDisabled || (!editedLink && !!isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
       onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}
       onKeyDown={(e) => {
