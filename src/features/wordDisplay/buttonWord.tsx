@@ -173,7 +173,7 @@ export const ButtonToken = ({
    */
   const gradientSvgId = useMemo<string>(() => `machine-color-gradient-${token.side}-${token.id}`, [token.side, token.id]);
   const gradientSvgUrl = useMemo<string>(() => `url(#${gradientSvgId})`, [gradientSvgId]);
-  const gradientSvg = useMemo<JSX.Element>(() =>
+  const gradientSvg = useMemo<React.JSX.Element>(() =>
     (<svg width={0} height={0}>
       <linearGradient id={gradientSvgId} x1={1} y1={0} x2={1} y2={1}>
         <stop offset={0} stopColor={gradientTopColor} />
@@ -304,7 +304,7 @@ export const ButtonToken = ({
     return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
   },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme.palette.text.primary, theme.palette.tokenButtons.excludedTokenButtons.text])
 
-  const sourceIndicator = useMemo<JSX.Element>(() => {
+  const sourceIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
       if (isSelectedInEditedLink || wasSubmittedForConsideration) {
@@ -359,7 +359,7 @@ export const ButtonToken = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
-  const statusIndicator = useMemo<JSX.Element>(() => {
+  const statusIndicator = useMemo<React.JSX.Element>(() => {
       const color = (() => {
         if (isCurrentlyHoveredToken) return buttonPrimaryColor;
         if (isSelectedInEditedLink) {
