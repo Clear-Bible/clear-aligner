@@ -7,6 +7,8 @@ import { userState } from '../features/profileAvatar/profileAvatar';
 import { ApiUtils } from '../api/utils';
 import generateRequest = ApiUtils.generateRequest;
 import RequestType = ApiUtils.RequestType;
+import { AuthSession, fetchAuthSession } from 'aws-amplify/auth';
+import { useMemoAsync } from './useMemoAsync';
 
 /**
  * name of the admin group, for comparison
@@ -65,6 +67,20 @@ export const useIsSignedIn = (): boolean => {
 export const useIsAdmin = ({ forceRefresh, refreshKey }: UseCurrentUserGroupsProps): boolean => {
   const groups = useCurrentUserGroups({ forceRefresh, refreshKey });
   return (groups ?? []).includes(ADMIN_GROUP);
+}
+
+/**
+ * retrieve the email address of the current user
+ */
+export const useUserEmail = ({ forceRefresh, refreshKey }: UseCurrentUserGroupsProps): string|undefined => {
+  const session = useMemoAsync<AuthSession>(async () => {
+    const s = await fetchAuthSession({ forceRefresh: forceRefresh ?? !!refreshKey });
+    return s;
+  }, [ forceRefresh, refreshKey ]);
+
+  const email = useMemo<string|undefined>(() => session?.tokens?.accessToken.payload.email as string|undefined, [ session?.tokens?.accessToken.payload.email ]);
+
+  return email;
 }
 
 /**

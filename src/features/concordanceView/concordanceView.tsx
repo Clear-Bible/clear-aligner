@@ -3,7 +3,7 @@
  * modes of the CA application
  */
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Link, LinkStatus } from '../../structs';
+import { RepositoryLink, LinkStatus } from '../../structs';
 import {
   Button,
   ButtonGroup,
@@ -83,11 +83,11 @@ export interface AlignmentTableControlPanelProps {
   setSaveButtonDisabled: Function;
   setSelectedRowsCount: Function;
   selectedRowsCount: number;
-  linksPendingUpdate: Map<string, Link>;
+  linksPendingUpdate: Map<string, RepositoryLink>;
   setSelectedRows: Function;
-  selectedRows: Link[];
+  selectedRows: RepositoryLink[];
   setUpdatedSelectedRows: Function;
-  updatedSelectedRows: Link[];
+  updatedSelectedRows: RepositoryLink[];
   setLinksPendingUpdate: Function;
   setRowSelectionModel: Function;
   alignmentTableControlPanelLinkState: LinkStatus | null;
@@ -286,8 +286,8 @@ export const ConcordanceView = () => {
     field: 'frequency',
     sort: 'desc'
   } as GridSortItem | null);
-  const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, Link>>(new Map());
-  const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
+  const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, RepositoryLink>>(new Map());
+  const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<RepositoryLink[]>([])
   const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
   useMemo(() => !!pivotWords, [pivotWords]);
@@ -302,7 +302,7 @@ export const ConcordanceView = () => {
     null as AlignedWord | null
   );
   const [selectedAlignmentLink, setSelectedAlignmentLink] = useState(
-    null as Link | null
+    null as RepositoryLink | null
   );
 
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
