@@ -355,7 +355,6 @@ export const ButtonToken = ({
         return emptyBox;
       default:
         return (<AutoAwesome {...{
-          ...iconProps,
           sx: {
             ...iconProps?.sx,
             ...(memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
@@ -388,7 +387,6 @@ export const ButtonToken = ({
     if (hasNote) {
       return (<CommentOutlined
                 {...{
-                  iconProps,
                   sx: {
                     ...iconProps?.sx
                   }
