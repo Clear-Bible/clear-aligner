@@ -236,9 +236,6 @@ export const ButtonToken = ({
 
   const anchorEl = useRef();
 
-  // Allow the user to right-click on an alignment and change it's state
-  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink);
-
   /**
    * editedLink is an object representing the currently selected tokens that comprise an
    * inProgressLink
@@ -373,7 +370,7 @@ export const ButtonToken = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
-  const upperRightHandCornerIndicator = useMemo<JSX.Element>(() => {
+  const upperRightHandCornerIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
       if (isSelectedInEditedLink) {
