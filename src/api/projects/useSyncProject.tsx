@@ -18,6 +18,7 @@ import { ProjectState as ProjectStateType } from '../../state/databaseManagement
 import { Containers } from '../../hooks/useCorpusContainers';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import ResponseObject = ApiUtils.ResponseObject;
+import { JournalEntryTableName } from '../../state/links/tableManager';
 
 /**
  * enum for indicating which step of the sync operation is in progress
@@ -180,6 +181,7 @@ export const stepSyncingCorpora = async (
  *
  * WARNING: exported for testing, not intended for reuse in other parts of the application
  * @param progress current progress
+ * @param dbApi database API access
  * @param setProgress setter callback
  * @param project project being operated on
  * @param setSnackBarMessage dependency for setting the snackbar message
@@ -189,6 +191,7 @@ export const stepSyncingCorpora = async (
  */
 export const stepSyncingAlignments = async (
   progress: SyncProgress,
+  dbApi: DatabaseApi,
   setProgress: (s: SyncProgress) => void,
   project: Project,
   setSnackBarMessage: Function,
@@ -205,6 +208,13 @@ export const stepSyncingAlignments = async (
         setSnackBarMessage('An unknown error occurred while attempting to upload alignment links. Skipping links');
       }
       setIsSnackBarOpen(true);
+    } else {
+      const allJournalEntries = await dbApi.getAllJournalEntries(project.id!);
+      await dbApi.deleteByIds({
+        projectId: project.id!,
+        table: JournalEntryTableName,
+        itemIdOrIds: allJournalEntries.map((journalEntry) => journalEntry.id!)
+      });
     }
   } else {
     const syncResponse = await syncAlignments(project.id);
@@ -353,6 +363,7 @@ export const useSyncProject = (): SyncState => {
         case SyncProgress.SYNCING_ALIGNMENTS: {
           await stepSyncingAlignments(
             progress,
+            dbApi,
             setProgress,
             project,
             setSnackBarMessage,

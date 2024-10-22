@@ -82,7 +82,7 @@ export module ApiUtils {
       case RequestType.PATCH:
       case RequestType.PUT:
       case RequestType.POST:
-        return [200, 201].includes(statusCode);
+        return statusCode >= 200 && statusCode < 300;
       case RequestType.DELETE:
         return statusCode === 204;
       default:

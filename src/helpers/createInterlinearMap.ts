@@ -1,9 +1,9 @@
 import { LinksTable } from '../state/links/tableManager';
-import { Link, LinkStatus, NamedContainers, Verse, Word } from '../structs';
+import { RepositoryLink, LinkStatus, NamedContainers, Verse, Word } from '../structs';
 import { AlignmentSide } from '../common/data/project/corpus';
 
 export interface LinkWords {
-  link: Link,
+  link: RepositoryLink,
   words: Word[]
 }
 

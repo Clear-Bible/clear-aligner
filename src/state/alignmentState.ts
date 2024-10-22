@@ -2,7 +2,7 @@
  * This file exports the AlignmentMode enum.
  * The AlignmentState interface is not currently used.
  */
-import { Link } from '../structs';
+import { RepositoryLink } from '../structs';
 
 export enum AlignmentMode {
   CleanSlate = 'cleanSlate', // empty state
@@ -13,6 +13,6 @@ export enum AlignmentMode {
 }
 
 export interface AlignmentState {
-  inProgressLink: Link | null;
+  inProgressLink: RepositoryLink | null;
   mode: AlignmentMode;
 }
