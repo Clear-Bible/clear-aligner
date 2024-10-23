@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { mockDatabaseApi, mockDatabaseApiOnWindow, mockEnvironmentVarsOnWindow } from '../../__tests__/mockElectron';
-import React from 'react';
+import React, { act } from 'react';
 import {
   stepSwitchToProject, stepSyncingAlignments,
   stepSyncingCorpora,
@@ -39,7 +39,9 @@ test('useSyncProject:incorrectProject', async () => {
     id: expectedSourceName,
   } as Project;
 
-  result.current.sync(project);
+  await act(async () => {
+    result.current.sync(project);
+  })
 
   await waitFor(() => {
     expect(result.current).not.toBe(initialValue)
