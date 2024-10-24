@@ -5,6 +5,7 @@
   "private": false,
   "homepage": ".",
   "dependencies": {
+    "@babel/plugin-proposal-decorators": "^7.25.9",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fontsource/roboto": "^4.5.5",
@@ -82,6 +83,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/plugin-transform-private-property-in-object": "^7.25.9",
     "@babel/preset-env": "^7.23.3",
     "@babel/preset-react": "^7.23.3",
