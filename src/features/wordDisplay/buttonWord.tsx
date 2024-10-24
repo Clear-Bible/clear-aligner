@@ -175,14 +175,14 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const isTokenExcluded = token.exclude === 1 ? true : false;
+  const isTokenExcluded = token.exclude === 1;
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
    */
   const gradientSvgId = useMemo<string>(() => `machine-color-gradient-${token.side}-${token.id}`, [token.side, token.id]);
   const gradientSvgUrl = useMemo<string>(() => `url(#${gradientSvgId})`, [gradientSvgId]);
-  const gradientSvg = useMemo<JSX.Element>(() =>
+  const gradientSvg = useMemo<React.JSX.Element>(() =>
     (<svg width={0} height={0}>
       <linearGradient id={gradientSvgId} x1={1} y1={0} x2={1} y2={1}>
         <stop offset={0} stopColor={gradientTopColor} />
@@ -236,6 +236,10 @@ export const ButtonToken = ({
 
   const anchorEl = useRef();
 
+  /**
+   * editedLink is an object representing the currently selected tokens that comprise an
+   * inProgressLink
+   */
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
   /**
@@ -243,7 +247,7 @@ export const ButtonToken = ({
    */
   const isMemberOfAnyLink = useMemo(() => !!memberOfPrimaryLink, [memberOfPrimaryLink]);
   /**
-   * indicates whether this token was a member of the link which is currently being edited (does not indicate if if it currently selected in the edited link, just that it was a member of that link before it was opened for editing)
+   * indicates whether this token was a member of the link which is currently being edited (does not indicate if it is currently selected in the edited link, just that it was a member of that link before it was opened for editing)
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
@@ -276,7 +280,7 @@ export const ButtonToken = ({
   );
 
   /**
-   * this is the color used for the iconography and borders in an unselected state
+   * This is the color used for the iconography and borders in an unselected state
    * when the token is selected, this is the background/fill color
    */
   const buttonPrimaryColor = useMemo(() => {
@@ -311,7 +315,7 @@ export const ButtonToken = ({
     return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
   },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme.palette.text.primary, theme.palette.tokenButtons.excludedTokenButtons.text])
 
-  const sourceIndicator = useMemo<JSX.Element>(() => {
+  const sourceIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
       if (isSelectedInEditedLink || wasSubmittedForConsideration) {
@@ -351,7 +355,6 @@ export const ButtonToken = ({
         return emptyBox;
       default:
         return (<AutoAwesome {...{
-          ...iconProps,
           sx: {
             ...iconProps?.sx,
             ...(memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
@@ -366,7 +369,7 @@ export const ButtonToken = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
-  const upperRightHandCornerIndicator = useMemo<JSX.Element>(() => {
+  const upperRightHandCornerIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
       if (isSelectedInEditedLink) {
@@ -384,7 +387,6 @@ export const ButtonToken = ({
     if (hasNote) {
       return (<CommentOutlined
                 {...{
-                  iconProps,
                   sx: {
                     ...iconProps?.sx
                   }
@@ -394,7 +396,7 @@ export const ButtonToken = ({
     </>);
   }, [ isCurrentlyHoveredToken, buttonPrimaryColor, isSelectedInEditedLink, buttonNormalBackgroundColor, hasNote ]);
 
-  const statusIndicator = useMemo<JSX.Element>(() => {
+  const statusIndicator = useMemo<React.JSX.Element>(() => {
       const color = (() => {
         if (isCurrentlyHoveredToken) return buttonPrimaryColor;
         if (isSelectedInEditedLink) {
@@ -417,7 +419,7 @@ export const ButtonToken = ({
             ...baseSx
           }} />);
         case LinkStatus.NEEDS_REVIEW:
-          return (<Flag sx={(theme) => ({
+          return (<Flag sx={() => ({
             ...baseSx
           })} />);
         case LinkStatus.REJECTED:
@@ -517,7 +519,7 @@ export const ButtonToken = ({
     <Button
       disabled={isEditorOpen || isTokenExcluded || disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
       component={'button'}
-      sx={(theme) => ({
+      sx={() => ({
         textTransform: 'none',
         color: computedButtonColor,
         borderColor: computedBorderColor,
@@ -532,7 +534,7 @@ export const ButtonToken = ({
         ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {}),
         ...(fillWidth ? { width: '100%' } : {})
       })}
-      onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
+      onMouseEnter={!!hoverHighlightingDisabled || (!editedLink && isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
       onClick={() => {
         if (isEditorOpen) return;
@@ -542,7 +544,7 @@ export const ButtonToken = ({
         }));
       }}
       onKeyDown={(e) => {
-        if (e.key === ' ') { // prevent the spacebar from triggering a click action so it can be used for control panel actions
+        if (e.key === ' ') { // prevent the space bar from triggering a click action so it can be used for control panel actions
           e.preventDefault();
         }
       }} >
