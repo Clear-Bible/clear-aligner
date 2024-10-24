@@ -17,6 +17,8 @@ import { InitializationStates } from '../../workbench/query';
 import { mockContainers } from '../../__tests__/mockModules/corpora';
 import { ProjectTokenReport } from './useSyncWordsOrParts';
 import { mockSetStateAction } from '../../__tests__/mockModules/react';
+import { DatabaseApi } from '../../hooks/useDatabase';
+import { DeleteByIdParams } from '../../structs';
 
 mockEnvironmentVarsOnWindow();
 mockDatabaseApiOnWindow();
@@ -165,8 +167,15 @@ test('useSyncProject:stepSyncingAlignments', async () => {
     return true;
   }
 
+  const mockDbApi = {
+    getAllJournalEntries: async () => [],
+    deleteByIds: async ({ projectId, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => {
+    }
+  } as unknown as DatabaseApi;
+
   await stepSyncingAlignments(
     progress,
+    mockDbApi,
     mockSetProgress,
     project,
     () => undefined,

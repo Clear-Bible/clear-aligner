@@ -1,22 +1,20 @@
 /**
  * This file supports the Project Repository, things like links, corpora, etc
  */
-//@ts-nocheck
 import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import {
-  AlignmentSide,
   CreateBulkJournalEntryParams,
   DeleteByIdParams,
   DeleteParams,
   InsertParams,
-  Link,
-  LinkOrigin,
+  RepositoryLink,
   LinkStatus,
-  SaveParams
+  SaveParams,
+  Corpus
 } from '../../structs';
 import { PivotWordFilter } from '../../features/concordanceView/concordanceView';
-import { Column, DataSource, Entity, EntitySchema, In, PrimaryColumn } from 'typeorm';
+import { Column, DataSource, Entity, EntityManager, EntitySchema, In, PrimaryColumn } from 'typeorm';
 import { BaseRepository } from './baseRepository';
 import fs from 'fs';
 import path from 'path';
@@ -28,6 +26,7 @@ import uuid from 'uuid-random';
 import { createPatch, Operation } from 'rfc6902';
 import { mapLinkEntityToServerAlignmentLink, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import {
+  JournalEntry,
   JournalEntryDTO,
   JournalEntryType,
   mapJournalEntryEntityToJournalEntryDTO
@@ -35,11 +34,14 @@ import {
 import { generateJsonString } from '../../common/generateJsonString';
 import { AddBulkInserts1720060108764 } from '../typeorm-migrations/project/1720060108764-add-bulk-inserts';
 import { SERVER_TRANSMISSION_CHUNK_SIZE } from '../../common/constants';
-import { CorpusEntity } from '../../common/data/project/corpus';
+import { AlignmentSide, CorpusDTO, CorpusEntity, CorpusEntityWithLanguage } from '../../common/data/project/corpus';
 import { CorporaTimestamps1720241454613 } from '../typeorm-migrations/project/1720241454613-corpora-timestamps';
 import {
   JournalEntriesDiffToBody1720419515419
 } from '../typeorm-migrations/project/1720419515419-journal-entries-diff-to-body';
+import { LinkNote } from '../../common/data/project/linkNote';
+import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728604421335-add-notes-to-links';
+import { LinkEntity } from '../../common/data/project/linkEntity';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -78,26 +80,6 @@ export class JournalEntryEntity {
     this.date = new Date();
     this.body = '';
     this.bulkInsertFile = undefined;
-  }
-}
-
-/**
- * Link class that links the sources_text to the targets_text used to define the
- * links table.
- */
-class LinkEntity {
-  id?: string;
-  origin: LinkOrigin;
-  status: LinkStatus;
-  sources_text?: string;
-  targets_text?: string;
-
-  constructor() {
-    this.id = undefined;
-    this.origin = 'manual';
-    this.status = LinkStatus.CREATED;
-    this.sources_text = undefined;
-    this.targets_text = undefined;
   }
 }
 
@@ -187,7 +169,7 @@ class LanguageEntity {
 const corporaSchema = new EntitySchema({
   name: 'corpora', tableName: CorporaTableName, target: CorpusEntity, columns: {
     id: {
-      primary: true, type: 'text', generated: false
+      primary: true, type: 'text', generated: undefined
     },
     side: {
       type: 'text'
@@ -221,12 +203,15 @@ const corporaSchema = new EntitySchema({
 const linkSchema = new EntitySchema({
   name: LinkTableName, tableName: LinkTableName, target: LinkEntity, columns: {
     id: {
-      primary: true, type: 'text', generated: false
+      primary: true, type: 'text', generated: undefined
     },
     origin: {
       type: 'text'
     },
     status: {
+      type: 'text'
+    },
+    notes: {
       type: 'text'
     },
     sources_text: {
@@ -241,7 +226,7 @@ const linkSchema = new EntitySchema({
 const linksToSourceWordsSchema = new EntitySchema({
   name: LinksToSourceWordsName, tableName: LinksToSourceWordsName, target: LinkToSourceWord, columns: {
     link_id: {
-      primary: true, type: 'text', generated: false
+      primary: true, type: 'text', generated: undefined
     }, word_id: {
       type: 'text'
     }
@@ -251,7 +236,7 @@ const linksToSourceWordsSchema = new EntitySchema({
 const linksToTargetWordsSchema = new EntitySchema({
   name: LinksToTargetWordsName, tableName: LinksToTargetWordsName, target: LinkToTargetWord, columns: {
     link_id: {
-      primary: true, type: 'text', generated: false
+      primary: true, type: 'text', generated: undefined
     }, word_id: {
       type: 'text'
     }
@@ -261,7 +246,7 @@ const linksToTargetWordsSchema = new EntitySchema({
 const wordsOrPartsSchema = new EntitySchema({
   name: 'words_or_parts', tableName: 'words_or_parts', target: WordsOrParts, columns: {
     id: {
-      primary: true, type: 'text', generated: false
+      primary: true, type: 'text', generated: undefined
     }, corpus_id: {
       type: 'text'
     }, text: {
@@ -299,7 +284,7 @@ const wordsOrPartsSchema = new EntitySchema({
 const languageSchema = new EntitySchema({
   name: 'language', tableName: 'language', target: LanguageEntity, columns: {
     code: {
-      primary: true, type: 'text', generated: false
+      primary: true, type: 'text', generated: undefined
     }, font_family: {
       type: 'text'
     }, text_direction: {
@@ -351,13 +336,14 @@ export class ProjectRepository extends BaseRepository {
    * list migrations to be applied to the project databases here. This will be
    * an ever-growing list
    */
-  getMigrations = async (): any[] => {
+  getMigrations = async (): Promise<any[]> => {
     return [
       AddLinkStatus1715305810421,
       AddJournalLinkTable1718060579447,
       AddBulkInserts1720060108764,
       CorporaTimestamps1720241454613,
-      JournalEntriesDiffToBody1720419515419
+      JournalEntriesDiffToBody1720419515419,
+      AddNotesToLinks1728604421335
     ];
   };
 
@@ -396,7 +382,7 @@ export class ProjectRepository extends BaseRepository {
   };
 
   removeTargetWordsOrParts = async (sourceName: string) => {
-    await (await this.getDataSource(sourceName))
+    await (await this.getDataSource(sourceName))!
       .createQueryBuilder()
       .delete()
       .from(WordsOrParts)
@@ -407,15 +393,15 @@ export class ProjectRepository extends BaseRepository {
   createSourceFromProject = async (project: ProjectDto) => {
     try {
       // Creates the data source
-      const projectDataSource = await this.getDataSource(project.id);
+      const projectDataSource = await this.getDataSource(project.id!);
       // Inserts corpora to the {project.id} data source
       const corpora = [...project.corpora].filter(Boolean);
       await this.insert({
-        projectId: project.id,
+        projectId: project.id!,
         table: CorporaTableName,
         itemOrItems: corpora
       });
-      const sources = await projectDataSource.getRepository(CorporaTableName)
+      const sources = await projectDataSource!.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
         .getMany();
       return {
@@ -429,13 +415,13 @@ export class ProjectRepository extends BaseRepository {
   updateSourceFromProject = async (project: ProjectDto) => {
     try {
       const corpora = project.corpora.map(this.convertCorpusToDataSource);
-      const dataSource = await this.getDataSource(project.id);
+      const dataSource = (await this.getDataSource(project.id!))!;
       const corporaRepository = dataSource.getRepository(CorporaTableName);
       await corporaRepository.save(corpora);
       await dataSource.getRepository(LanguageTableName).upsert(project.corpora.filter(c => c.language).map(c => ({
         code: c.language.code, text_direction: c.language.textDirection, font_family: c.language.fontFamily
       })), ['code']);
-      const sources = await dataSource.getRepository(CorporaTableName)
+      const sources = await dataSource!.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
         .getMany();
       return { id: project.id, sources };
@@ -446,7 +432,7 @@ export class ProjectRepository extends BaseRepository {
 
   getFirstBcvFromSource = async (sourceName: string) => {
     try {
-      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const entityManager = (await this.getDataSource(sourceName))!.manager;
       const firstBcv = await entityManager.query(`select replace(id, 'targets:', '') id
                                                   from words_or_parts
                                                   where side = 'targets'
@@ -460,7 +446,7 @@ export class ProjectRepository extends BaseRepository {
 
   hasBcvInSource = async (sourceName: string, bcvId: string) => {
     try {
-      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const entityManager = (await this.getDataSource(sourceName))!.manager;
       const hasBcv = await entityManager.query(`select count(1) bcv
                                                 from words_or_parts
                                                 where id like 'targets:${bcvId}%'`);
@@ -518,8 +504,8 @@ export class ProjectRepository extends BaseRepository {
     return !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
   }
 
-  createLinksToSource = (links: any[]) => {
-    const result = [];
+  createLinksToSource = (links: RepositoryLink[]): LinkToSourceWord[] => {
+    const result: LinkToSourceWord[] = [];
     links.forEach(link => {
       const linkId = link.id ?? '';
       return (link.sources ?? [])
@@ -533,8 +519,8 @@ export class ProjectRepository extends BaseRepository {
     });
     return result;
   };
-  createLinksToTarget = (links) => {
-    const result = [];
+  createLinksToTarget = (links: RepositoryLink[]): LinkToTargetWord[] => {
+    const result: LinkToTargetWord[] = [];
     links.forEach(link => {
       const linkId = link.id ?? '';
       return (link.targets ?? [])
@@ -555,7 +541,7 @@ export class ProjectRepository extends BaseRepository {
     }
     this.logDatabaseTime('insert()');
     try {
-      await (await this.getDataSource(projectId))
+      await (await this.getDataSource(projectId))!
         .transaction(async (entityManager) => {
           const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
           const chunks = chunkSize ? _.chunk(items, chunkSize) : [items];
@@ -563,20 +549,22 @@ export class ProjectRepository extends BaseRepository {
           for (const chunk of chunks) {
             switch (table) {
               case LinkTableName:
+                const linkChunk = (chunk as RepositoryLink[]);
                 promises.push(
                   entityManager.getRepository(LinkTableName)
-                    .insert(chunk.map((link): LinkEntity => ({
+                    .insert(linkChunk.map((link): LinkEntity => ({
                       id: link.id,
                       origin: link.metadata.origin,
-                      status: link.metadata.status
+                      status: link.metadata.status,
+                      notes: generateJsonString(link.metadata.note)
                     }))),
                   entityManager.getRepository(LinksToSourceWordsName)
-                    .insert(this.createLinksToSource(chunk)),
+                    .insert(this.createLinksToSource(linkChunk)),
                   entityManager.getRepository(LinksToTargetWordsName)
-                    .insert(this.createLinksToTarget(chunk)),
+                    .insert(this.createLinksToTarget(linkChunk)),
                   disableJournaling ? undefined :
                     entityManager.getRepository(JournalEntryTableName)
-                      .insert((chunk as Link[]).map((link): JournalEntryEntity => ({
+                      .insert(linkChunk.map((link): JournalEntryEntity => ({
                         id: uuid(),
                         linkId: link.id,
                         type: JournalEntryType.CREATE,
@@ -587,7 +575,7 @@ export class ProjectRepository extends BaseRepository {
               case CorporaTableName:
                 promises.push(
                   entityManager.getRepository(LanguageTableName)
-                    .upsert(chunk.filter(c => c.language).map(c => ({
+                    .upsert((chunk as CorpusDTO[]).filter(c => c.language).map(c => ({
                       code: c.language.code,
                       text_direction: c.language.textDirection,
                       font_family: c.language.fontFamily
@@ -603,7 +591,7 @@ export class ProjectRepository extends BaseRepository {
           }
           await Promise.all(promises);
           this.logDatabaseTimeLog('insert()',
-            projectId, table, itemOrItems?.length ?? itemOrItems,
+            projectId, table, (itemOrItems as T[])?.length ?? itemOrItems,
             chunkSize, chunks?.length, promises?.length);
         });
       return true;
@@ -618,7 +606,7 @@ export class ProjectRepository extends BaseRepository {
   deleteAll = async ({ projectId, table }: DeleteParams) => {
     this.logDatabaseTime('deleteAll()');
     try {
-      const dataSource = await this.getDataSource(projectId);
+      const dataSource = (await this.getDataSource(projectId))!;
       switch (table) {
         case LinkTableName:
           await dataSource.getRepository(LinksToSourceWordsName)
@@ -648,22 +636,23 @@ export class ProjectRepository extends BaseRepository {
    * @param pastLink before
    * @param currentLink after
    */
-  generateLinkDiff = (pastLink: Link, currentLink: Link): Operation[] => createPatch(mapLinkEntityToServerAlignmentLink(pastLink), mapLinkEntityToServerAlignmentLink(currentLink));
+  generateLinkDiff = (pastLink: RepositoryLink, currentLink: RepositoryLink): Operation[] => createPatch(mapLinkEntityToServerAlignmentLink(pastLink), mapLinkEntityToServerAlignmentLink(currentLink));
 
   save = async <T, >({ projectId, table, itemOrItems, disableJournaling }: SaveParams<T>) => {
     this.logDatabaseTime('save()');
     try {
       const dataSource = await this.getDataSource(projectId);
+      if (!dataSource) throw new Error(`Error retrieving dataSource for ${projectId}`);
       switch (table) {
         case LinkTableName:
-          const links = (Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems]) as Link[];
-          let pastLinks: Map<string, Link> = new Map();
+          const links = (Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems]) as RepositoryLink[];
+          let pastLinks: Map<string, RepositoryLink> = new Map();
           if (!disableJournaling) {
             const tmpIds = links
               .map(({ id }) => id)
-              .filter((linkId) => !!linkId && linkId.trim().length > 0);
+              .filter((linkId) => !!linkId && linkId.trim().length > 0) as string[];
             pastLinks = new Map((await this.findLinksById(dataSource, tmpIds))
-              .map((link: Link) => [link.id!, link]));
+              .map((link: RepositoryLink) => [link.id!, link]));
           }
           const linksToDelete = links.map(({ id }) => id!);
           await this.deleteByIds({
@@ -676,18 +665,19 @@ export class ProjectRepository extends BaseRepository {
             .save(links.map((link): Partial<LinkEntity> => ({
               id: link.id,
               origin: link.metadata.origin,
-              status: link.metadata.status
+              status: link.metadata.status,
+              notes: generateJsonString(link.metadata.note)
             })));
           await dataSource.getRepository(LinksToSourceWordsName)
             .save(this.createLinksToSource(links));
           await dataSource.getRepository(LinksToTargetWordsName)
             .save(this.createLinksToTarget(links));
           if (!disableJournaling) {
-            const savedLinks: Link[] = await this.findLinksById(dataSource, savedLinksTmp.map(({ id }) => id));
+            const savedLinks: RepositoryLink[] = await this.findLinksById(dataSource, savedLinksTmp.map(({ id }) => id).filter(v => !!v) as string[]);
             await dataSource.getRepository(JournalEntryEntity)
               .insert(savedLinks
                 .map((link) => {
-                  const pastLink = pastLinks.has(link.id) ? pastLinks.get(link.id) : undefined;
+                  const pastLink = link.id && pastLinks.has(link.id) ? pastLinks.get(link.id) : undefined;
                   if (!pastLink) return undefined;
                   const linkDiff = this.generateLinkDiff(pastLink, link);
                   if (linkDiff.length < 1) return undefined;
@@ -705,7 +695,7 @@ export class ProjectRepository extends BaseRepository {
           break;
         default:
           await dataSource.getRepository(table)
-            .save(itemOrItems);
+            .save(itemOrItems as { [x: string]: any });
           break;
       }
       this.logDatabaseTimeLog('save()', projectId, table);
@@ -718,27 +708,28 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  existsById = async (sourceName: string, table: string, itemId: string) => {
+  existsById = async (sourceName: string, table: string, itemId: string): Promise<Boolean> => {
     this.logDatabaseTime('existsById()');
     try {
       const result = await (await this.getDataSource(sourceName))
-        .getRepository(table)
+        ?.getRepository(table)
         .existsBy({ id: itemId });
       this.logDatabaseTimeLog('existsById()', sourceName, table, itemId, result);
-      return result;
+      return Boolean(result);
     } catch (ex) {
       console.error('existsById()', ex);
+      return false;
     } finally {
       this.logDatabaseTimeEnd('existsById()');
     }
   };
 
-  createLinksFromRows = async (dataSource: DataSource | undefined, linkRows: any[]) => {
+  createLinksFromRows = async (dataSource: DataSource | undefined, linkRows: any[]): Promise<RepositoryLink[]> => {
     if (!linkRows || linkRows.length === 0) {
       return [];
     }
     const results = [];
-    let currLink: Link = {
+    let currLink: Partial<RepositoryLink> = {
       id: undefined,
       sources: [],
       targets: []
@@ -747,7 +738,7 @@ export class ProjectRepository extends BaseRepository {
     const linkMetaDataRows: LinkEntity[] = [];
     for (const linkIdChunk of _.chunk(linkIds, 100)) {
       (await dataSource?.manager.findByIds(LinkEntity, linkIdChunk))
-        .forEach((row) => {
+        ?.forEach((row) => {
           linkMetaDataRows.push(row);
         });
     }
@@ -757,14 +748,17 @@ export class ProjectRepository extends BaseRepository {
       if (currLink.id && currLink.id !== linkRow.link_id) {
         results.push(currLink);
         currLink = {
-          id: undefined, sources: [], targets: []
+          id: undefined,
+          sources: [],
+          targets: []
         };
       }
       currLink.id = linkRow.link_id;
-      const linkRowMetadata = metadata.get(currLink.id);
+      const linkRowMetadata = metadata.get(currLink.id)!;
       currLink.metadata = {
         origin: linkRowMetadata.origin,
-        status: linkRowMetadata.status
+        status: linkRowMetadata.status,
+        note: JSON.parse(linkRowMetadata?.notes ?? '[]') as LinkNote[]
       };
       // normal find* methods
       if (linkRow.type) {
@@ -783,12 +777,12 @@ export class ProjectRepository extends BaseRepository {
       }
     });
     if (currLink.id) {
-      results.push(currLink);
+      results.push(currLink as RepositoryLink);
     }
     return results;
   };
 
-  findLinksById = async (dataSource: DataSource, linkIdOrIds: string | string[]) => {
+  findLinksById = async (dataSource: DataSource, linkIdOrIds: string | string[]): Promise<RepositoryLink[]> => {
     if (!linkIdOrIds) {
       return [];
     }
@@ -822,7 +816,7 @@ export class ProjectRepository extends BaseRepository {
     return await this.createLinksFromRows(dataSource, rows);
   };
 
-  findLinksBetweenIds = async (dataSource, fromLinkId: string, toLinkId: string) => {
+  findLinksBetweenIds = async (dataSource: DataSource, fromLinkId: string, toLinkId: string) => {
     if (!fromLinkId || !toLinkId) {
       return [];
     }
@@ -863,7 +857,7 @@ export class ProjectRepository extends BaseRepository {
           return [];
       }
       const queryWordId = `${linkSide}:${wordId}`;
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = (await this.getDataSource(sourceName))!;
       const entityManager = dataSource.manager;
       const results = await this.createLinksFromRows(dataSource, (await entityManager.query(`select t1.link_id,
                                                                                                     json_group_array(
@@ -893,7 +887,7 @@ export class ProjectRepository extends BaseRepository {
     const workPart2 = (workPart1 === 'target') ? 'source' : 'target';
     this.logDatabaseTime('findLinksByBCV()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = (await this.getDataSource(sourceName))!;
       const entityManager = dataSource.manager;
       const results = await this.createLinksFromRows(dataSource, (await entityManager.query(`select q2.link_id, q2.type, q2.words
                                                                                              from (with q1(link_id)
@@ -939,7 +933,7 @@ export class ProjectRepository extends BaseRepository {
     }
     this.logDatabaseTime('findWordsByBCV()');
     try {
-      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const entityManager = (await this.getDataSource(sourceName))!.manager;
       const results = (await entityManager.query(`select replace(w.id, '${linkSide}:', '') as id,
                                                          w.corpus_id                       as corpusId,
                                                          w.side                            as side,
@@ -967,7 +961,7 @@ export class ProjectRepository extends BaseRepository {
     }
     this.logDatabaseTime('getAllWordsByCorpus()');
     try {
-      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const entityManager = (await this.getDataSource(sourceName))!.manager;
       const results = (await entityManager.query(`select replace(w.id, '${linkSide}:', '') as id,
                                                          w.corpus_id                       as corpusId,
                                                          w.side                            as side,
@@ -993,16 +987,16 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  getAllCorpora = async (sourceName: string) => {
+  getAllCorpora = async (sourceName: string): Promise<Partial<Corpus>[]> => {
     this.logDatabaseTime('getAllCorpora()');
     try {
-      const entityManager = (await this.getDataSource(sourceName)).manager;
-      const results = (await entityManager.query(`select c.id                 as id,
+      const entityManager: EntityManager = (await this.getDataSource(sourceName))!.manager;
+      const results = (await entityManager.query<CorpusEntityWithLanguage[]>(`select c.id                 as id,
                                                          c.name               as name,
-                                                         c.full_name          as fullName,
-                                                         c.file_name          as fileName,
+                                                         c.full_name          as full_name,
+                                                         c.file_name          as file_name,
                                                          c.side               as side,
-                                                         c.created_at         as created_at,
+                                                         c.created_at         as createdat,
                                                          c.updated_since_sync as updated_since_sync,
                                                          l.code               as code,
                                                          l.text_direction     as textDirection,
@@ -1012,18 +1006,19 @@ export class ProjectRepository extends BaseRepository {
       this.logDatabaseTimeLog('getAllCorpora()', sourceName, results?.length ?? results);
       return (results ?? [])
         .filter(Boolean)
-        .map(result => ({
-          id: result.id,
-          name: result.name,
-          fileName: result.fileName,
-          fullName: result.fullName,
-          side: result.side,
-          createdAt: new Date(result.created_at),
-          updatedSinceSync: result.updated_since_sync,
-          language: {
-            code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
-          }
-        }));
+        .map((result): Partial<Corpus> =>
+          ({
+            id: result.id,
+            name: result.name,
+            fileName: result.file_name,
+            fullName: result.full_name,
+            side: result.side,
+            createdAt: result.createdAt ? new Date(result.createdAt) : undefined,
+            updatedSinceSync: result.updated_since_sync,
+            language: {
+              code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
+            }
+          }));
     } catch (ex) {
       console.error('getAllCorpora()', ex);
       return [];
@@ -1033,11 +1028,11 @@ export class ProjectRepository extends BaseRepository {
   };
 
   getJournalEntryDTOFromJournalEntryEntity = (projectId: string, journalEntryEntity: JournalEntryEntity, dontDeleteFiles = false): JournalEntryDTO => {
-    if (journalEntryEntity.type !== JournalEntryType.BULK_INSERT) return mapJournalEntryEntityToJournalEntryDTO(journalEntryEntity);
-    const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, journalEntryEntity.bulkInsertFile);
+    if (journalEntryEntity.type !== JournalEntryType.BULK_INSERT) return mapJournalEntryEntityToJournalEntryDTO(journalEntryEntity as JournalEntry);
+    const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, journalEntryEntity.bulkInsertFile!);
     const serverAlignmentLinks = JSON.parse(fs.readFileSync(bulkInsertFilePath, 'utf8')) as ServerAlignmentLinkDTO[];
     if (!dontDeleteFiles) {
-      this.rmBulkInsertFile(projectId, journalEntryEntity.bulkInsertFile, true);
+      this.rmBulkInsertFile(projectId, journalEntryEntity.bulkInsertFile!, true);
     }
     return {
       id: journalEntryEntity.id,
@@ -1063,7 +1058,7 @@ export class ProjectRepository extends BaseRepository {
       .map((journalEntry) => this.getJournalEntryDTOFromJournalEntryEntity(projectId, journalEntry));
   };
 
-  getAllLinks = async (dataSource: DataSource | undefined, itemLimit: number, itemSkip: number) => await this.createLinksFromRows(dataSource, (await dataSource.manager.query(`select q.link_id,
+  getAllLinks = async (dataSource: DataSource, itemLimit?: number, itemSkip?: number) => await this.createLinksFromRows(dataSource, (await dataSource.manager.query(`select q.link_id,
                                                                                                                                                                                       MAX(q.sources) as sources,
                                                                                                                                                                                       MAX(q.targets) as targets
                                                                                                                                                                                from (select lsw.link_id                              as link_id,
@@ -1095,7 +1090,7 @@ export class ProjectRepository extends BaseRepository {
     }
     this.logDatabaseTime('updateLinkText()');
     try {
-      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const entityManager = (await this.getDataSource(sourceName))!.manager;
       for (const linkId of linkIds) {
         await entityManager.query(`update links
                                    set sources_text = coalesce((select group_concat(words, ' ')
@@ -1135,7 +1130,7 @@ export class ProjectRepository extends BaseRepository {
   updateAllLinkText = async (sourceName: string) => {
     this.logDatabaseTime('updateAllLinkText()');
     try {
-      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const entityManager = (await this.getDataSource(sourceName))!.manager;
       await entityManager.query(`update links
                                  set sources_text = coalesce((select group_concat(words, ' ')
                                                               from (select group_concat(w.normalized_text, '') words
@@ -1166,25 +1161,26 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  findByIds = async (sourceName: string, table: string, itemIds: string | string[]) => {
+  findByIds = async <T, >(sourceName: string, table: string, itemIds: string | string[]): Promise<T[]|undefined> => {
     this.logDatabaseTime('findByIds()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
-      let result;
+      const dataSource = (await this.getDataSource(sourceName))!;
+      let result: T[];
       switch (table) {
         case LinkTableName:
-          result = await this.findLinksById(dataSource, itemIds);
+          result = await this.findLinksById(dataSource, itemIds) as T[];
           break;
         default:
           result = await dataSource
             .getRepository(table)
-            .findBy({ id: In(itemIds) });
+            .findBy({ id: In(itemIds as string[]) }) as T[];
           break;
       }
       this.logDatabaseTimeLog('findByIds()', sourceName, table, itemIds, result);
       return result;
     } catch (ex) {
       console.error('findByIds()', ex);
+      return undefined;
     } finally {
       this.logDatabaseTimeEnd('findByIds()');
     }
@@ -1193,7 +1189,7 @@ export class ProjectRepository extends BaseRepository {
   getAll = async (sourceName: string, table: string, itemLimit?: number, itemSkip?: number) => {
     this.logDatabaseTime(`getAll()`);
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = (await this.getDataSource(sourceName))!;
       let result;
       switch (table) {
         case LinkTableName:
@@ -1221,7 +1217,7 @@ export class ProjectRepository extends BaseRepository {
   findOneById = async (sourceName: string, table: string, itemId: string) => {
     this.logDatabaseTime('findOneById()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = (await this.getDataSource(sourceName))!;
       let result;
       switch (table) {
         case LinkTableName:
@@ -1246,20 +1242,20 @@ export class ProjectRepository extends BaseRepository {
   deleteByIds = async ({ projectId, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => {
     this.logDatabaseTime('deleteByIds()');
     try {
-      const dataSource = await this.getDataSource(projectId);
+      const dataSource = (await this.getDataSource(projectId))!;
       switch (table) {
         case LinkTableName:
           const linkIds = Array.isArray(itemIdOrIds) ? itemIdOrIds : [itemIdOrIds];
           if (!disableJournaling) {
-            const pastLinks = await this.findByIds(projectId, table, linkIds);
+            const pastLinks = await this.findByIds<RepositoryLink>(projectId, table, linkIds);
             await dataSource
               .getRepository(JournalEntryTableName)
-              .insert(pastLinks.map((link): JournalEntryEntity => ({
+              .insert(pastLinks!.map((link): JournalEntryEntity => ({
                 id: uuid(),
                 linkId: link.id,
                 type: JournalEntryType.DELETE,
                 date: new Date(),
-                body: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
+                body: generateJsonString(mapLinkEntityToServerAlignmentLink(link as RepositoryLink))
               } as JournalEntryEntity)));
           }
           await dataSource
@@ -1274,18 +1270,19 @@ export class ProjectRepository extends BaseRepository {
           break;
         case JournalEntryTableName:
           const journalEntryIds = Array.isArray(itemIdOrIds) ? itemIdOrIds : [itemIdOrIds];
-          const journalEntryRepository = dataSource?.getRepository(JournalEntryTableName);
+          const journalEntryRepository = dataSource?.getRepository<JournalEntryEntity>(JournalEntryTableName);
           const journalEntriesToDelete: JournalEntryEntity[] = [];
           for (const journalEntryId of journalEntryIds) {
-            journalEntriesToDelete.push(await journalEntryRepository?.findOneById(journalEntryId));
+            const entry = await journalEntryRepository.findOneById(journalEntryId);
+            if (entry) journalEntriesToDelete.push(entry);
           }
           for (const journalEntry of journalEntriesToDelete) {
             switch (journalEntry.type) {
               case JournalEntryType.BULK_INSERT:
-                this.rmBulkInsertFile(projectId, journalEntry.bulkInsertFile, true);
+                if (journalEntry.bulkInsertFile) this.rmBulkInsertFile(projectId, journalEntry.bulkInsertFile, true);
               /* eslint-disable no-fallthrough */
               default:
-                await journalEntryRepository?.delete(journalEntry.id);
+                await journalEntryRepository?.delete(journalEntry.id!);
                 break;
             }
           }
@@ -1309,7 +1306,7 @@ export class ProjectRepository extends BaseRepository {
   findBetweenIds = async (sourceName: string, table: string, fromId: string, toId: string) => {
     this.logDatabaseTime('findBetweenIds()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = (await this.getDataSource(sourceName))!;
       let result: any[];
       switch (table) {
         case LinkTableName:
@@ -1333,7 +1330,7 @@ export class ProjectRepository extends BaseRepository {
   };
 
   corporaGetPivotWords = async (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem) => {
-    const em = (await this.getDataSource(sourceName)).manager;
+    const em = (await this.getDataSource(sourceName))!.manager;
     const joins = filter === 'aligned'
       ? `inner join links__${side === 'sources' ? 'source' : 'target'}_words j on w.id = j.word_id inner join links l on l.id = j.link_id`
       : '';
@@ -1347,7 +1344,7 @@ export class ProjectRepository extends BaseRepository {
   };
 
   languageFindByIds = async (sourceName: string, languageIds: string[]) => {
-    const em = (await this.getDataSource(sourceName)).manager;
+    const em = (await this.getDataSource(sourceName))!.manager;
     return await em.query(`SELECT code, text_direction textDirection, font_family fontFamily
                            from language
                            WHERE code in (${languageIds.map(id => `'${id}'`).join(',')});`);
@@ -1355,13 +1352,13 @@ export class ProjectRepository extends BaseRepository {
 
 
   languageGetAll = async (sourceName: string) => {
-    const em = (await this.getDataSource(sourceName)).manager;
+    const em = (await this.getDataSource(sourceName))!.manager;
     return await em.query(`SELECT code, text_direction textDirection, font_family fontFamily
                            from language;`);
   };
 
   corporaGetAlignedWordsByPivotWord = async (sourceName: string, side: AlignmentSide, normalizedText: string, sort: GridSortItem) => {
-    const em = (await this.getDataSource(sourceName)).manager;
+    const em = (await this.getDataSource(sourceName))!.manager;
     switch (side) {
       case 'sources':
         const sourceQueryTextWLang = `
@@ -1424,7 +1421,7 @@ export class ProjectRepository extends BaseRepository {
                                         itemLimit?: number,
                                         itemSkip?: number) => {
     if (!sourcesText && !targetsText) return [];
-    const dataSource = (await this.getDataSource(sourceName));
+    const dataSource = (await this.getDataSource(sourceName))!;
     const entityManager = dataSource.manager;
     const whereSourceTextClause = !!sourcesText ? 'l.sources_text = ?' : undefined;
     const whereTargetTextClause = !!targetsText ? 'l.targets_text = ?' : undefined;
@@ -1457,7 +1454,7 @@ export class ProjectRepository extends BaseRepository {
                                     targetsText?: string,
                                     excludeRejected?: boolean): Promise<{ status: LinkStatus, count: number }[]> => {
     if (!sourcesText && !targetsText) return [];
-    const dataSource = (await this.getDataSource(sourceName));
+    const dataSource = (await this.getDataSource(sourceName))!;
     const entityManager = dataSource.manager;
 
     const whereSourceTextClause = !!sourcesText ? 'l.sources_text = ?' : undefined;
@@ -1478,9 +1475,9 @@ export class ProjectRepository extends BaseRepository {
       ${where};`, params));
   };
 
-  _buildOrderBy = (sort?: GridSortItem|null, fieldMap: { [key: string]: string }) => {
+  _buildOrderBy = (sort?: GridSortItem|null, fieldMap?: { [key: string]: string }) => {
     if (!sort || !sort.field || !sort.sort) return '';
-    return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
+    return `ORDER BY ${fieldMap && fieldMap?.[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
   };
 
   _buildPaging = (itemLimit?: number, itemSkip?: number): string => `${!!itemLimit ? `limit ${itemLimit}` : ''} ${!!itemSkip ? `offset ${itemSkip}` : ''}`;
@@ -1507,9 +1504,9 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  getBulkInsertFilePath = (projectId: string, fileName?: string, dontMkDirIfMissing = false) => path.join(this.getBulkInsertDirPath(projectId, dontMkDirIfMissing), fileName);
+  getBulkInsertFilePath = (projectId: string, fileName: string, dontMkDirIfMissing = false) => path.join(this.getBulkInsertDirPath(projectId, dontMkDirIfMissing), fileName);
 
-  rmBulkInsertFile = (projectId: string, fileName?: string, rmDirIfEmpty = false) => {
+  rmBulkInsertFile = (projectId: string, fileName: string, rmDirIfEmpty = false) => {
     this.logDatabaseTime('rmBulkInsertFile()');
     try {
       const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, fileName, true);
@@ -1554,15 +1551,16 @@ export class ProjectRepository extends BaseRepository {
     });
     const firstBulkInsertIndex = journalEntries.findIndex((value) => value.type === JournalEntryType.BULK_INSERT);
     if (firstBulkInsertIndex === -1) { // if there are no bulk inserts, simply return all the entries
-      return journalEntries.map(mapJournalEntryEntityToJournalEntryDTO);
+      return journalEntries.map((je) => mapJournalEntryEntityToJournalEntryDTO(je as JournalEntry));
     } else if (firstBulkInsertIndex === 0) {
       const bulkEntry = journalEntries[0];
       if (bulkEntry.type !== JournalEntryType.BULK_INSERT) throw new Error(`Expected bulk insert but encountered ${generateJsonString(bulkEntry)}`);
       return [
-        this.getJournalEntryDTOFromJournalEntryEntity(bulkEntry)
+        this.getJournalEntryDTOFromJournalEntryEntity(sourceName, bulkEntry)
       ];
     }
-    return journalEntries.slice(0, firstBulkInsertIndex - 1).map(mapJournalEntryEntityToJournalEntryDTO);
+    return journalEntries.slice(0, firstBulkInsertIndex - 1)
+      .map((je) => mapJournalEntryEntityToJournalEntryDTO(je as JournalEntry));
   };
 
   getCount = async (sourceName: string, tableName: string): Promise<number> => {

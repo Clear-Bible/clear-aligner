@@ -1,7 +1,7 @@
 import {
   Corpus,
   LanguageInfo,
-  Link,
+  RepositoryLink,
   LinkOriginManual,
   LinkStatus,
   TextDirection,
@@ -15,13 +15,22 @@ import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
+import {
+  AutoAwesome,
+  Cancel,
+  CheckCircle,
+  CommentOutlined,
+  Flag,
+  InsertLink,
+  Lightbulb
+} from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
 import { useTokenSuggestionRelevancyScore } from '../../hooks/useSuggestions';
+import { useLinkNotes } from '../linkNotes/useLinkNotes';
 
 const alphaTransparencyValueForButtonTokens = '.12';
 /**
@@ -57,7 +66,7 @@ export interface ButtonWordProps extends LimitedToLinks {
   /**
    * link data
    */
-  links?: Map<string, Link[]>;
+  links?: Map<string, RepositoryLink[]>;
   corpus?: Corpus;
   suppressAfter?: boolean;
   disabled?: boolean;
@@ -128,7 +137,7 @@ export interface ButtonTokenProps {
   /**
    * link data
    */
-  links?: Map<string, Link[]>;
+  links?: Map<string, RepositoryLink[]>;
   languageInfo?: LanguageInfo;
   suppressAfter?: boolean;
   disabled?: boolean;
@@ -166,14 +175,14 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const isTokenExcluded = token.exclude === 1 ? true : false;
+  const isTokenExcluded = token.exclude === 1;
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
    */
   const gradientSvgId = useMemo<string>(() => `machine-color-gradient-${token.side}-${token.id}`, [token.side, token.id]);
   const gradientSvgUrl = useMemo<string>(() => `url(#${gradientSvgId})`, [gradientSvgId]);
-  const gradientSvg = useMemo<JSX.Element>(() =>
+  const gradientSvg = useMemo<React.JSX.Element>(() =>
     (<svg width={0} height={0}>
       <linearGradient id={gradientSvgId} x1={1} y1={0} x2={1} y2={1}>
         <stop offset={0} stopColor={gradientTopColor} />
@@ -201,13 +210,13 @@ export const ButtonToken = ({
   /**
    * links currently being hovered over by the user, if any
    */
-  const currentlyHoveredLinks = useMemo<Link[]>(() => {
+  const currentlyHoveredLinks = useMemo<RepositoryLink[]>(() => {
     if (!links
       || !currentlyHoveredToken?.id) {
       return [];
     }
     const sanitized = BCVWP.sanitize(currentlyHoveredToken.id);
-    const result = [...links.values()].flatMap((a) => a).find((link: Link) => link[currentlyHoveredToken.side].includes(sanitized));
+    const result = [...links.values()].flatMap((a) => a).find((link: RepositoryLink) => link[currentlyHoveredToken.side].includes(sanitized));
     return result ? [result] : [];
   }, [links, currentlyHoveredToken?.id, currentlyHoveredToken?.side]);
 
@@ -227,9 +236,10 @@ export const ButtonToken = ({
 
   const anchorEl = useRef();
 
-  // Allow the user to right-click on an alignment and change it's state
-  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink);
-
+  /**
+   * editedLink is an object representing the currently selected tokens that comprise an
+   * inProgressLink
+   */
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
   /**
@@ -237,9 +247,14 @@ export const ButtonToken = ({
    */
   const isMemberOfAnyLink = useMemo(() => !!memberOfPrimaryLink, [memberOfPrimaryLink]);
   /**
-   * indicates whether this token was a member of the link which is currently being edited (does not indicate if if it currently selected in the edited link, just that it was a member of that link before it was opened for editing)
+   * indicates whether this token was a member of the link which is currently being edited (does not indicate if it is currently selected in the edited link, just that it was a member of that link before it was opened for editing)
    */
   const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
+
+  const { onOpenEditor, editorDialog, hasNote, isEditorOpen } = useLinkNotes({ memberOfLink: memberOfPrimaryLink });
+
+  // Allow the user to right-click on an alignment and change it's state
+  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink, onOpenEditor);
 
   const { wasSubmittedForConsideration, isMostRelevantSuggestion, scoreIsRelevant } = useTokenSuggestionRelevancyScore(token, isMemberOfAnyLink);
 
@@ -265,7 +280,7 @@ export const ButtonToken = ({
   );
 
   /**
-   * this is the color used for the iconography and borders in an unselected state
+   * This is the color used for the iconography and borders in an unselected state
    * when the token is selected, this is the background/fill color
    */
   const buttonPrimaryColor = useMemo(() => {
@@ -300,7 +315,7 @@ export const ButtonToken = ({
     return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
   },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme.palette.text.primary, theme.palette.tokenButtons.excludedTokenButtons.text])
 
-  const sourceIndicator = useMemo<JSX.Element>(() => {
+  const sourceIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
       if (isSelectedInEditedLink || wasSubmittedForConsideration) {
@@ -340,7 +355,6 @@ export const ButtonToken = ({
         return emptyBox;
       default:
         return (<AutoAwesome {...{
-          ...iconProps,
           sx: {
             ...iconProps?.sx,
             ...(memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
@@ -355,7 +369,34 @@ export const ButtonToken = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
-  const statusIndicator = useMemo<JSX.Element>(() => {
+  const upperRightHandCornerIndicator = useMemo<React.JSX.Element>(() => {
+    const color = (() => {
+      if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isSelectedInEditedLink) {
+        return buttonNormalBackgroundColor;
+      }
+      return buttonPrimaryColor;
+    })();
+    const iconProps: SvgIconOwnProps = {
+      sx: {
+        fontSize: iconSize,
+        margin: iconMargin,
+        color,
+      }
+    };
+    if (hasNote) {
+      return (<CommentOutlined
+                {...{
+                  sx: {
+                    ...iconProps?.sx
+                  }
+                }} />);
+    }
+    return (<>
+    </>);
+  }, [ isCurrentlyHoveredToken, buttonPrimaryColor, isSelectedInEditedLink, buttonNormalBackgroundColor, hasNote ]);
+
+  const statusIndicator = useMemo<React.JSX.Element>(() => {
       const color = (() => {
         if (isCurrentlyHoveredToken) return buttonPrimaryColor;
         if (isSelectedInEditedLink) {
@@ -378,7 +419,7 @@ export const ButtonToken = ({
             ...baseSx
           }} />);
         case LinkStatus.NEEDS_REVIEW:
-          return (<Flag sx={(theme) => ({
+          return (<Flag sx={() => ({
             ...baseSx
           })} />);
         case LinkStatus.REJECTED:
@@ -474,10 +515,11 @@ export const ButtonToken = ({
         ...(fillWidth ? { width: '100%' } : {})
       }}
     >
+    {isMemberOfAnyLink && editorDialog}
     <Button
-      disabled={isTokenExcluded || disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
+      disabled={isEditorOpen || isTokenExcluded || disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
       component={'button'}
-      sx={(theme) => ({
+      sx={() => ({
         textTransform: 'none',
         color: computedButtonColor,
         borderColor: computedBorderColor,
@@ -492,11 +534,17 @@ export const ButtonToken = ({
         ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {}),
         ...(fillWidth ? { width: '100%' } : {})
       })}
-      onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
+      onMouseEnter={!!hoverHighlightingDisabled || (!editedLink && isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
-      onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}
+      onClick={() => {
+        if (isEditorOpen) return;
+        return dispatch(toggleTextSegment({
+          foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v),
+          word: token
+        }));
+      }}
       onKeyDown={(e) => {
-        if (e.key === ' ') { // prevent the spacebar from triggering a click action so it can be used for control panel actions
+        if (e.key === ' ') { // prevent the space bar from triggering a click action so it can be used for control panel actions
           e.preventDefault();
         }
       }} >
@@ -514,13 +562,15 @@ export const ButtonToken = ({
             flexDirection: 'column'
           }}>
           <Box
+            dir={'ltr'}
             sx={{
               width: '100%',
               display: 'flex',
-              justifyContent: 'left',
+              justifyContent: 'space-between',
               m: 0
             }}>
             {sourceIndicator}
+            {upperRightHandCornerIndicator}
           </Box>
           <Box
             sx={{

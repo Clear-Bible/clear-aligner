@@ -1,11 +1,10 @@
 {
   "name": "clear-aligner",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "license": "MIT",
   "private": false,
   "homepage": ".",
   "dependencies": {
-    "@babel/plugin-proposal-decorators": "^7.25.9",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@fontsource/roboto": "^4.5.5",
@@ -27,6 +26,7 @@
     "react-router-dom": "^6.20.0",
     "react-scripts": "5.0.0",
     "redux-undo": "^1.0.1",
+    "reflect-metadata": "^0.2.1",
     "rfc6902": "^5.1.1",
     "sanitize-filename": "^1.6.3",
     "stream-browserify": "^3.0.0",
@@ -83,7 +83,6 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@babel/plugin-transform-private-property-in-object": "^7.25.9",
     "@babel/preset-env": "^7.23.3",
     "@babel/preset-react": "^7.23.3",
     "@babel/preset-typescript": "^7.23.3",
@@ -101,7 +100,8 @@
     "@storybook/react-webpack5": "^7.5.3",
     "@storybook/testing-library": "^0.2.2",
     "@testing-library/jest-dom": "^5.16.3",
-    "@testing-library/react": "^16.0.1",
+    "@testing-library/react": "^13.0.1",
+    "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^13.5.0",
     "@types/electron": "^1.6.10",
     "@types/jest": "^29.5.13",

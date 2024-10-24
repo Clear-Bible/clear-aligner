@@ -1,5 +1,5 @@
 import { WordDisplay } from '../wordDisplay';
-import { Corpus, Link, NamedContainers, Verse, Word } from '../../structs';
+import { Corpus, RepositoryLink, NamedContainers, Verse, Word } from '../../structs';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
@@ -35,7 +35,7 @@ const determineDefaultTargetView = (
     <Grid item
           key={`interlinear/${sourceCorpus?.id}/${sourceTokens.map(sourceToken => sourceToken.id).join('+')}/default`}>
       <WordDisplay
-        links={new Map<string, Link[]>()}
+        links={new Map<string, RepositoryLink[]>()}
         corpus={sourceCorpus}
         readonly={true}
         parts={[{
@@ -70,7 +70,7 @@ const determineTargetView = (
 
   // build link map and target tokens, pre-concatenated
   // and compressed with placeholders
-  const targetLinkMap = new Map<string, Link[]>();
+  const targetLinkMap = new Map<string, RepositoryLink[]>();
   const targetTokens = sourceTokens.map(sourceToken => {
     const linkWords = interlinearMap.sourceMap?.get(sourceToken.id)?.at(0);
     if (!linkWords
@@ -157,7 +157,7 @@ const determineVerseView = (
   }
 
   // reduce source map into map of word IDs to links
-  const sourceLinkMap = new Map<string, Link[]>();
+  const sourceLinkMap = new Map<string, RepositoryLink[]>();
   interlinearMap.sourceMap.forEach((linkWords, sourceWordId) => {
     const sourceLinks = sourceLinkMap.get(sourceWordId) ?? [];
     sourceLinks.push(...linkWords.map(linkWord => linkWord.link));

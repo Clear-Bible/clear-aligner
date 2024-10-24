@@ -72,9 +72,9 @@ export const ControlPanel = (): ReactElement => {
   };
 
   // keyboard shortcuts
-  useHotkeys('space', () => createLink(), {enabled: linkHasBothSides})
-  useHotkeys('backspace', () => deleteLink(), {enabled: !!inProgressLink?.id})
-  useHotkeys('shift+esc', () => dispatch(resetTextSegments()), {enabled: anySegmentsSelected})
+  useHotkeys('space', () => createLink(), {enabled: linkHasBothSides });
+  useHotkeys('backspace', () => deleteLink(), {enabled: !!inProgressLink?.id});
+  useHotkeys('shift+esc', () => dispatch(resetTextSegments()), {enabled: anySegmentsSelected});
 
   return (
     <>

@@ -5,7 +5,7 @@
 import { IconButton, Stack, SxProps, Theme, useTheme } from '@mui/material';
 import { ReactElement, useEffect, useState } from 'react';
 import { useSaveLink } from '../../state/links/tableManager';
-import { Link, LinkStatus } from '../../structs';
+import { RepositoryLink, LinkStatus } from '../../structs';
 
 /**
  * props for the ToggleIcon
@@ -20,7 +20,7 @@ export interface ToggleIconProps{
   };
   currentValue: string;
   setCurrentValue: Function;
-  currentLink: Link;
+  currentLink: RepositoryLink;
 }
 /**
  * Display a single icon inside the perRowLinkStateSelector component
@@ -98,7 +98,7 @@ export interface PerRowLinkStateSelectorProps {
     tooltip?: string;
     color: string;
   }[];
-  currentLink: Link;
+  currentLink: RepositoryLink;
 }
 
 /**
