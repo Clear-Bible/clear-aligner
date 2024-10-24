@@ -27,7 +27,6 @@
     "react-router-dom": "^6.20.0",
     "react-scripts": "5.0.0",
     "redux-undo": "^1.0.1",
-    "reflect-metadata": "^0.2.1",
     "rfc6902": "^5.1.1",
     "sanitize-filename": "^1.6.3",
     "stream-browserify": "^3.0.0",
