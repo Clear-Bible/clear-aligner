@@ -1,6 +1,6 @@
-import { renderHook } from '@testing-library/react-hooks/dom';
+import { renderHook, waitFor } from '@testing-library/react';
 import { mockDatabaseApi, mockDatabaseApiOnWindow, mockEnvironmentVarsOnWindow } from '../../__tests__/mockElectron';
-import React from 'react';
+import React, { act } from 'react';
 import {
   stepSwitchToProject, stepSyncingAlignments,
   stepSyncingCorpora,
@@ -24,6 +24,7 @@ mockEnvironmentVarsOnWindow();
 mockDatabaseApiOnWindow();
 
 test('useSyncProject:incorrectProject', async () => {
+
   const ctx = mockContext({
     projectState: mockProjectState({
     })
@@ -31,8 +32,8 @@ test('useSyncProject:incorrectProject', async () => {
   const wrapper = mockContextWithWrapper(ctx);
   const {
     result,
-    waitForNextUpdate
   } = renderHook(() => useSyncProject(), { wrapper });
+  const initialValue = result.current
 
   const expectedSourceName = 'abcdefg';
 
@@ -40,9 +41,13 @@ test('useSyncProject:incorrectProject', async () => {
     id: expectedSourceName,
   } as Project;
 
-  result.current.sync(project);
+  await act(async () => {
+    result.current.sync(project);
+  })
 
-  await waitForNextUpdate();
+  await waitFor(() => {
+    expect(result.current).not.toBe(initialValue)
+  })
 
   // assert that the state has been properly modified to the initial state
   expect(result.current.progress).toBe(SyncProgress.SWITCH_TO_PROJECT);

@@ -40,3 +40,6 @@ yarn-error.log*
 **/*.sqlite-shm
 **/*.sqlite-wal
 **/*.sqlite-journal
+
+#cache folder
+/cache

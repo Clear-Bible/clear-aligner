@@ -19,6 +19,8 @@ const testState: RootState = {
         },
         sources: ['sbl_0'],
         targets: [],
+        suggestedSources: [],
+        suggestedTargets: []
       },
     },
   },
