@@ -1,4 +1,4 @@
-import { Link, Word } from '../structs';
+import { RepositoryLink, Word } from '../structs';
 import { ZERO_BCVWP } from '../features/bcvwp/BCVWPSupport';
 
 /**
@@ -48,7 +48,7 @@ const ELLIPSIS_CHAR = '\u2026';
  */
 export const compressAlignedWords = (
   inputWords: Word[][],
-  linkMap: Map<string, Link[]>
+  linkMap: Map<string, RepositoryLink[]>
 ): CompressedWord[][] => {
   // compute 0-based indexes, to simplify implementation
   const workInputWords = inputWords.flat();

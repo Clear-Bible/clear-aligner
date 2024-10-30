@@ -22,6 +22,24 @@ const dbApi = window.databaseApi as DatabaseApi;
 
 export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 
+/*
+ function that handles any input from the exclude column in the tsv files
+ */
+function sanitizeExclude(inputExclude: string){
+  if(!inputExclude){
+    return 0
+  }
+  let workingExclude = inputExclude.trim().toLowerCase();
+  if (workingExclude.length < 1){
+    return 0
+  }
+  let firstLetter = workingExclude[0];
+  if (firstLetter === 'n' || firstLetter === 'f'){
+    return 0
+  }
+  return 1
+}
+
 export const parseTsv = (fileContent: string, refCorpus: Corpus, side: AlignmentSide, fileType: CorpusFileFormat) => {
   const [header, ...rows] = fileContent.split('\n');
   const headerMap: Record<string, number> = {};
@@ -38,16 +56,11 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
   rows.forEach((row) => {
     const values = row.split('\t');
 
-    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse;
+    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse, exclude: number;
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         const wordText = (values[headerMap['text']] || values[headerMap['lemma']] || '');
-        // filter out punctuation in content
-        if (wordText.match(/^[\p{P}\s]*$/gu)) {
-          // skip punctuation
-          return;
-        }
 
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['id']];
@@ -58,6 +71,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         pos = +id.substring(8, 11); // grab word position
         if (!wordText || wordText.length < 1) return;
         const normalizedText = wordText.toLowerCase();
+        exclude = sanitizeExclude(values[headerMap['exclude']]);
+
         word = {
           id: id, // standardize n40001001002 to  40001001002
           side,
@@ -65,7 +80,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           text: wordText,
           position: pos,
           sourceVerse: values[headerMap['source_verse']] || '',
-          normalizedText
+          normalizedText,
+          exclude: exclude,
         };
 
         wordKey = normalizedText;
@@ -94,6 +110,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         // Either could be null within the TSV file.
         const gloss = values[headerMap['english']] || values[headerMap['gloss']] || '-';
 
+        exclude = sanitizeExclude(values[headerMap['exclude']]);
+
         word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
@@ -103,7 +121,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           position: pos,
           gloss: (new RegExp(/^(.+\..+)+$/)).test(gloss)
             ? gloss.replaceAll('.', ' ')
-            : gloss
+            : gloss,
+          exclude: exclude,
         } as Word;
 
         wordRef = BCVWP.parseFromString(id);
