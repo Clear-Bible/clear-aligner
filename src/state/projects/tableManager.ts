@@ -210,7 +210,6 @@ export class ProjectTable extends VirtualTable {
   getProjectTableData = async (): Promise<ProjectEntity[]> => {
     try {
       const dbProjects = (await dbApi.getProjects());
-      debugger;
       return dbProjects ?? [];
     } catch (ex) {
       console.error('Unable to convert data source to project: ', ex);
@@ -243,7 +242,6 @@ export class ProjectTable extends VirtualTable {
           name: entity.name,
           members: JSON.parse(entity.members ?? '[]')
         } as Project;
-        debugger;
         return [entity.id!, project];
       }));
     }

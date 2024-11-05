@@ -33,7 +33,6 @@ export const useDeleteProject = (): DeleteState => {
     try {
       const project = (await projectState.projectTable.getProjects(true))?.get(projectId); //projects.find((p) => p.id === projectId);
       setProgress(Progress.IN_PROGRESS);
-      debugger;
       const res = await ApiUtils.generateRequest<{}>({
         requestPath: `/api/projects/${projectId}`,
         requestType: ApiUtils.RequestType.DELETE,
