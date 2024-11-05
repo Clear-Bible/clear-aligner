@@ -49,7 +49,7 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
       await deleteLocalProject(project.id, { preferences, projectState, setPreferences, setProjects });
       setIsDialogOpen(false);
     }
-  }, [project.id, projectState.projectTable, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences]);
+  }, [project.id, projectState.projectTable, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences, preferences, projectState]);
 
   const dialog = useMemo(() => (
     <Dialog
