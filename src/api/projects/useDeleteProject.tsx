@@ -3,7 +3,7 @@ import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/materia
 import { Progress } from '../ApiModels';
 import { ApiUtils } from '../utils';
 import { AppContext } from '../../App';
-import { ProjectState } from '../../common/data/project/project';
+import { ProjectLocation } from '../../common/data/project/project';
 import ResponseObject = ApiUtils.ResponseObject;
 import { deleteLocalProject } from './useDeleteProjectFromLocalWithDialog';
 
@@ -32,6 +32,7 @@ export const useDeleteProject = (): DeleteState => {
   const deleteProject = useCallback(async (projectId: string) => {
     try {
       const project = (await projectState.projectTable.getProjects(true))?.get(projectId); //projects.find((p) => p.id === projectId);
+      const shouldDeleteProjectLocally = project && (project.location === ProjectLocation.LOCAL && project.lastSyncServerTime === null) ? true : false;
       setProgress(Progress.IN_PROGRESS);
       const res = await ApiUtils.generateRequest<{}>({
         requestPath: `/api/projects/${projectId}`,
@@ -41,9 +42,7 @@ export const useDeleteProject = (): DeleteState => {
       setProgress(res.success ? Progress.SUCCESS : Progress.FAILED);
       if (!project) return res;
 
-      // remove from local db only if this project has never been synced to the server
-      // if it has been synced then we want to keep it around as a local only project
-      if (project.serverState === ProjectState.DRAFT && project.lastSyncServerTime === null) {
+      if (shouldDeleteProjectLocally) {
         await deleteLocalProject(projectId, { projectState, preferences, setPreferences, setProjects });
       }
 
