@@ -5,7 +5,6 @@ import { DefaultProjectId } from '../../state/links/tableManager';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
 import { AppContext, AppContextProps } from '../../App';
-import { ProjectState } from '../../state/databaseManagement';
 
 /**
  * props for the hook

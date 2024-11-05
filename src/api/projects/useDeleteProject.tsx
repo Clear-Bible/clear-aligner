@@ -31,7 +31,7 @@ export const useDeleteProject = (): DeleteState => {
 
   const deleteProject = useCallback(async (projectId: string) => {
     try {
-      const project = (await projectState.projectTable.getProjects(true))?.get(projectId); //projects.find((p) => p.id === projectId);
+      const project = (await projectState.projectTable.getProjects(true))?.get(projectId);
       const shouldDeleteProjectLocally = project && (project.location === ProjectLocation.LOCAL && project.lastSyncServerTime === null) ? true : false;
       setProgress(Progress.IN_PROGRESS);
       const res = await ApiUtils.generateRequest<{}>({
