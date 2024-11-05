@@ -17,6 +17,15 @@ def sanitize_bcvwp(bcv_id):
         result = result[1:]
     return result
 
+def sanitize_exclude(input_exclude):
+    #trim and lower case
+    working_exclude = input_exclude.strip().lower()
+    if len(working_exclude) < 1:
+        return 0
+    first_letter = working_exclude[0]
+    if first_letter == 'n' or first_letter == 'f':
+        return 0
+    return 1
 
 def parse_bcvwp(bcv_id):
     sanitized = sanitize_bcvwp(bcv_id)
@@ -58,7 +67,7 @@ def insert_corpus(project_conn, project_cursor, corpus):
 
 def insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, word):
     project_cursor.execute(
-        f'INSERT INTO words_or_parts (id, corpus_id, side, text, after, gloss, position_book, position_chapter, position_verse, position_word, position_part, normalized_text, source_verse_bcvid, language_id) VALUES ({val(word.get("id"))}, {val(corpus_id)}, {val(word.get("side"))}, {val(word.get("text"))}, {val(word.get("after"))}, {val(word.get("gloss"))}, {val(word.get("position_book"))}, {val(word.get("position_chapter"))}, {val(word.get("position_verse"))}, {val(word.get("position_word"))}, {val(word.get("position_part"))}, {val(word.get("normalized_text"))}, {val(word.get("source_verse_bcvid"))}, {val(language_id)})')
+        f'INSERT INTO words_or_parts (id, corpus_id, side, text, after, gloss, position_book, position_chapter, position_verse, position_word, position_part, normalized_text, source_verse_bcvid, language_id, exclude) VALUES ({val(word.get("id"))}, {val(corpus_id)}, {val(word.get("side"))}, {val(word.get("text"))}, {val(word.get("after"))}, {val(word.get("gloss"))}, {val(word.get("position_book"))}, {val(word.get("position_chapter"))}, {val(word.get("position_verse"))}, {val(word.get("position_word"))}, {val(word.get("position_part"))}, {val(word.get("normalized_text"))}, {val(word.get("source_verse_bcvid"))}, {val(language_id)}, {val(word.get("exclude"))})')
 
 
 def cleanup_gloss(gloss):
@@ -74,7 +83,6 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
     corpus_id = metadata.get('id')
     corpus_side = metadata.get('side')
     language_id = metadata.get('language').get('code')
-    total_rows = 0
     with open(tsv_file) as tsvFd:
         total_rows = len(tsvFd.readlines())
     with open(tsv_file) as tsvFd:
@@ -87,17 +95,19 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
         idx_gloss = header.index('gloss') if 'gloss' in header else -1
         idx_english = header.index('english') if 'english' in header else -1
         idx_source_verse = header.index('source_verse') if 'source_verse' in header else -1
+        idx_exclude = header.index('exclude') if 'exclude' in header else -1
         idx = 0
         last_percentage = -1
         for row in corpus:
             row_id = sanitize_bcvwp(row[idx_id])
             text = row[idx_text] or row[idx_lemma]
-            if corpus_side == 'targets' and (text is None or punctuation_or_whitespace_only.match(text)):
+            if corpus_side == 'targets' and (text is None or whitespace_only.match(text)):
                 continue
             after = row[idx_after] if idx_after >= 0 else ""
             gloss = cleanup_gloss(row[idx_gloss] or row[idx_english]) if idx_gloss >= 0 or idx_english >= 0 else ""
             bcvwp = parse_bcvwp(row[idx_id])
             source_verse = sanitize_bcvwp(row[idx_source_verse]) if idx_source_verse >= 0 else ""
+            exclude = sanitize_exclude(row[idx_exclude]) if idx_exclude >= 0 else "0"
             insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, {
                 'id': f'{metadata.get("side")}:{row_id}',
                 'corpus_id': corpus_id,
@@ -112,6 +122,7 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
                 'position_part': bcvwp.get('part'),
                 'normalized_text': text.lower(),
                 'source_verse_bcvid': source_verse,
+                'exclude': exclude,
             })
             current_percentage = math.floor((idx / total_rows) * 100)
             if idx % 1000 == 0:

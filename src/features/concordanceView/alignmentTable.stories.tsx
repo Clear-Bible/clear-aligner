@@ -5,7 +5,7 @@
 import { Meta } from '@storybook/react';
 import { AlignmentTable, AlignmentTableProps } from './alignmentTable';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { Link, LinkStatus, TextDirection } from '../../structs';
+import { RepositoryLink, LinkStatus, TextDirection } from '../../structs';
 import { AppContext, AppContextProps } from '../../App';
 import { useEffect } from 'react';
 import { ProjectState } from '../../state/databaseManagement';
@@ -32,14 +32,14 @@ export const Default = (props: AlignmentTableProps) => {
 Default.args = {} as AlignmentTableProps;
 
 interface MockedAlignmentTableProps extends AlignmentTableProps {
-  links: Link[],
+  links: RepositoryLink[],
 }
 
-let linksForDbApi: Link[] = [];
+let linksForDbApi: RepositoryLink[] = [];
 // @ts-ignore
 window.databaseApi = {};
 // @ts-ignore
-window.databaseApi.corporaGetLinksByAlignedWord = async (...args: any[]): Link[] | undefined => {
+window.databaseApi.corporaGetLinksByAlignedWord = async (...args: any[]): RepositoryLink[] | undefined => {
   // @ts-ignore
   console.log('args: ', args);
   return (linksForDbApi);
@@ -77,28 +77,28 @@ export const FourLinksOneRejected = (props: MockedAlignmentTableProps) => {
   );
 };
 
-const firstLink = new Link();
+const firstLink = new RepositoryLink();
 firstLink.id = 'firstlinkid';
 firstLink.sources = [new BCVWP(1, 1, 1, 1, 1).toReferenceString()];
 firstLink.targets = [new BCVWP(1, 1, 1, 3, 1).toReferenceString()];
 firstLink.metadata.origin = "manual";
 firstLink.metadata.status = LinkStatus.NEEDS_REVIEW;
 
-const secondLink = new Link();
+const secondLink = new RepositoryLink();
 secondLink.id = 'secondlinkid';
 secondLink.sources = [new BCVWP(1, 2, 1, 1, 2).toReferenceString()];
 secondLink.targets = [new BCVWP(1, 2, 1, 1, 5).toReferenceString()];
 secondLink.metadata.origin = "manual";
 secondLink.metadata.status = LinkStatus.APPROVED;
 
-const thirdLink = new Link();
+const thirdLink = new RepositoryLink();
 thirdLink.id = 'thirdLinkid';
 thirdLink.sources = [new BCVWP(1, 3, 1, 1, 2).toReferenceString()];
 thirdLink.targets = [new BCVWP(1, 3, 1, 1, 5).toReferenceString()];
 thirdLink.metadata.origin = "manual";
 thirdLink.metadata.status = LinkStatus.CREATED;
 
-const rejectedLink = new Link();
+const rejectedLink = new RepositoryLink();
 rejectedLink.id = 'rejectedLink';
 rejectedLink.sources = [new BCVWP(1, 4, 1, 1, 2).toReferenceString()];
 rejectedLink.targets = [new BCVWP(1, 4, 1, 1, 5).toReferenceString()];
@@ -135,7 +135,7 @@ FourLinksOneRejected.args = {
       }
     }
   },
-  links: [ firstLink, secondLink, thirdLink, rejectedLink] as Link[]
+  links: [ firstLink, secondLink, thirdLink, rejectedLink] as RepositoryLink[]
 } as MockedAlignmentTableProps;
 
 

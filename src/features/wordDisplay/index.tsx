@@ -3,7 +3,7 @@
  * component. It accepts props from VerseDisplay that customize how the text
  * is displayed to the user.
  */
-import { Corpus, Link, Word } from '../../structs';
+import { Corpus, RepositoryLink, Word } from '../../structs';
 import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
@@ -28,7 +28,7 @@ export interface WordDisplayProps extends LimitedToLinks {
   variant?: WordDisplayVariant;
   parts?: Word[];
   corpus?: Corpus;
-  links?: Map<string, Link[]>;
+  links?: Map<string, RepositoryLink[]>;
   readonly?: boolean;
   suppressAfter?: boolean;
   suppressGloss?: boolean;

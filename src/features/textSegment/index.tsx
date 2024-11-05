@@ -9,7 +9,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { LanguageInfo, Link, Word } from 'structs';
+import { LanguageInfo, RepositoryLink, Word } from 'structs';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -25,7 +25,7 @@ export interface TextSegmentProps extends LimitedToLinks {
   languageInfo?: LanguageInfo;
   showAfter?: boolean;
   alignment?: 'flex-end' | 'flex-start' | 'center';
-  links?: Map<string, Link[]>;
+  links?: Map<string, RepositoryLink[]>;
 }
 
 const computeVariant = (
@@ -108,7 +108,7 @@ export const TextSegment = ({
   const currentlyHoveredWord = useAppSelector(
     (state) => state.textSegmentHover.hovered
   );
-  const wordLinks = useMemo<Link[]>(() => {
+  const wordLinks = useMemo<RepositoryLink[]>(() => {
     if (!links
       || !word?.id) {
       return [];
@@ -116,13 +116,13 @@ export const TextSegment = ({
     const result = links.get(BCVWP.sanitize(word.id));
     return (result ?? []);
   }, [links, word?.id]);
-  const hoveredLinks = useMemo<Link[]>(() => {
+  const hoveredLinks = useMemo<RepositoryLink[]>(() => {
     if (!links
       || !currentlyHoveredWord?.id) {
       return [];
     }
     const sanitized = BCVWP.sanitize(currentlyHoveredWord.id);
-    const result = [...links.values()].flatMap((a) => a).find((link: Link) => link[currentlyHoveredWord.side].includes(sanitized));
+    const result = [...links.values()].flatMap((a) => a).find((link: RepositoryLink) => link[currentlyHoveredWord.side].includes(sanitized));
     return result ? [result] : [];
   }, [links, currentlyHoveredWord?.id, currentlyHoveredWord?.side]);
 
