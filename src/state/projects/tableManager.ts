@@ -25,6 +25,7 @@ export interface Project {
   targetCorpora?: CorpusContainer;
   lastSyncTime?: number;
   updatedAt?: number;
+  serverState?: ProjectState;
   serverUpdatedAt?: number;
   lastSyncServerTime?: number;
   location: ProjectLocation;

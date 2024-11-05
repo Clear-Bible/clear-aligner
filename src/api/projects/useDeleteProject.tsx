@@ -3,7 +3,7 @@ import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/materia
 import { Progress } from '../ApiModels';
 import { ApiUtils } from '../utils';
 import { AppContext } from '../../App';
-import { ProjectLocation } from '../../common/data/project/project';
+import { ProjectState } from '../../common/data/project/project';
 import ResponseObject = ApiUtils.ResponseObject;
 import { deleteLocalProject } from './useDeleteProjectFromLocalWithDialog';
 
@@ -42,8 +42,9 @@ export const useDeleteProject = (): DeleteState => {
       setProgress(res.success ? Progress.SUCCESS : Progress.FAILED);
       if (!project) return res;
 
-      if (project.location === ProjectLocation.REMOTE) { // remove from db
-        debugger;
+      // remove from local db only if this project has never been synced to the server
+      // if it has been synced then we want to keep it around as a local only project
+      if (project.serverState === ProjectState.DRAFT && project.lastSyncServerTime === null) {
         await deleteLocalProject(projectId, { projectState, preferences, setPreferences, setProjects });
       }
 
