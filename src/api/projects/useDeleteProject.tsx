@@ -20,7 +20,7 @@ export interface DeleteState {
  * hook to delete a specified project from the server.
  */
 export const useDeleteProject = (): DeleteState => {
-  const { projectState, preferences, setPreferences, projects, setProjects } = useContext(AppContext);
+  const { projectState, preferences, setPreferences, setProjects } = useContext(AppContext);
   const [ progress, setProgress ] = useState<Progress>(Progress.IDLE);
   const abortController = useRef<AbortController|undefined>();
 
