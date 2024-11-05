@@ -133,7 +133,7 @@ export const useDatabase = (): DatabaseApi => {
     }[]> => {
       return await dbDelegate.corporaGetAlignedWordsByPivotWord(sourceName, side, normalizedText, sort);
     },
-    corporaGetLinksByAlignedWord: async (sourceName: string, sourcesText: string | undefined, targetsText: string | undefined, sort: GridSortItem | null | undefined, excludeRejected: boolean | undefined, itemLimit: number | undefined, itemSkip: number | undefined): Promise<Link[]> => {
+    corporaGetLinksByAlignedWord: async (sourceName: string, sourcesText: string | undefined, targetsText: string | undefined, sort: GridSortItem | null | undefined, excludeRejected: boolean | undefined, itemLimit: number | undefined, itemSkip: number | undefined): Promise<RepositoryLink[]> => {
       return await dbDelegate.corporaGetLinksByAlignedWord(sourceName, sourcesText, targetsText, sort, excludeRejected, itemLimit, itemSkip);
     },
     corporaGetPivotWords: dbDelegate.corporaGetPivotWords,
