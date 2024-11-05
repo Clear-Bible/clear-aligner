@@ -8,7 +8,7 @@ import regex as re
 
 prefixed_bcvwp = re.compile(r"^[onON]\d")
 gloss_needing_cleanup = re.compile(r'^(.+\..+)+$')
-punctuation_or_whitespace_only = re.compile(r'^[\p{P}\s]*$', re.U)
+whitespace_only = re.compile(r'^[\p{P}\s]*$', re.U)
 
 
 def sanitize_bcvwp(bcv_id):
