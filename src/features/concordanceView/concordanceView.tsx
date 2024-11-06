@@ -277,6 +277,8 @@ export const ConcordanceView = () => {
   const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true);
   const [rowSelectionModel, setRowSelectionModel ] = React.useState<GridInputRowSelectionModel>([]);
   const [alignmentTableControlPanelLinkState, setAlignmentTableControlPanelLinkState] = React.useState<LinkStatus>();
+
+  console.log('inside ConcordanceView')
   /**
    * pivot words
    */

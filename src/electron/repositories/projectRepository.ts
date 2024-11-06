@@ -1214,20 +1214,20 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  findOneById = async (sourceName: string, table: string, itemId: string) => {
+  findOneById = async<T,> (sourceName: string, table: string, itemId: string) : Promise<T | undefined> => {
     this.logDatabaseTime('findOneById()');
     try {
       const dataSource = (await this.getDataSource(sourceName))!;
-      let result;
+      let result: T;
       switch (table) {
         case LinkTableName:
           const links = await this.findLinksById(dataSource, [itemId]);
-          result = links.length > 0 ? links[0] : [];
+          result = (links.length > 0 ? links[0] : []) as any as T;
           break;
         default:
-          result = await dataSource
+          result = (await dataSource
             .getRepository(table)
-            .findOneBy({ id: itemId });
+            .findOneBy({ id: itemId })) as any as T;
           break;
       }
       this.logDatabaseTimeLog('findOneById()', sourceName, table, itemId, result);

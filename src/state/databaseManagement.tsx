@@ -6,6 +6,7 @@ import { DefaultProjectId, LinksTable } from './links/tableManager';
 import { UserPreferenceTable } from './preferences/tableManager';
 import { ProjectTable } from './projects/tableManager';
 import _ from 'lodash';
+import { DatabaseApi, getDatabaseAPIProxy } from '../hooks/useDatabase';
 
 /**
  * intended to provide a single place to keep track of
@@ -149,8 +150,7 @@ export abstract class VirtualTable {
     this.logDatabaseTime('checkDatabase(): loading');
     loadState.isLoading = true;
     try {
-      // @ts-ignore
-      await window.databaseApi.createDataSource(this.sourceName ?? DefaultProjectId);
+      await getDatabaseAPIProxy((window as any).databaseApi as DatabaseApi).createDataSource((this as any).sourceName ?? DefaultProjectId);
       loadState.isLoaded = true;
 
       return true;
