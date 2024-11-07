@@ -6,12 +6,12 @@ import { Corpus, CorpusContainer, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
-import { DatabaseApi } from '../../hooks/useDatabase';
+import { DatabaseApi, getDatabaseAPIProxy } from '../../hooks/useDatabase';
 import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { DateTime } from 'luxon';
 import { AlignmentSide } from '../../common/data/project/corpus';
 
-const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
+const dbApi: DatabaseApi =  getDatabaseAPIProxy((window as any).databaseApi as DatabaseApi);
 
 export interface Project {
   id: string;
@@ -55,8 +55,7 @@ export class ProjectTable extends VirtualTable {
       this.incrDatabaseBusyCtr();
       await this.sync(project);
       if (!!createDataSource || updateWordsOrParts) {
-        // @ts-ignore
-        const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
+        const createdProject = await dbApi.createSourceFromProject(ProjectTable.convertToDto(project));
         createdProject && this.projects.set(createdProject.id, createdProject);
         updateWordsOrParts && await this.insertWordsOrParts(project);
         this.decrDatabaseBusyCtr();
@@ -100,8 +99,7 @@ export class ProjectTable extends VirtualTable {
 
       await this.sync(project).catch(console.error);
       if (!!createDataSource || updateWordsOrParts) {
-        // @ts-ignore
-        const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
+        const updatedProject = await dbApi.updateSourceFromProject(ProjectTable.convertToDto(project));
         updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
         this.projects.set(project.id, project);
         this.decrDatabaseBusyCtr();
@@ -153,8 +151,7 @@ export class ProjectTable extends VirtualTable {
         .flatMap(corpus => (corpus.words ?? [])
           .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
-      // @ts-ignore
-      await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
+      await dbApi.removeTargetWordsOrParts(project.id).catch(console.error);
 
       let progressCtr = 0;
       let progressMax = wordsOrParts.length;
@@ -248,8 +245,7 @@ export class ProjectTable extends VirtualTable {
   };
 
   hasBcvInSource = async (sourceName: string, bcvId: string) => {
-    // @ts-ignore
-    return await window.databaseApi.hasBcvInSource(sourceName, bcvId.trim()).catch(console.error);
+    return await dbApi.hasBcvInSource(sourceName, bcvId.trim()).catch(console.error);
   };
 
   static convertDataSourceToProject = (dataSource: { id: string, corpora: Corpus[] }) => {

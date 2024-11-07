@@ -6,7 +6,7 @@ import BCVWP from '../features/bcvwp/BCVWPSupport';
 import { DefaultProjectId, EmptyWordId } from 'state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
-import { DatabaseApi } from '../hooks/useDatabase';
+import { DatabaseApi, getDatabaseAPIProxy } from '../hooks/useDatabase';
 import { AlignmentSide } from '../common/data/project/corpus';
 
 export enum InitializationStates {
@@ -17,8 +17,7 @@ export enum InitializationStates {
 
 let IsLoadingAnyCorpora = false;
 
-// @ts-ignore
-const dbApi = window.databaseApi as DatabaseApi;
+const dbApi: DatabaseApi =  getDatabaseAPIProxy((window as any).databaseApi as DatabaseApi);
 
 export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 

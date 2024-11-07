@@ -390,7 +390,7 @@ export class ProjectRepository extends BaseRepository {
       .execute();
   };
 
-  createSourceFromProject = async (project: ProjectDto) => {
+  createSourceFromProject = async (project: ProjectDto): Promise<{ id: string, sources: CorpusEntity[] }|undefined> => {
     try {
       // Creates the data source
       const projectDataSource = await this.getDataSource(project.id!);
@@ -401,11 +401,11 @@ export class ProjectRepository extends BaseRepository {
         table: CorporaTableName,
         itemOrItems: corpora
       });
-      const sources = await projectDataSource!.getRepository(CorporaTableName)
+      const sources = (await projectDataSource!.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
-        .getMany();
+        .getMany()) as CorpusEntity[];
       return {
-        id: project.id, sources
+        id: project.id!, sources
       };
     } catch (ex) {
       console.error('createSourceFromProject()', ex);
@@ -430,21 +430,21 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  getFirstBcvFromSource = async (sourceName: string) => {
+  getFirstBcvFromSource = async (sourceName: string): Promise<{ id?: string }|undefined> => {
     try {
       const entityManager = (await this.getDataSource(sourceName))!.manager;
-      const firstBcv = await entityManager.query(`select replace(id, 'targets:', '') id
+      const firstBcv = (await entityManager.query(`select replace(id, 'targets:', '') id
                                                   from words_or_parts
                                                   where side = 'targets'
                                                   order by id asc
-                                                  limit 1;`);
+                                                  limit 1;`)) as { id?: string }[];
       return firstBcv[0];
     } catch (err) {
       console.error('getFirstBcvFromSource()', err);
     }
   };
 
-  hasBcvInSource = async (sourceName: string, bcvId: string) => {
+  hasBcvInSource = async (sourceName: string, bcvId: string): Promise<boolean|undefined> => {
     try {
       const entityManager = (await this.getDataSource(sourceName))!.manager;
       const hasBcv = await entityManager.query(`select count(1) bcv

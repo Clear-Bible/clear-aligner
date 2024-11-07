@@ -18,7 +18,8 @@ import { useMemo } from 'react';
 import { UserPreferenceDto } from '../state/preferences/tableManager';
 import { ProjectEntity } from '../common/data/project/project';
 import { JournalEntryDTO } from '../common/data/journalEntryDTO';
-import { AlignmentSide } from '../common/data/project/corpus';
+import { AlignmentSide, CorpusEntity } from '../common/data/project/corpus';
+import { ProjectDto } from '../state/projects/tableManager';
 
 export interface ListedProjectDto {
   id: string;
@@ -35,6 +36,7 @@ export interface DatabaseApi {
    */
   getFirstJournalEntryUploadChunk: (sourceName: string) => Promise<JournalEntryDTO[]>;
   getAllJournalEntries: (projectId: string, itemLimit?: number, itemSkip?: number) => Promise<JournalEntryDTO[]>;
+  getFirstBcvFromSource: (sourceName: string) => Promise<{ id?: string }|undefined>;
   getCount: (sourceName: string, tableName: string) => Promise<number>;
   getDataSources: () => Promise<ListedProjectDto[]|undefined>;
   getProjects: () => Promise<ProjectEntity[]|undefined>;
@@ -111,6 +113,9 @@ export interface DatabaseApi {
   languageFindByIds: (sourceName: string, languageIds: string[]) => Promise<LanguageInfo[]>;
   getAllWordsByCorpus: (sourceName: string, linkSide: AlignmentSide, corpusId: string, wordLimit: number, wordSkip: number) => Promise<Word[]>;
   createDataSource: (sourceName: string) => Promise<boolean>;
+  createSourceFromProject: (project: ProjectDto) => Promise<any|undefined>;
+  updateSourceFromProject: (project: ProjectDto) => Promise<any>;
+  hasBcvInSource: (sourceName: string, bcvId: string) => Promise<boolean|undefined>;
   /**
    * Retrieve all corpora for the given project
    * @param sourceName project id to query corpora from
@@ -252,6 +257,12 @@ export const getDatabaseAPIProxy = (dbDelegate: DatabaseApi) : DatabaseApi => ({
     }
     return await dbDelegate.createDataSource(sourceName);
   },
+  createSourceFromProject: async (project: ProjectDto): Promise<any|undefined> => {
+    if(enableBreakpoints){
+      debugger;
+    }
+    return await dbDelegate.createSourceFromProject(project);
+  },
   existsById: async (sourceName: string, table: string, itemId: string) : Promise<Boolean> => {
     if(enableBreakpoints){
       debugger;
@@ -263,6 +274,24 @@ export const getDatabaseAPIProxy = (dbDelegate: DatabaseApi) : DatabaseApi => ({
       debugger;
     }
     return await dbDelegate.findOneById(sourceName, table, itemId );
+  },
+  getFirstBcvFromSource: async (sourceName: string): Promise<{ id?: string }|undefined> => {
+    if(enableBreakpoints){
+      debugger;
+    }
+    return await dbDelegate.getFirstBcvFromSource(sourceName);
+  },
+  updateSourceFromProject: async (project: ProjectDto): Promise<any> => {
+    if(enableBreakpoints){
+      debugger;
+    }
+    return await dbDelegate.updateSourceFromProject(project);
+  },
+  hasBcvInSource: async (sourceName: string, bcvId: string): Promise<boolean|undefined> => {
+    if(enableBreakpoints){
+      debugger;
+    }
+    return await dbDelegate.hasBcvInSource(sourceName, bcvId);
   }
 });
 
