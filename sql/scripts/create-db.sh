@@ -67,10 +67,10 @@ else
     "${defaultDbPath}"
   python3 ./create-db.py \
     -of "${defaultDbPath}" \
-    -cf '../../src/tsv/ylt-new.tsv' \
-    -ci 'ylt-new' \
-    -cn 'YLT' \
-    -cfn "Young's Literal Translation" \
+    -cf '../../src/tsv/target_BSB_20240904.tsv' \
+    -ci 'target_BSB' \
+    -cn 'BSB' \
+    -cfn "Berean Standard Bible" \
     -cs 'targets' \
     -cl 'eng' \
     -ctd 'ltr'\
