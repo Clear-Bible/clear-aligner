@@ -40,7 +40,7 @@ builds. These files are:
 ```
 sql/clear-aligner-template.sqlite
 sql/clear-aligner-user.sqlite
-sql/projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite
+sql/projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite
 ```
 
 ...in the project directory during development and the application footprint after

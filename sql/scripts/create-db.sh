@@ -51,7 +51,7 @@ else
   echo "...Template database created: '${templateDbPath}'."
 fi
 
-defaultDbPath="../projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite"
+defaultDbPath="../projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite"
 
 if [[ -f "${defaultDbPath}" && "$*" == *'--no-remove'* ]]; then
   echo "Default database already exists: '${defaultDbPath}' (not recreating)."
