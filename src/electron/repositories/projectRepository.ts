@@ -305,7 +305,7 @@ export class ProjectRepository extends BaseRepository {
       return await this.getDataSourceWithEntities(projectId || DefaultProjectId,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema, JournalEntryEntity],
         path.join(this.getTemplatesDirectory(), DefaultProjectId === projectId
-          ? `projects/clear-aligner-${DefaultProjectId}}.sqlite`
+          ? 'projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite'
           : 'clear-aligner-template.sqlite'),
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
     };
