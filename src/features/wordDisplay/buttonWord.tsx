@@ -16,7 +16,7 @@ import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMe
 import { useTokenSuggestionRelevancyScore } from '../../hooks/useSuggestions';
 import { useLinkNotes } from '../linkNotes/useLinkNotes';
 
-const alphaTransparencyValueForButtonTokens = '.12';
+const alphaTransparencyValueForButtonTokens = '.25';
 /**
  * top color of the machine alignment gradient
  */
