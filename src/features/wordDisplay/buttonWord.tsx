@@ -16,7 +16,6 @@ import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMe
 import { useTokenSuggestionRelevancyScore } from '../../hooks/useSuggestions';
 import { useLinkNotes } from '../linkNotes/useLinkNotes';
 
-const alphaTransparencyValueForButtonTokens = '.25';
 /**
  * top color of the machine alignment gradient
  */
@@ -160,6 +159,8 @@ export const ButtonToken = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isTokenExcluded = token.exclude === 1;
+
+  const alphaTransparencyValueForButtonTokens = useMemo( () => theme.palette.mode === 'light' ? '.12' : '.25', [theme.palette.mode])
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
@@ -434,7 +435,7 @@ export const ButtonToken = ({
   const gradientTopColorDecomposed = useMemo(() => decomposeColor(gradientTopColor), []);
   const gradientBottomColorDecomposed = useMemo(() => decomposeColor(gradientBottomColor), []);
 
-  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
+  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values, alphaTransparencyValueForButtonTokens]);
 
   const hoverSx: SxProps<Theme> = useMemo(() => {
       if (!memberOfPrimaryLink) {
@@ -459,7 +460,7 @@ export const ButtonToken = ({
     return ({
       backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
     });
-  }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink, theme]);
+  }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink, theme, alphaTransparencyValueForButtonTokens]);
 
   const wordPart = useMemo<number | undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
   const wordLength = useMemo<number>(() => completeWord.length, [completeWord.length]);
