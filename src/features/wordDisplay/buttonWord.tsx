@@ -270,7 +270,7 @@ export const ButtonToken = ({
    */
   const buttonPrimaryColor = useMemo(() => {
     if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) return theme.palette.tokenButtons.defaultTokenButtons.selected;
-    if (wasSubmittedForConsideration && scoreIsRelevant) return theme.palette.secondary.light;
+    if (wasSubmittedForConsideration && scoreIsRelevant) return theme.palette.mode === 'light' ? theme.palette.secondary.light : theme.palette.secondary.main;
     if (!memberOfPrimaryLink?.metadata.status) return theme.palette.text.disabled;
     switch (memberOfPrimaryLink?.metadata.status) {
       case LinkStatus.APPROVED:
@@ -309,6 +309,9 @@ export const ButtonToken = ({
   const sourceIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isMostRelevantSuggestion){
+       return theme.palette.tokenButtons.suggestedTokenButtons.icon;
+      }
       if (isSelectedInEditedLink || wasSubmittedForConsideration) {
         return buttonNormalBackgroundColor;
       }

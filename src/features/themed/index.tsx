@@ -142,6 +142,9 @@ const lightTheme: Theme = createTheme({
       },
       excludedTokenButtons : {
         text: '#999999'
+      },
+      suggestedTokenButtons : {
+        icon: '#FAEBE9', // Coral 50
       }
     },
     background :{
@@ -343,6 +346,9 @@ const darkTheme = createTheme({
       },
       excludedTokenButtons : {
         text: '#999999'
+      },
+      suggestedTokenButtons : {
+        icon: '#FAEBE9', // Coral 50
       }
     },
     background : {
