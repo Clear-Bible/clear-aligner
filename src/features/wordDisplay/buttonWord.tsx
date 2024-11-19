@@ -307,6 +307,9 @@ export const ButtonToken = ({
    * This is the computed color for the sx object for the Button.
    */
   const computedButtonColor = useMemo(() => {
+    if(isSelectedInEditedLink){
+      return theme.palette.text.primary
+    }
     // If this token is excluded, then make sure it gets the specified excluded color from the theme.
     // !important ensures it overrides the color it gets as a result of disabled being set to true.
     if(isTokenExcluded){
@@ -396,9 +399,18 @@ export const ButtonToken = ({
     </>);
   }, [ isCurrentlyHoveredToken, buttonPrimaryColor, isSelectedInEditedLink, buttonNormalBackgroundColor, hasNote ]);
 
+  /**
+   * This computes the styled icon corresponding to the status
+   * of the link.
+   */
   const statusIndicator = useMemo<React.JSX.Element>(() => {
       const color = (() => {
-        if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+        if(isCurrentlyHoveredToken && isSelectedInEditedLink){
+          return buttonNormalBackgroundColor;
+        }
+        if (isCurrentlyHoveredToken) {
+          return buttonPrimaryColor;
+        }
         if (isSelectedInEditedLink) {
           return buttonNormalBackgroundColor;
         }
@@ -446,7 +458,15 @@ export const ButtonToken = ({
 
   const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
 
+  /**
+   * The css styling used when the buttonWord is hovered.
+   */
   const hoverSx: SxProps<Theme> = useMemo(() => {
+    if(isSelectedInEditedLink){
+      return {
+        backgroundColor: buttonPrimaryColor
+      };
+    }
     if (buttonPrimaryColor === theme.palette.text.disabled) {
       const decomposedColor = decomposeColor(theme.palette.primary.main);
       return ({
@@ -463,7 +483,7 @@ export const ButtonToken = ({
     return ({
       backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
     });
-  }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
+  }, [isSelectedInEditedLink, buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
 
   const wordPart = useMemo<number | undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
   const wordLength = useMemo<number>(() => completeWord.length, [completeWord.length]);
