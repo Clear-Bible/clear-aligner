@@ -39,6 +39,8 @@ export interface DatabaseApi {
   getDataSources: () => Promise<ListedProjectDto[]|undefined>;
   getProjects: () => Promise<ProjectEntity[]|undefined>;
   projectSave: (project: ProjectEntity) => Promise<ProjectEntity>;
+  removeSource: (sourceName: string) => Promise<undefined>;
+  projectRemove: (sourceName: string) => Promise<undefined>;
   corporaGetPivotWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<{
     t: string, // normalized text
     l: string, // language id
@@ -119,7 +121,6 @@ export interface DatabaseApi {
 }
 
 export const useDatabase = (): DatabaseApi => {
-  // @ts-ignore
-  const dbDelegate = useMemo(() => window.databaseApi, []);
+  const dbDelegate = useMemo(() => (window as any).databaseApi as DatabaseApi, []);
   return dbDelegate as DatabaseApi;
 }

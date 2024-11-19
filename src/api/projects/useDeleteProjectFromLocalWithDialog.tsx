@@ -4,7 +4,7 @@ import { Project } from '../../state/projects/tableManager';
 import { DefaultProjectId } from '../../state/links/tableManager';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
-import { AppContext } from '../../App';
+import { AppContext, AppContextProps } from '../../App';
 
 /**
  * props for the hook
@@ -22,6 +22,20 @@ export interface UseDeleteProjectFromLocalWithDialogState {
   dialog: JSX.Element;
 }
 
+export const deleteLocalProject = async (projectId: string, { projectState, preferences, setPreferences, setProjects }: Partial<AppContextProps>) => {
+  await projectState!.projectTable?.remove?.(projectId);
+  setProjects!((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
+  if (preferences?.currentProject === projectId) {
+    projectState!.linksTable.reset().catch(console.error);
+    projectState!.linksTable.setSourceName(DefaultProjectId);
+    setPreferences!((p: UserPreference | undefined) => ({
+      ...(p ?? {}) as UserPreference,
+      currentProject: DefaultProjectId,
+      initialized: InitializationStates.UNINITIALIZED
+    }));
+  }
+};
+
 /**
  * hook to delete a local project with a confirmation dialog
  * @param project project the hook would be used to delete
@@ -32,20 +46,10 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
 
   const handleDelete = useCallback(async () => {
     if (project.id) {
-      await projectState.projectTable?.remove?.(project.id);
-      setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (project.id || '').trim()));
-      if (preferences?.currentProject === project.id) {
-        projectState.linksTable.reset().catch(console.error);
-        projectState.linksTable.setSourceName(DefaultProjectId);
-        setPreferences((p: UserPreference | undefined) => ({
-          ...(p ?? {}) as UserPreference,
-          currentProject: DefaultProjectId,
-          initialized: InitializationStates.UNINITIALIZED
-        }));
-      }
+      await deleteLocalProject(project.id, { preferences, projectState, setPreferences, setProjects });
       setIsDialogOpen(false);
     }
-  }, [project.id, projectState.projectTable, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences]);
+  }, [project.id, setProjects, setPreferences, preferences, projectState]);
 
   const dialog = useMemo(() => (
     <Dialog
