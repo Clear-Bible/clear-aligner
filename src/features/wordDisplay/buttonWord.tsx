@@ -538,7 +538,7 @@ export const ButtonToken = ({
     else {
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
-  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme, token.gloss, memberOfPrimaryLink?.metadata.status])
+  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme, memberOfPrimaryLink?.metadata.status])
 
   return (<>
     <Box
