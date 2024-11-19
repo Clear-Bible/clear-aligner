@@ -512,6 +512,34 @@ export const ButtonToken = ({
 
   },[buttonPrimaryColor, isMostRelevantSuggestion, isSelectedInEditedLink, isSpecialMachineLearningCase, isTokenExcluded])
 
+  /**
+   * This is the computed color for the text of the Gloss, when gloss is used.
+   */
+  const computedGlossColor = useMemo(() => {
+    if(isMostRelevantSuggestion && isHoveredToken ){
+      return theme.palette.mode === 'light' ?
+        theme.palette.tokenButtons.defaultTokenButtons.textContrast :
+        theme.palette.tokenButtons.defaultTokenButtons.text;
+    }
+    else if (isMostRelevantSuggestion){
+     return theme.palette.mode === 'light' ?
+       theme.palette.tokenButtons.defaultTokenButtons.text :
+       theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    }
+    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+      return theme.palette.tokenButtons.defaultTokenButtons.textContrast
+    }
+    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
+      return theme.palette.tokenButtons.defaultTokenButtons.text
+    }
+    else if((isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken){
+      return buttonNormalBackgroundColor
+    }
+    else {
+      return theme.palette.tokenButtons.defaultTokenButtons.text
+    }
+  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme, token.gloss, memberOfPrimaryLink?.metadata.status])
+
   return (<>
     <Box
       onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
@@ -611,7 +639,7 @@ export const ButtonToken = ({
                       display: 'flex',
                       width: '100%',
                       justifyContent: `${textJustification} !important`,
-                      color: (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
+                      color: computedGlossColor,
                     }}>
                     {token.gloss ?? '-'}
                   </Typography> : <></>}
