@@ -295,7 +295,7 @@ export const ButtonToken = ({
     if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast
     }
-    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) {
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink || isMostRelevantSuggestion) {
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
     // If this token is excluded, then make sure it gets the specified excluded color from the theme.
