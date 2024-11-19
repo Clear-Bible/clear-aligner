@@ -292,10 +292,15 @@ export const ButtonToken = ({
    * This is the computed color for the sx object for the Button.
    */
   const computedButtonColor = useMemo(() => {
+    if(isMostRelevantSuggestion) {
+      return theme.palette.mode === 'light' ?
+        theme.palette.tokenButtons.defaultTokenButtons.text :
+        theme.palette.tokenButtons.defaultTokenButtons.textContrast
+    }
     if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast
     }
-    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink || isMostRelevantSuggestion) {
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
     // If this token is excluded, then make sure it gets the specified excluded color from the theme.
