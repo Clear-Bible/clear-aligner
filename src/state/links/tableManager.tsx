@@ -11,7 +11,7 @@ import { AlignmentFile } from '../../structs/alignmentFile';
 import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
-import { DatabaseApi } from '../../hooks/useDatabase';
+import { DatabaseApi, getDatabaseAPIProxy } from '../../hooks/useDatabase';
 import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlignmentLinkDTO';
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
@@ -31,8 +31,7 @@ export const JournalEntryTableName = 'journal_entries';
 const LogDatabaseHooks = true;
 const PreloadVerseRange = 3;
 
-const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
-
+const dbApi: DatabaseApi =  getDatabaseAPIProxy((window as any).databaseApi as DatabaseApi);
 
 export class LinksTable extends VirtualTable {
   private static latestLastUpdateTime?: number;
@@ -119,8 +118,7 @@ export class LinksTable extends VirtualTable {
 
   exists = async (linkId?: string): Promise<boolean> => {
     if (!linkId) return false;
-    // @ts-ignore
-    return !!(await window.databaseApi.existsById(this.getSourceName(), LinkTableName, linkId));
+    return !!(await dbApi.existsById(this.getSourceName(), LinkTableName, linkId));
   };
 
   removeAll = async (suppressOnUpdate = false,
@@ -343,9 +341,7 @@ export class LinksTable extends VirtualTable {
     if (!id) return undefined;
     const cacheKey = [id, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByLinkIdCache.wrap(cacheKey, async () => {
-      // @ts-ignore
-      return window.databaseApi
-        .findOneById(this.getSourceName(), LinkTableName, id);
+      return dbApi.findOneById<RepositoryLink>(this.getSourceName(), LinkTableName, id);
     });
   };
 

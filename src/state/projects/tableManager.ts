@@ -6,12 +6,12 @@ import { Corpus, CorpusContainer, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
-import { DatabaseApi } from '../../hooks/useDatabase';
+import { DatabaseApi, getDatabaseAPIProxy } from '../../hooks/useDatabase';
 import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { DateTime } from 'luxon';
 import { AlignmentSide } from '../../common/data/project/corpus';
 
-const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
+const dbApi: DatabaseApi =  getDatabaseAPIProxy((window as any).databaseApi as DatabaseApi);
 
 export interface Project {
   id: string;
@@ -25,6 +25,7 @@ export interface Project {
   targetCorpora?: CorpusContainer;
   lastSyncTime?: number;
   updatedAt?: number;
+  serverState?: ProjectState;
   serverUpdatedAt?: number;
   lastSyncServerTime?: number;
   location: ProjectLocation;
@@ -54,8 +55,7 @@ export class ProjectTable extends VirtualTable {
       this.incrDatabaseBusyCtr();
       await this.sync(project);
       if (!!createDataSource || updateWordsOrParts) {
-        // @ts-ignore
-        const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
+        const createdProject = await dbApi.createSourceFromProject(ProjectTable.convertToDto(project));
         createdProject && this.projects.set(createdProject.id, createdProject);
         updateWordsOrParts && await this.insertWordsOrParts(project);
         this.decrDatabaseBusyCtr();
@@ -75,10 +75,8 @@ export class ProjectTable extends VirtualTable {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
-      // @ts-ignore Remove the local project database.
-      await window.databaseApi.removeSource(projectId);
-      // @ts-ignore Remove the project from the user database.
-      await window.databaseApi.projectRemove(projectId);
+      await dbApi.removeSource(projectId);
+      await dbApi.projectRemove(projectId);
       this.projects.delete(projectId);
       this.decrDatabaseBusyCtr();
     } catch (e) {
@@ -101,8 +99,7 @@ export class ProjectTable extends VirtualTable {
 
       await this.sync(project).catch(console.error);
       if (!!createDataSource || updateWordsOrParts) {
-        // @ts-ignore
-        const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
+        const updatedProject = await dbApi.updateSourceFromProject(ProjectTable.convertToDto(project));
         updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
         this.projects.set(project.id, project);
         this.decrDatabaseBusyCtr();
@@ -154,8 +151,7 @@ export class ProjectTable extends VirtualTable {
         .flatMap(corpus => (corpus.words ?? [])
           .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
-      // @ts-ignore
-      await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
+      await dbApi.removeTargetWordsOrParts(project.id).catch(console.error);
 
       let progressCtr = 0;
       let progressMax = wordsOrParts.length;
@@ -209,7 +205,8 @@ export class ProjectTable extends VirtualTable {
 
   getProjectTableData = async (): Promise<ProjectEntity[]> => {
     try {
-      return (await dbApi.getProjects()) ?? [];
+      const dbProjects = (await dbApi.getProjects());
+      return dbProjects ?? [];
     } catch (ex) {
       console.error('Unable to convert data source to project: ', ex);
       return [];
@@ -235,20 +232,20 @@ export class ProjectTable extends VirtualTable {
       }
       this.projects = new Map<string, Project>(projectEntities.map((entity) => {
         const p: Project | undefined = dataSources?.find(src => src.id === entity.id);
-        return [entity.id!, {
+        const project = {
           ...(p ?? {}),
           ...entity,
           name: entity.name,
           members: JSON.parse(entity.members ?? '[]')
-        } as Project];
+        } as Project;
+        return [entity.id!, project];
       }));
     }
     return this.projects;
   };
 
   hasBcvInSource = async (sourceName: string, bcvId: string) => {
-    // @ts-ignore
-    return await window.databaseApi.hasBcvInSource(sourceName, bcvId.trim()).catch(console.error);
+    return await dbApi.hasBcvInSource(sourceName, bcvId.trim()).catch(console.error);
   };
 
   static convertDataSourceToProject = (dataSource: { id: string, corpora: Corpus[] }) => {

@@ -114,6 +114,8 @@ const App = () => {
     }
   ]);
 
+  console.log('inside App component')
+
   return (
     <>
       <AppContext.Provider value={appContext}>

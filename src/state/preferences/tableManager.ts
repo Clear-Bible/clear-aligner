@@ -7,6 +7,9 @@ import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import uuid from 'uuid-random';
 import { DefaultProjectId } from '../links/tableManager';
 import { InitializationStates } from '../../workbench/query';
+import { DatabaseApi, getDatabaseAPIProxy } from '../../hooks/useDatabase';
+
+const dbApi: DatabaseApi =  getDatabaseAPIProxy((window as any).databaseApi as DatabaseApi);
 
 export enum ControlPanelFormat {
   VERTICAL,
@@ -53,8 +56,7 @@ export class UserPreferenceTable extends VirtualTable {
   saveOrUpdate = async (nextPreference: UserPreference, suppressOnUpdate = true): Promise<UserPreference | undefined> => {
     try {
       const prevPreferences = await this.getPreferences(true);
-      // @ts-ignore
-      await window.databaseApi.createOrUpdatePreferences(
+      await dbApi.createOrUpdatePreferences(
         UserPreferenceTable.convertToDto({ ...prevPreferences, ...nextPreference }));
       await this.getPreferences(true);
     } catch (e) {
@@ -66,8 +68,7 @@ export class UserPreferenceTable extends VirtualTable {
 
   getPreferences = async (requery = false): Promise<UserPreference> => {
     if (requery) {
-      // @ts-ignore
-      const preferences = await window.databaseApi.getPreferences();
+      const preferences = await dbApi.getPreferences();
       if (preferences) {
         this.preferences = {
           id: preferences?.id,
@@ -83,10 +84,9 @@ export class UserPreferenceTable extends VirtualTable {
     return this.preferences;
   };
 
-  getFirstBcvFromSource = async (sourceName: string, suppressOnUpdate?: boolean): Promise<{ id?: string }> => {
+  getFirstBcvFromSource = async (sourceName: string, suppressOnUpdate?: boolean): Promise<{ id?: string }|undefined> => {
     try {
-      // @ts-ignore
-      return await window.databaseApi.getFirstBcvFromSource(sourceName);
+      return await dbApi.getFirstBcvFromSource(sourceName);
     } catch (e) {
       return {};
     } finally {
