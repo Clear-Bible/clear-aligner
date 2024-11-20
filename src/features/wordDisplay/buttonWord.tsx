@@ -316,7 +316,12 @@ export const ButtonToken = ({
 
   const sourceIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
-      if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
+        return buttonNormalBackgroundColor;
+      }
+      if (isCurrentlyHoveredToken) {
+        return buttonPrimaryColor;
+      }
       if (isMostRelevantSuggestion){
        return theme.palette.tokenButtons.suggestedTokenButtons.icon;
       }
