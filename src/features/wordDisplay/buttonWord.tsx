@@ -1,12 +1,4 @@
-import {
-  Corpus,
-  LanguageInfo,
-  RepositoryLink,
-  LinkOriginManual,
-  LinkStatus,
-  TextDirection,
-  Word
-} from '../../structs';
+import { Corpus, LanguageInfo, LinkOriginManual, LinkStatus, RepositoryLink, TextDirection, Word } from '../../structs';
 import React, { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -15,15 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import {
-  AutoAwesome,
-  Cancel,
-  CheckCircle,
-  CommentOutlined,
-  Flag,
-  InsertLink,
-  Lightbulb
-} from '@mui/icons-material';
+import { AutoAwesome, Cancel, CheckCircle, CommentOutlined, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
@@ -32,7 +16,6 @@ import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMe
 import { useTokenSuggestionRelevancyScore } from '../../hooks/useSuggestions';
 import { useLinkNotes } from '../linkNotes/useLinkNotes';
 
-const alphaTransparencyValueForButtonTokens = '.12';
 /**
  * top color of the machine alignment gradient
  */
@@ -177,6 +160,8 @@ export const ButtonToken = ({
   const theme = useTheme();
   const isTokenExcluded = token.exclude === 1;
 
+  const alphaTransparencyValueForButtonTokens = useMemo( () => theme.palette.mode === 'light' ? '.12' : '.25', [theme.palette.mode])
+
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
    */
@@ -284,8 +269,8 @@ export const ButtonToken = ({
    * when the token is selected, this is the background/fill color
    */
   const buttonPrimaryColor = useMemo(() => {
-    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) return theme.palette.primary.main;
-    if (wasSubmittedForConsideration && scoreIsRelevant) return theme.palette.secondary.light;
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) return theme.palette.tokenButtons.defaultTokenButtons.selected;
+    if (wasSubmittedForConsideration && scoreIsRelevant) return theme.palette.mode === 'light' ? theme.palette.secondary.light : theme.palette.secondary.main;
     if (!memberOfPrimaryLink?.metadata.status) return theme.palette.text.disabled;
     switch (memberOfPrimaryLink?.metadata.status) {
       case LinkStatus.APPROVED:
@@ -299,7 +284,7 @@ export const ButtonToken = ({
       default:
         return theme.palette.text.disabled;
     }
-  }, [ wasSubmittedForConsideration, scoreIsRelevant, memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink, theme.palette.secondary.light ]);
+  }, [ wasSubmittedForConsideration, scoreIsRelevant, memberOfPrimaryLink?.metadata.status, isSelectedInEditedLink, theme ]);
 
   const buttonNormalBackgroundColor = useMemo(() => theme.palette.background.default, [theme.palette.background.default]);
 
@@ -307,17 +292,31 @@ export const ButtonToken = ({
    * This is the computed color for the sx object for the Button.
    */
   const computedButtonColor = useMemo(() => {
+    if(isMostRelevantSuggestion) {
+      return theme.palette.mode === 'light' ?
+        theme.palette.tokenButtons.defaultTokenButtons.text :
+        theme.palette.tokenButtons.defaultTokenButtons.textContrast
+    }
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+      return theme.palette.tokenButtons.defaultTokenButtons.textContrast
+    }
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
+      return theme.palette.tokenButtons.defaultTokenButtons.text
+    }
     // If this token is excluded, then make sure it gets the specified excluded color from the theme.
     // !important ensures it overrides the color it gets as a result of disabled being set to true.
     if(isTokenExcluded){
       return `${theme.palette.tokenButtons.excludedTokenButtons.text} !important`
     }
     return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
-  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme.palette.text.primary, theme.palette.tokenButtons.excludedTokenButtons.text])
+  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme, memberOfPrimaryLink])
 
   const sourceIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isMostRelevantSuggestion){
+       return theme.palette.tokenButtons.suggestedTokenButtons.icon;
+      }
       if (isSelectedInEditedLink || wasSubmittedForConsideration) {
         return buttonNormalBackgroundColor;
       }
@@ -444,9 +443,15 @@ export const ButtonToken = ({
   const gradientTopColorDecomposed = useMemo(() => decomposeColor(gradientTopColor), []);
   const gradientBottomColorDecomposed = useMemo(() => decomposeColor(gradientBottomColor), []);
 
-  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
+  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values, alphaTransparencyValueForButtonTokens]);
 
   const hoverSx: SxProps<Theme> = useMemo(() => {
+      if (!memberOfPrimaryLink) {
+      return ({
+        backgroundColor: theme.palette.tokenButtons.defaultTokenButtons.rollover,
+        color: theme.palette.tokenButtons.defaultTokenButtons.text,
+      })
+    }
     if (buttonPrimaryColor === theme.palette.text.disabled) {
       const decomposedColor = decomposeColor(theme.palette.primary.main);
       return ({
@@ -463,7 +468,7 @@ export const ButtonToken = ({
     return ({
       backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
     });
-  }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
+  }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink, theme, alphaTransparencyValueForButtonTokens]);
 
   const wordPart = useMemo<number | undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
   const wordLength = useMemo<number>(() => completeWord.length, [completeWord.length]);
@@ -506,6 +511,34 @@ export const ButtonToken = ({
     return ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`
 
   },[buttonPrimaryColor, isMostRelevantSuggestion, isSelectedInEditedLink, isSpecialMachineLearningCase, isTokenExcluded])
+
+  /**
+   * This is the computed color for the text of the Gloss, when gloss is used.
+   */
+  const computedGlossColor = useMemo(() => {
+    if(isMostRelevantSuggestion && isHoveredToken ){
+      return theme.palette.mode === 'light' ?
+        theme.palette.tokenButtons.defaultTokenButtons.textContrast :
+        theme.palette.tokenButtons.defaultTokenButtons.text;
+    }
+    else if (isMostRelevantSuggestion){
+     return theme.palette.mode === 'light' ?
+       theme.palette.tokenButtons.defaultTokenButtons.text :
+       theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    }
+    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+      return theme.palette.tokenButtons.defaultTokenButtons.textContrast
+    }
+    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
+      return theme.palette.tokenButtons.defaultTokenButtons.text
+    }
+    else if((isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken){
+      return buttonNormalBackgroundColor
+    }
+    else {
+      return theme.palette.tokenButtons.defaultTokenButtons.text
+    }
+  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme, memberOfPrimaryLink?.metadata.status])
 
   return (<>
     <Box
@@ -606,7 +639,7 @@ export const ButtonToken = ({
                       display: 'flex',
                       width: '100%',
                       justifyContent: `${textJustification} !important`,
-                      color: (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
+                      color: computedGlossColor,
                     }}>
                     {token.gloss ?? '-'}
                   </Typography> : <></>}
