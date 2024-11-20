@@ -552,7 +552,10 @@ export const ButtonToken = ({
     else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
-    else if((isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken){
+    else if(isSelectedInEditedLink && !isHoveredToken){
+      return theme.palette.tokenButtons.defaultTokenButtons.text
+    }
+    else if(isMostRelevantSuggestion && !isHoveredToken){
       return buttonNormalBackgroundColor
     }
     else {
