@@ -303,7 +303,10 @@ export const ButtonToken = ({
     if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
-    if(isSelectedInEditedLink){
+    if (memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+      return theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    }
+    if (isSelectedInEditedLink){
       return theme.palette.text.primary
     }
     // If this token is excluded, then make sure it gets the specified excluded color from the theme.
@@ -557,26 +560,27 @@ export const ButtonToken = ({
         theme.palette.tokenButtons.defaultTokenButtons.textContrast :
         theme.palette.tokenButtons.defaultTokenButtons.text;
     }
-    else if (isMostRelevantSuggestion){
+    if (isMostRelevantSuggestion){
      return theme.palette.mode === 'light' ?
        theme.palette.tokenButtons.defaultTokenButtons.text :
        theme.palette.tokenButtons.defaultTokenButtons.textContrast;
     }
-    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast
     }
-    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
-    else if(isSelectedInEditedLink && !isHoveredToken){
+    if (memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark'){
+      return theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    }
+    if(isSelectedInEditedLink && !isHoveredToken){
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
-    else if(isMostRelevantSuggestion && !isHoveredToken){
+    if(isMostRelevantSuggestion && !isHoveredToken){
       return buttonNormalBackgroundColor
     }
-    else {
-      return theme.palette.tokenButtons.defaultTokenButtons.text
-    }
+    return theme.palette.tokenButtons.defaultTokenButtons.text
   },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme, memberOfPrimaryLink?.metadata.status])
 
   return (<>
