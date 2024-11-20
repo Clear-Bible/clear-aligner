@@ -5,6 +5,7 @@ import { DefaultProjectId } from '../../state/links/tableManager';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
 import { AppContext } from '../../App';
+import { useDatabase } from '../../hooks/useDatabase';
 
 /**
  * props for the hook
@@ -30,9 +31,16 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
   const { projectState, setProjects, preferences, setPreferences } = useContext(AppContext);
   const [ isDialogOpen, setIsDialogOpen ] = useState<boolean>(false);
 
+  const dbApi = useDatabase();
+
   const handleDelete = useCallback(async () => {
     if (project.id) {
       await projectState.projectTable?.remove?.(project.id);
+      const onInitialized = () => {
+        dbApi.removeSource(project.id)
+          .then(console.log)
+          .then(console.error);
+      }
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (project.id || '').trim()));
       if (preferences?.currentProject === project.id) {
         projectState.linksTable.reset().catch(console.error);
@@ -40,7 +48,14 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
         setPreferences((p: UserPreference | undefined) => ({
           ...(p ?? {}) as UserPreference,
           currentProject: DefaultProjectId,
-          initialized: InitializationStates.UNINITIALIZED
+          initialized: InitializationStates.UNINITIALIZED,
+          onInitialized: [ ...(p?.onInitialized ?? []), onInitialized ]
+        }));
+      } else {
+        setPreferences((p: UserPreference | undefined) => ({
+          ...(p ?? {}) as UserPreference,
+          initialized: InitializationStates.UNINITIALIZED,
+          onInitialized: [ ...(p?.onInitialized ?? []), onInitialized ]
         }));
       }
       setIsDialogOpen(false);

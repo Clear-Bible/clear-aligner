@@ -311,7 +311,6 @@ export class ProjectRepository extends BaseRepository {
     };
   }
 
-
   convertCorpusToDataSource = (corpus: any) => ({
     id: corpus.id,
     side: corpus.side,

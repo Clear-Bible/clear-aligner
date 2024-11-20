@@ -37,6 +37,7 @@ export interface DatabaseApi {
   getAllJournalEntries: (projectId: string, itemLimit?: number, itemSkip?: number) => Promise<JournalEntryDTO[]>;
   getCount: (sourceName: string, tableName: string) => Promise<number>;
   getDataSources: () => Promise<ListedProjectDto[]|undefined>;
+  removeSource: (projectId: string) => Promise<void>;
   getProjects: () => Promise<ProjectEntity[]|undefined>;
   projectSave: (project: ProjectEntity) => Promise<ProjectEntity>;
   corporaGetPivotWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<{
