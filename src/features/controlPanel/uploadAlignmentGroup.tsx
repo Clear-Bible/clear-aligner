@@ -5,7 +5,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile } from '../../structs/alignmentFile';
-import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
+import { useGetAllLinks } from '../../state/links/tableManager';
 import { Button } from '@mui/material';
 import uuid from 'uuid-random';
 import { AlignmentFileCheckResults, checkAlignmentFile, saveAlignmentFile } from '../../helpers/alignmentFile';
@@ -13,6 +13,7 @@ import { AlignmentValidationErrorDialog } from '../../components/alignmentValida
 import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { Project } from '../../state/projects/tableManager';
+import { useImportAlignmentFile } from '../../state/links/useImportAlignmentFile';
 
 const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
   project?: Project,
