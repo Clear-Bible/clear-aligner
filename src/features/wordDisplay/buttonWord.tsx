@@ -384,7 +384,12 @@ export const ButtonToken = ({
    */
   const upperRightHandCornerIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
-      if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
+        return buttonNormalBackgroundColor;
+      }
+      if (isCurrentlyHoveredToken) {
+        return buttonPrimaryColor
+      }
       if (isSelectedInEditedLink) {
         return buttonNormalBackgroundColor;
       }
