@@ -314,6 +314,9 @@ export const ButtonToken = ({
     return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
   },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme, memberOfPrimaryLink])
 
+  /**
+   * This is the icon to indicate the source of the alignment
+   */
   const sourceIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
@@ -376,6 +379,9 @@ export const ButtonToken = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
+  /**
+   * This is the icon to indicate if there are notes on the alignment
+   */
   const upperRightHandCornerIndicator = useMemo<React.JSX.Element>(() => {
     const color = (() => {
       if (isCurrentlyHoveredToken) return buttonPrimaryColor;
