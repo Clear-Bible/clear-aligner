@@ -1,10 +1,9 @@
 /**
  * This file contains classes to set up the database with TypeORM.
  */
-//@ts-nocheck
 import path from 'path';
 
-const { DataSource } = require('typeorm');
+import { DataSource } from 'typeorm';
 const isDev = require('electron-is-dev');
 const { app } = require('electron');
 const sanitize = require('sanitize-filename');
@@ -47,7 +46,7 @@ export interface RepositoryWithMigrations {
 /**
  * This class facilitates the database initialization
  */
-export class BaseRepository implements RepositoryWithMigrations {
+export abstract class BaseRepository implements RepositoryWithMigrations {
   static DB_WAIT_IN_MS = 1000;
 
   isLoggingTime: boolean;
@@ -58,19 +57,21 @@ export class BaseRepository implements RepositoryWithMigrations {
     this.dataSources = new Map<string, DataSourceStatus>();
   }
 
-  logDatabaseTime = (label) => {
+  abstract getMigrations(): Promise<any[]>;
+
+  logDatabaseTime = (label: string) => {
     if (this.isLoggingTime) {
       console.time(label);
     }
   };
 
-  logDatabaseTimeLog = (label, ...args) => {
+  logDatabaseTimeLog = (label: string, ...args: any[]) => {
     if (this.isLoggingTime) {
       console.timeLog(label, ...args);
     }
   };
 
-  logDatabaseTimeEnd = (label) => {
+  logDatabaseTimeEnd = (label: string) => {
     if (this.isLoggingTime) {
       console.timeEnd(label);
     }
@@ -89,7 +90,7 @@ export class BaseRepository implements RepositoryWithMigrations {
       : path.dirname(app.getPath('exe'))), 'sql');
   };
 
-  removeDataSource = async (sourceName) => {
+  removeDataSource = async (sourceName: string) => {
     this.logDatabaseTime('removeDataSource()');
     try {
       const sourceStatus = this.dataSources.get(sourceName);
@@ -104,7 +105,7 @@ export class BaseRepository implements RepositoryWithMigrations {
     }
   };
 
-  getDataSourceWithEntities = async (sourceName, entities, generationFile = '', databaseDirectory = '') => {
+  getDataSourceWithEntities = async (sourceName: string, entities: any[], generationFile = '', databaseDirectory = '', allowCreate?: boolean) => {
     if (!sourceName || sourceName.length < 1) {
       throw new Error('sourceName cannot be empty or undefined!');
     }
@@ -128,6 +129,12 @@ export class BaseRepository implements RepositoryWithMigrations {
       const workDatabaseDirectory = databaseDirectory ? databaseDirectory : this.getDataDirectory();
       const databaseFile = path.join(workDatabaseDirectory, fileName);
 
+      if (!allowCreate) { // if allowCreate isn't allowed
+        if (!fs.existsSync(path.dirname(databaseFile)) || !fs.existsSync(databaseFile)) { // if the directory doesn't exist or the db file doesn't exist
+          console.error(`Attempted to access '${databaseFile}' but allowCreate is false and it doesn't exist`);
+          return undefined;
+        }
+      }
 
       this.logDatabaseTime('getDataSourceWithEntities(): copied template');
       try {

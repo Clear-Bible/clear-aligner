@@ -56,9 +56,7 @@ contextBridge.exposeInMainWorld('databaseApi', {
   findLinksByBCV: (sourceName, side, bookNum, chapterNum, verseNum) => ipcRenderer.invoke(`${ChannelPrefix}:findLinksByBCV`, sourceName, side, bookNum, chapterNum, verseNum),
   findWordsByBCV: (database, side, bookNum, chapterNum, verseNum) => ipcRenderer.invoke(`${ChannelPrefix}:findWordsByBCV`, database, side, bookNum, chapterNum, verseNum),
   getAllWordsByCorpus: (database, side, corpusId, wordLimit, wordSkip) => ipcRenderer.invoke(`${ChannelPrefix}:getAllWordsByCorpus`, database, side, corpusId, wordLimit, wordSkip),
-  getAllCorpora: (database) => {
-    return ipcRenderer.invoke(`${ChannelPrefix}:getAllCorpora`, database);
-  },
+  getAllCorpora: (database) => ipcRenderer.invoke(`${ChannelPrefix}:getAllCorpora`, database),
   toggleCorporaUpdatedFlagOff: (projectId) => ipcRenderer.invoke(`${ChannelPrefix}:toggleCorporaUpdatedFlagOff`, projectId)
 } as DatabaseApi);
 

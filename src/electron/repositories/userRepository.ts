@@ -125,14 +125,14 @@ export class UserRepository extends BaseRepository implements UserRepositoryIFac
   constructor() {
     super();
     this.getDataSource = async () =>
-      await this.getDataSourceWithEntities(
+      (await this.getDataSourceWithEntities(
         UserRepository.USER_DB_NAME,
         [
           preferenceEntity,
           projectEntitySchema
         ],
         path.join(this.getTemplatesDirectory(), 'clear-aligner-user.sqlite'),
-        this.getDataDirectory());
+        this.getDataDirectory(), true))!; // allow create should always be true for the user database
   }
   getProjects = async (): Promise<ProjectEntity[]> => {
     const repo: Repository<ProjectEntity> = (await this.getDataSource()).getRepository(ProjectEntity);

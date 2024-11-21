@@ -16,6 +16,7 @@ import { userState } from '../features/profileAvatar/profileAvatar';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 import { FeaturePreferences } from '../common/data/featurePreferences';
+import { ProjectLocation } from '../common/data/project/project';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
@@ -118,15 +119,16 @@ const useInitialization = (): AppContextProps => {
         });
       }).then(() => {
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
+          const prefCurrentProject = projects.some((p) => p.id === res?.currentProject && p.location !== ProjectLocation.REMOTE) ? res?.currentProject : undefined;
+          const firstLocalOrSyncedProject = projects.find((p) => p.location !== ProjectLocation.REMOTE);
+          const currentProjectId = prefCurrentProject
+            ?? firstLocalOrSyncedProject?.id
+            ?? DefaultProjectId;
           setPreferences({
             ...(res ?? {}) as UserPreference,
-            currentProject: res?.currentProject
-              ?? projects?.[0]?.id
-              ?? DefaultProjectId
+            currentProject: currentProjectId
           });
-          currLinksTable.setSourceName(res?.currentProject
-            ?? projects?.[0]?.id
-            ?? DefaultProjectId);
+          currLinksTable.setSourceName(currentProjectId);
         });
       });
       initializeProject().catch(console.error);

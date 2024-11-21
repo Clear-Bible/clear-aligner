@@ -6,6 +6,7 @@ import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
 import { AppContext } from '../../App';
 import { useDatabase } from '../../hooks/useDatabase';
+import { ProjectLocation } from '../../common/data/project/project';
 
 /**
  * props for the hook
@@ -30,18 +31,39 @@ export interface UseDeleteProjectFromLocalWithDialogState {
 export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjectFromLocalWithDialogProps): UseDeleteProjectFromLocalWithDialogState => {
   const { projectState, setProjects, preferences, setPreferences } = useContext(AppContext);
   const [ isDialogOpen, setIsDialogOpen ] = useState<boolean>(false);
-
   const dbApi = useDatabase();
 
   const handleDelete = useCallback(async () => {
     if (project.id) {
-      await projectState.projectTable?.remove?.(project.id);
-      const onInitialized = () => {
-        dbApi.removeSource(project.id)
-          .then(console.log)
-          .then(console.error);
+      switch (project.location) {
+        case ProjectLocation.REMOTE: // do nothing
+          break;
+        case ProjectLocation.LOCAL:
+          await projectState.projectTable?.remove?.(project.id);
+          break;
+        case ProjectLocation.SYNCED:
+          await projectState.projectTable?.sync({
+            ...project,
+            location: ProjectLocation.REMOTE
+          });
+          break;
       }
-      setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (project.id || '').trim()));
+      const cleanupDbFile = () => {
+        console.log('Remove db file', project.id);
+        dbApi.removeSource(project.id)
+          .then(() => { })
+          .then(() => { });
+      };
+      setProjects((ps: Project[]) => {
+        const newProjectsList = (ps || []).filter(p => (p.id || '').trim() !== (project.id || '').trim());
+        if (project.location === ProjectLocation.SYNCED) {
+          return [ ...newProjectsList, {
+            ...project,
+            location: ProjectLocation.REMOTE
+          } ];
+        }
+        return newProjectsList;
+      });
       if (preferences?.currentProject === project.id) {
         projectState.linksTable.reset().catch(console.error);
         projectState.linksTable.setSourceName(DefaultProjectId);
@@ -49,18 +71,16 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
           ...(p ?? {}) as UserPreference,
           currentProject: DefaultProjectId,
           initialized: InitializationStates.UNINITIALIZED,
-          onInitialized: [ ...(p?.onInitialized ?? []), onInitialized ]
+          onInitialized: [ ...(p?.onInitialized ?? []), cleanupDbFile ]
         }));
       } else {
-        setPreferences((p: UserPreference | undefined) => ({
-          ...(p ?? {}) as UserPreference,
-          initialized: InitializationStates.UNINITIALIZED,
-          onInitialized: [ ...(p?.onInitialized ?? []), onInitialized ]
-        }));
+        setTimeout(cleanupDbFile, 1_000);
+        //if (project.location === ProjectLocation.LOCAL) {
+        //}
       }
       setIsDialogOpen(false);
     }
-  }, [project.id, projectState.projectTable, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences, dbApi]);
+  }, [project, projectState.projectTable, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences, dbApi]);
 
   const dialog = useMemo(() => (
     <Dialog

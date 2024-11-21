@@ -101,6 +101,9 @@ export class ProjectTable extends VirtualTable {
 
       await this.sync(project).catch(console.error);
       if (!!createDataSource || updateWordsOrParts) {
+        if (createDataSource) {
+          await dbApi.createDataSource(project.id);
+        }
         // @ts-ignore
         const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
         updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
