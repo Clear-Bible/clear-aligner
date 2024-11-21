@@ -269,9 +269,15 @@ export const ButtonToken = ({
    * when the token is selected, this is the background/fill color
    */
   const buttonPrimaryColor = useMemo(() => {
-    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) return theme.palette.tokenButtons.defaultTokenButtons.selected;
-    if (wasSubmittedForConsideration && scoreIsRelevant) return theme.palette.mode === 'light' ? theme.palette.secondary.light : theme.palette.secondary.main;
-    if (!memberOfPrimaryLink?.metadata.status) return theme.palette.text.disabled;
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) {
+      return theme.palette.tokenButtons.defaultTokenButtons.selected;
+    }
+    else if (wasSubmittedForConsideration && scoreIsRelevant) {
+      return theme.palette.mode === 'light' ? theme.palette.secondary.light : theme.palette.secondary.main;
+    }
+    else if (!memberOfPrimaryLink?.metadata.status) {
+      return theme.palette.text.disabled;
+    }
     switch (memberOfPrimaryLink?.metadata.status) {
       case LinkStatus.APPROVED:
         return theme.palette.success.main;
@@ -297,24 +303,26 @@ export const ButtonToken = ({
         theme.palette.tokenButtons.defaultTokenButtons.text :
         theme.palette.tokenButtons.defaultTokenButtons.textContrast
     }
-    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast
     }
-    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
+    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
-    if (memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+    else if (memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast;
     }
-    if (isSelectedInEditedLink){
+    else if (isSelectedInEditedLink){
       return theme.palette.text.primary
     }
     // If this token is excluded, then make sure it gets the specified excluded color from the theme.
     // !important ensures it overrides the color it gets as a result of disabled being set to true.
-    if(isTokenExcluded){
+    else if(isTokenExcluded){
       return `${theme.palette.tokenButtons.excludedTokenButtons.text} !important`
     }
-    return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
+    else{
+      return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
+    }
   },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme, memberOfPrimaryLink])
 
   /**
@@ -325,16 +333,18 @@ export const ButtonToken = ({
       if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
         return buttonNormalBackgroundColor;
       }
-      if (isCurrentlyHoveredToken) {
+      else if (isCurrentlyHoveredToken) {
         return buttonPrimaryColor;
       }
-      if (isMostRelevantSuggestion){
+      else if (isMostRelevantSuggestion){
        return theme.palette.tokenButtons.suggestedTokenButtons.icon;
       }
-      if (isSelectedInEditedLink || wasSubmittedForConsideration) {
+      else if (isSelectedInEditedLink || wasSubmittedForConsideration) {
         return buttonNormalBackgroundColor;
       }
-      return buttonPrimaryColor;
+      else {
+        return buttonPrimaryColor;
+      }
     })();
     const iconProps: SvgIconOwnProps = {
       sx: {
@@ -390,13 +400,15 @@ export const ButtonToken = ({
       if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
         return buttonNormalBackgroundColor;
       }
-      if (isCurrentlyHoveredToken) {
+      else if (isCurrentlyHoveredToken) {
         return buttonPrimaryColor
       }
-      if (isSelectedInEditedLink) {
+      else if (isSelectedInEditedLink) {
         return buttonNormalBackgroundColor;
       }
-      return buttonPrimaryColor;
+      else {
+        return buttonPrimaryColor;
+      }
     })();
     const iconProps: SvgIconOwnProps = {
       sx: {
@@ -426,13 +438,15 @@ export const ButtonToken = ({
         if(isCurrentlyHoveredToken && isSelectedInEditedLink){
           return buttonNormalBackgroundColor;
         }
-        if (isCurrentlyHoveredToken) {
+        else if (isCurrentlyHoveredToken) {
           return buttonPrimaryColor;
         }
-        if (isSelectedInEditedLink) {
+        else if (isSelectedInEditedLink) {
           return buttonNormalBackgroundColor;
         }
-        return buttonPrimaryColor;
+        else{
+          return buttonPrimaryColor;
+        }
       })();
       const baseSx: SxProps<Theme> = {
         fontSize: iconSize,
@@ -485,28 +499,30 @@ export const ButtonToken = ({
         backgroundColor: buttonPrimaryColor
       };
     }
-      if (!memberOfPrimaryLink) {
+    else if (!memberOfPrimaryLink) {
       return ({
         backgroundColor: theme.palette.tokenButtons.defaultTokenButtons.rollover,
         color: theme.palette.tokenButtons.defaultTokenButtons.text,
       })
     }
-    if (buttonPrimaryColor === theme.palette.text.disabled) {
+    else if (buttonPrimaryColor === theme.palette.text.disabled) {
       const decomposedColor = decomposeColor(theme.palette.primary.main);
       return ({
         backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
       });
     }
-    if (memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
+    else if (memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
       return ({
         backgroundColor: undefined,
         backgroundImage: backgroundImageGradientTransparent
       });
     }
-    const rgbColor = decomposeColor(buttonPrimaryColor);
-    return ({
-      backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
-    });
+    else {
+      const rgbColor = decomposeColor(buttonPrimaryColor);
+      return ({
+        backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
+      });
+    }
   }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink, theme, alphaTransparencyValueForButtonTokens, isSelectedInEditedLink]);
 
   const wordPart = useMemo<number | undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
@@ -547,8 +563,9 @@ export const ButtonToken = ({
     if(isTokenExcluded){
       return `transparent !important`
     }
-    return ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`
-
+    else{
+      return ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`
+    }
   },[buttonPrimaryColor, isMostRelevantSuggestion, isSelectedInEditedLink, isSpecialMachineLearningCase, isTokenExcluded])
 
   /**
@@ -560,27 +577,29 @@ export const ButtonToken = ({
         theme.palette.tokenButtons.defaultTokenButtons.textContrast :
         theme.palette.tokenButtons.defaultTokenButtons.text;
     }
-    if (isMostRelevantSuggestion){
+    else if (isMostRelevantSuggestion){
      return theme.palette.mode === 'light' ?
        theme.palette.tokenButtons.defaultTokenButtons.text :
        theme.palette.tokenButtons.defaultTokenButtons.textContrast;
     }
-    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast
     }
-    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
+    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
-    if (memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark'){
+    else if (memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark'){
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast;
     }
-    if(isSelectedInEditedLink && !isHoveredToken){
+    else if(isSelectedInEditedLink && !isHoveredToken){
       return theme.palette.tokenButtons.defaultTokenButtons.text
     }
-    if(isMostRelevantSuggestion && !isHoveredToken){
+    else if(isMostRelevantSuggestion && !isHoveredToken){
       return buttonNormalBackgroundColor
     }
-    return theme.palette.tokenButtons.defaultTokenButtons.text
+    else{
+      return theme.palette.tokenButtons.defaultTokenButtons.text
+    }
   },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme, memberOfPrimaryLink?.metadata.status])
 
   return (<>
