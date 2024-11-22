@@ -7,6 +7,7 @@ import { InitializationStates } from '../../workbench/query';
 import { AppContext } from '../../App';
 import { useDatabase } from '../../hooks/useDatabase';
 import { ProjectLocation } from '../../common/data/project/project';
+import { pickDeFactoCurrentProject } from './pickDeFactoCurrentProject';
 
 /**
  * props for the hook
@@ -29,7 +30,7 @@ export interface UseDeleteProjectFromLocalWithDialogState {
  * @param project project the hook would be used to delete
  */
 export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjectFromLocalWithDialogProps): UseDeleteProjectFromLocalWithDialogState => {
-  const { projectState, setProjects, preferences, setPreferences } = useContext(AppContext);
+  const { projectState, projects, setProjects, preferences, setPreferences } = useContext(AppContext);
   const [ isDialogOpen, setIsDialogOpen ] = useState<boolean>(false);
   const dbApi = useDatabase();
 
@@ -65,11 +66,12 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
         return newProjectsList;
       });
       if (preferences?.currentProject === project.id) {
+        const currentProjectId = pickDeFactoCurrentProject((projects || []).filter(p => (p.id || '').trim() !== (project.id || '').trim()), DefaultProjectId);
         projectState.linksTable.reset().catch(console.error);
-        projectState.linksTable.setSourceName(DefaultProjectId);
+        projectState.linksTable.setSourceName(currentProjectId);
         setPreferences((p: UserPreference | undefined) => ({
           ...(p ?? {}) as UserPreference,
-          currentProject: DefaultProjectId,
+          currentProject: currentProjectId,
           initialized: InitializationStates.UNINITIALIZED,
           onInitialized: [ ...(p?.onInitialized ?? []), cleanupDbFile ]
         }));
@@ -80,7 +82,7 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
       }
       setIsDialogOpen(false);
     }
-  }, [project, projectState.projectTable, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences, dbApi]);
+  }, [project, projectState.projectTable, projects, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences, dbApi]);
 
   const dialog = useMemo(() => (
     <Dialog

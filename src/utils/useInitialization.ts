@@ -16,7 +16,8 @@ import { userState } from '../features/profileAvatar/profileAvatar';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 import { FeaturePreferences } from '../common/data/featurePreferences';
-import { ProjectLocation } from '../common/data/project/project';
+import { pickDeFactoCurrentProject } from '../api/projects/pickDeFactoCurrentProject';
+import { useDatabase } from '../hooks/useDatabase';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
@@ -35,6 +36,7 @@ const useInitialization = (): AppContextProps => {
   const [ features, setFeatures ] = useState<FeaturePreferences>({
     enableTokenSuggestions: true // defaults to enabled
   });
+  const dbApi = useDatabase();
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -119,11 +121,7 @@ const useInitialization = (): AppContextProps => {
         });
       }).then((projectsList: Project[]) => {
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
-          const prefCurrentProject = projectsList.some((p) => p.id === res?.currentProject && p.location !== ProjectLocation.REMOTE) ? res?.currentProject : undefined;
-          const firstLocalOrSyncedProject = projectsList.find((p) => p.location !== ProjectLocation.REMOTE);
-          const currentProjectId = prefCurrentProject
-            ?? firstLocalOrSyncedProject?.id
-            ?? projects.find((p) => DefaultProjectId === p.id)?.id;
+          const currentProjectId = pickDeFactoCurrentProject(projectsList, res?.currentProject);
           setPreferences({
             ...(res ?? {}) as UserPreference,
             currentProject: currentProjectId

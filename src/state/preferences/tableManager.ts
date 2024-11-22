@@ -16,6 +16,15 @@ export enum ControlPanelFormat {
   HORIZONTAL
 }
 
+export interface UserPreferenceDto {
+  id: string;
+  bcv: string;
+  alignment_view: string;
+  current_project: string;
+  page: string;
+  show_gloss: boolean;
+}
+
 export interface UserPreference {
   id: string;
   bcv: BCVWP | null;
@@ -25,15 +34,6 @@ export interface UserPreference {
   currentProject?: string;
   initialized?: InitializationStates;
   onInitialized?: (() => void)[];
-}
-
-export interface UserPreferenceDto {
-  id: string;
-  bcv: string;
-  alignment_view: string;
-  current_project: string;
-  page: string;
-  show_gloss: boolean;
 }
 
 const initialPreferences = {
@@ -67,9 +67,12 @@ export class UserPreferenceTable extends VirtualTable {
     }
   };
 
-  getPreferences = async (requery = false): Promise<UserPreference> => {
+  getPreferences = async (requery: boolean = false): Promise<UserPreference> => {
     if (requery) {
-      const preferences = await dbApi.getPreferences(false);
+      const preferences = await dbApi.getPreferences();
+      if (!preferences) { // if first launch, create the default project
+        await dbApi.createDataSource(DefaultProjectId);
+      }
       if (preferences) {
         this.preferences = {
           id: preferences?.id,

@@ -7,7 +7,7 @@ import { GridSortItem } from '@mui/x-data-grid';
 import { RepositoryLink } from '../../structs';
 import { useContext, useEffect, useState } from 'react';
 import { useDatabase } from '../../hooks/useDatabase';
-import { DefaultProjectId, useDataLastUpdated } from '../../state/links/tableManager';
+import { useDataLastUpdated } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 
 /**
@@ -35,10 +35,10 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
     const load = async () => {
       console.time(`useLinksFromAlignedWord(alignedWord: '${currentAlignedWord.id}')`);
       try {
-        const links = await db.corporaGetLinksByAlignedWord(
-          preferences?.currentProject ?? DefaultProjectId,
+        const links = !!preferences?.currentProject ? (await db.corporaGetLinksByAlignedWord(
+          preferences?.currentProject,
           currentAlignedWord.sourceWordTexts.text,
-          currentAlignedWord.targetWordTexts.text, sort);
+          currentAlignedWord.targetWordTexts.text, sort)) : [];
         //remove links that are marked as 'rejected
         const nonRejectedLinks = links.filter(item => item.metadata?.status !== 'rejected')
         setLinks(nonRejectedLinks);
