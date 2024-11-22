@@ -65,6 +65,7 @@ export const AlignmentTableContext = createContext({} as AlignmentTableContextPr
 
 /**
  * Custom cell component to display book, chapter, and verse in the AlignmentTable
+ * or display the PerRowLinkStateSelector component (depending on hover state).
  * @param row rendering params for this RefCell entry
  */
 export const RefCell = ({row, rowHoveredId, setRowHoveredId}: {
@@ -78,13 +79,6 @@ export const RefCell = ({row, rowHoveredId, setRowHoveredId}: {
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
   const apiRef = useGridApiContext();
 
-  // this logic allows us to subscribe to mouse enter and mouse leave states
-  // inside the datagrid
-  // useEffect( () => {
-  //   if (apiRef.current.getRowElement(row.id)?.matches(":hover")){
-  //     setRowHoveredId(row.id);
-  //   }
-  // },[apiRef, row.id, setRowHoveredId],)
   const handleRowEnter: GridEventListener<"rowMouseEnter"> = ({id})  => {
     id === row.id && setRowHoveredId(id);
   }
