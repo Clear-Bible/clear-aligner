@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
-import { DefaultProjectId, LinksTable } from '../state/links/tableManager';
+import { LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
 import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
@@ -17,7 +17,6 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 import { FeaturePreferences } from '../common/data/featurePreferences';
 import { pickDeFactoCurrentProject } from '../api/projects/pickDeFactoCurrentProject';
-import { useDatabase } from '../hooks/useDatabase';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
@@ -36,7 +35,6 @@ const useInitialization = (): AppContextProps => {
   const [ features, setFeatures ] = useState<FeaturePreferences>({
     enableTokenSuggestions: true // defaults to enabled
   });
-  const dbApi = useDatabase();
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
