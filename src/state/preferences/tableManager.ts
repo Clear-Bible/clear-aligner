@@ -7,6 +7,9 @@ import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import uuid from 'uuid-random';
 import { DefaultProjectId } from '../links/tableManager';
 import { InitializationStates } from '../../workbench/query';
+import { DatabaseApi } from '../../hooks/useDatabase';
+
+const dbApi = (window as any).databaseApi as DatabaseApi;
 
 export enum ControlPanelFormat {
   VERTICAL,
@@ -19,7 +22,7 @@ export interface UserPreference {
   alignmentDirection: string;
   page: string;
   showGloss: boolean;
-  currentProject: string;
+  currentProject?: string;
   initialized?: InitializationStates;
   onInitialized?: (() => void)[];
 }
@@ -66,8 +69,7 @@ export class UserPreferenceTable extends VirtualTable {
 
   getPreferences = async (requery = false): Promise<UserPreference> => {
     if (requery) {
-      // @ts-ignore
-      const preferences = await window.databaseApi.getPreferences();
+      const preferences = await dbApi.getPreferences(false);
       if (preferences) {
         this.preferences = {
           id: preferences?.id,

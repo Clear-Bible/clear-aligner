@@ -47,7 +47,7 @@ const useInitialization = (): AppContextProps => {
         res && setProjects(p => [...(res.values() ?? p)]);
       });
     }
-  }, 1000);
+  }, 1_000);
 
   useEffect(() => {
     setUpdatedPreferences(preferences);
@@ -93,7 +93,7 @@ const useInitialization = (): AppContextProps => {
         initialized: InitializationStates.INITIALIZED
       }));
     };
-    if (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED) {
+    if (!!preferences?.currentProject && (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED)) {
       void loadContainers();
     }
   }, [preferences, preferences?.currentProject, projects, containers, setContainers, state]);
@@ -110,20 +110,20 @@ const useInitialization = (): AppContextProps => {
         projectTable: currProjectTable,
         userPreferenceTable: currUserPreferenceTable
       });
-      const initializeProject = () => new Promise((resolve) => {
+      const initializeProject = () => new Promise<Project[]>((resolve) => {
           let projects: Project[] = [];
         currProjectTable.getProjects(true).then(res => {
           projects = [...res!.values()];
           setProjects(projects);
           resolve(projects);
         });
-      }).then(() => {
+      }).then((projectsList: Project[]) => {
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
-          const prefCurrentProject = projects.some((p) => p.id === res?.currentProject && p.location !== ProjectLocation.REMOTE) ? res?.currentProject : undefined;
-          const firstLocalOrSyncedProject = projects.find((p) => p.location !== ProjectLocation.REMOTE);
+          const prefCurrentProject = projectsList.some((p) => p.id === res?.currentProject && p.location !== ProjectLocation.REMOTE) ? res?.currentProject : undefined;
+          const firstLocalOrSyncedProject = projectsList.find((p) => p.location !== ProjectLocation.REMOTE);
           const currentProjectId = prefCurrentProject
             ?? firstLocalOrSyncedProject?.id
-            ?? DefaultProjectId;
+            ?? projects.find((p) => DefaultProjectId === p.id)?.id;
           setPreferences({
             ...(res ?? {}) as UserPreference,
             currentProject: currentProjectId

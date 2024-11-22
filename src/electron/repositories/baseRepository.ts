@@ -1,9 +1,9 @@
 /**
  * This file contains classes to set up the database with TypeORM.
  */
-import path from 'path';
+const path = require('path');
 
-import { DataSource } from 'typeorm';
+const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
 const { app } = require('electron');
 const sanitize = require('sanitize-filename');
@@ -18,7 +18,7 @@ const isMac = platform() === 'darwin';
 class DataSourceStatus {
   isLoading: boolean;
   isLoaded: boolean;
-  dataSource: DataSource | undefined;
+  dataSource: typeof DataSource | undefined;
 
   constructor() {
     this.isLoading = false;
@@ -40,7 +40,7 @@ export interface RepositoryWithMigrations {
    * by typeorm (strings with globs indicating file paths, migration data
    * classes, etc)
    */
-  getMigrations?: () => Promise<any[]>;
+  getMigrations?: (() => Promise<any[]>)|undefined;
 }
 
 /**
@@ -105,7 +105,7 @@ export abstract class BaseRepository implements RepositoryWithMigrations {
     }
   };
 
-  getDataSourceWithEntities = async (sourceName: string, entities: any[], generationFile = '', databaseDirectory = '', allowCreate?: boolean) => {
+  getDataSourceWithEntities = async (sourceName: string, entities: any[], generationFile: string = '', databaseDirectory: string = '', allowCreate: boolean = false) => {
     if (!sourceName || sourceName.length < 1) {
       throw new Error('sourceName cannot be empty or undefined!');
     }
@@ -160,7 +160,7 @@ export abstract class BaseRepository implements RepositoryWithMigrations {
             migrationsRun: true,
             migrations: [...migrations]
           } : {}),
-          prepareDatabase: (db) => {
+          prepareDatabase: (db: any) => {
             db.pragma('journal_mode = MEMORY');
             db.pragma('cache_size = -8000000');
             db.pragma('read_uncommitted = true');
@@ -169,9 +169,10 @@ export abstract class BaseRepository implements RepositoryWithMigrations {
           },
           entities
         });
+        sourceStatus.dataSource = newDataSource;
+
         await newDataSource.initialize();
 
-        sourceStatus.dataSource = newDataSource;
         sourceStatus.isLoaded = true;
 
         this.logDatabaseTimeLog('getDataSourceWithEntities(): created data source', sourceName, databaseFile);
