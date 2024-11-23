@@ -36,6 +36,17 @@ const useInitialization = (): AppContextProps => {
     enableTokenSuggestions: true // defaults to enabled
   });
 
+  useEffect(() => {
+    if (!preferences?.isFirstLaunch) {
+      return;
+    }
+    window.location.assign('/');
+    setPreferences((oldPreferences) => ({
+      ...(oldPreferences ?? {}) as UserPreference,
+      isFirstLaunch: false
+    }));
+  }, [ preferences?.isFirstLaunch, setPreferences ]);
+
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
   }, [state.userPreferenceTable]);
@@ -96,7 +107,7 @@ const useInitialization = (): AppContextProps => {
     if (!!preferences?.currentProject && (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED)) {
       void loadContainers();
     }
-  }, [preferences, preferences?.currentProject, projects, containers, setContainers, state]);
+  }, [preferences, preferences?.initialized, preferences?.currentProject, projects, containers, setContainers, state]);
 
   useEffect(() => {
     if (!isLoaded.current) {

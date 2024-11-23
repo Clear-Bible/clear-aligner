@@ -34,6 +34,7 @@ export interface UserPreference {
   currentProject?: string;
   initialized?: InitializationStates;
   onInitialized?: (() => void)[];
+  isFirstLaunch?: boolean;
 }
 
 const initialPreferences = {
@@ -42,7 +43,7 @@ const initialPreferences = {
   alignmentDirection: ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
   page: '',
   showGloss: false,
-  currentProject: DefaultProjectId
+  currentProject: undefined
 };
 
 export class UserPreferenceTable extends VirtualTable {
@@ -89,8 +90,14 @@ export class UserPreferenceTable extends VirtualTable {
         try {
           await dbApi.createDataSource(DefaultProjectId);
         } finally {
-          this.preferences.initialized = InitializationStates.UNINITIALIZED;
-          this.preferences.currentProject = DefaultProjectId;
+          this.preferences = {
+            ...this.preferences,
+            initialized: InitializationStates.UNINITIALIZED,
+            currentProject: DefaultProjectId,
+            page: '/',
+            isFirstLaunch: true
+          }
+          window.location.assign('/');
           console.log('preferences/tableManager:94', 'decrementing database busy counter');
           this.decrDatabaseBusyCtr();
         }

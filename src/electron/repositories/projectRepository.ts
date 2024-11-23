@@ -484,7 +484,7 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  createDataSource = async (sourceName: string) => {
+  createDataSource = async (sourceName: string): Promise<boolean> => {
     this.logDatabaseTime('createDataSource()');
     try {
       const result = !!(await this.getDataSource(sourceName, true));
