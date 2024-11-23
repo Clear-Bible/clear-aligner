@@ -70,9 +70,6 @@ export class UserPreferenceTable extends VirtualTable {
   getPreferences = async (requery: boolean = false): Promise<UserPreference> => {
     if (requery) {
       const preferences = await dbApi.getPreferences();
-      if (!preferences) { // if first launch, create the default project
-        await dbApi.createDataSource(DefaultProjectId);
-      }
       if (preferences) {
         this.preferences = {
           id: preferences?.id,
@@ -82,6 +79,12 @@ export class UserPreferenceTable extends VirtualTable {
           currentProject: preferences?.current_project ?? DefaultProjectId,
           bcv: preferences?.bcv ? BCVWP.parseFromString(preferences.bcv.trim()) : null
         };
+      } else { // if first launch, create the default project
+        this.incrDatabaseBusyCtr();
+        await dbApi.createDataSource(DefaultProjectId);
+        this.decrDatabaseBusyCtr();
+        this.preferences.initialized = InitializationStates.UNINITIALIZED;
+        this.preferences.currentProject = DefaultProjectId;
       }
     }
 
