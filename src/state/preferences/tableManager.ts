@@ -69,8 +69,11 @@ export class UserPreferenceTable extends VirtualTable {
 
   getPreferences = async (requery: boolean = false): Promise<UserPreference> => {
     if (requery) {
+      console.log('preferences/tableManager:72');
       const preferences = await dbApi.getPreferences();
+      console.log('preferences/tableManager:74', 'prefs from db', preferences);
       if (preferences) {
+        console.log('preferences/tableManager:76', 'this.preferences', this.preferences);
         this.preferences = {
           id: preferences?.id,
           page: preferences?.page,
@@ -80,11 +83,17 @@ export class UserPreferenceTable extends VirtualTable {
           bcv: preferences?.bcv ? BCVWP.parseFromString(preferences.bcv.trim()) : null
         };
       } else { // if first launch, create the default project
+        console.log('preferences/tableManager:86', 'incrementing database busy counter');
         this.incrDatabaseBusyCtr();
-        await dbApi.createDataSource(DefaultProjectId);
-        this.decrDatabaseBusyCtr();
-        this.preferences.initialized = InitializationStates.UNINITIALIZED;
-        this.preferences.currentProject = DefaultProjectId;
+        this.setDatabaseBusyText('Initializing default project...');
+        try {
+          await dbApi.createDataSource(DefaultProjectId);
+        } finally {
+          this.preferences.initialized = InitializationStates.UNINITIALIZED;
+          this.preferences.currentProject = DefaultProjectId;
+          console.log('preferences/tableManager:94', 'decrementing database busy counter');
+          this.decrDatabaseBusyCtr();
+        }
       }
     }
 

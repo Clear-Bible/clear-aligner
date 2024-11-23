@@ -118,7 +118,9 @@ const useInitialization = (): AppContextProps => {
           resolve(projects);
         });
       }).then((projectsList: Project[]) => {
+        console.log('useInitialization:121', 'getPreferences');
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
+          console.log('useInitialization:123', 'received preferences', res);
           const currentProjectId = pickDeFactoCurrentProject(projectsList, res?.currentProject);
           setPreferences({
             ...(res ?? {}) as UserPreference,
