@@ -1,7 +1,7 @@
 /**
  * This file contains the LinksTable Class and supporting functions.
  */
-import { RepositoryLink, LinkOriginManual, LinkStatus } from '../../structs';
+import { LinkOriginManual, LinkStatus, RepositoryLink } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { DatabaseStatus, InitialDatabaseStatus, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
@@ -442,7 +442,7 @@ export class LinksTable extends VirtualTable {
     LinksTable.createIdFromWordId(link?.targets?.[0] ?? EmptyWordId);
 }
 
-const databaseHookDebug = (text: string, ...args: any[]) => {
+export const databaseHookDebug = (text: string, ...args: any[]) => {
   if (LogDatabaseHooks) {
     console.debug(text, ...args);
   }
@@ -780,51 +780,6 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
         databaseHookDebug('useFindLinksByBCV(): endStatus', endStatus);
       });
   }, [projectState?.linksTable, isNoPreload, prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
-
-  return { ...status };
-};
-
-/**
- * Get all links hook.
- *<p>
- * Key parameters are used to control operations that may be destructive or time-consuming
- * on re-render. A constant value will ensure an operation only happens once, and a UUID
- * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
- * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
- *<p>
- * @param projectId optional project name to specify
- * @param getKey Unique key to control get operation (optional; undefined = no get).
- */
-export const useGetAllLinks = (projectId?: string, getKey?: string) => {
-  const { projectState } = React.useContext(AppContext);
-  const [status, setStatus] = useState<{
-    result?: RepositoryLink[];
-  }>({});
-  const prevGetKey = useRef<string | undefined>();
-  const linksTable = useMemo(() => {
-    if (!projectId) {
-      return projectState.linksTable;
-    }
-    return new LinksTable(projectId);
-  }, [projectId, projectState.linksTable]);
-
-  useEffect(() => {
-    if (!getKey
-      || prevGetKey.current === getKey) {
-      return;
-    }
-    prevGetKey.current = getKey;
-    databaseHookDebug('useGetAllLinks(): status', status);
-    linksTable.getAll()
-      .then(result => {
-        const endStatus = {
-          ...status,
-          result
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
-      });
-  }, [linksTable, prevGetKey, getKey, status]);
 
   return { ...status };
 };
