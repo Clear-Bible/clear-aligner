@@ -8,6 +8,7 @@ import { MiniDrawer } from './features/miniDrawer/miniDrawer';
 import { Box } from '@mui/system';
 import BCVWP from './features/bcvwp/BCVWPSupport';
 import { DEFAULT_DOCUMENT_TITLE } from './common/constants';
+import { BusyDialogContext, BusyDialogContextProps, useBusyDialogContext } from './utils/useBusyDialogContext';
 
 export interface LayoutContextProps {
   windowTitle: string;
@@ -22,7 +23,8 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
   useTrackLocation();
-  const { isOpen: busyDialogOpen, busyDialog } = useBusyDialog();
+  const busyDialogContext: BusyDialogContextProps = useBusyDialogContext();
+  const { isOpen: busyDialogOpen, busyDialog } = useBusyDialog(busyDialogContext);
   const appCtx = useContext(AppContext);
   const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1, 1, 1), [appCtx.preferences?.bcv]);
   const layoutContext: LayoutContextProps = useMemo(
@@ -57,22 +59,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
 
   return (
     <LayoutContext.Provider value={layoutContext}>
-      <Themed theme={theme}>
-        {!isProjectDialogOpen ? busyDialog : null}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          overflow: 'hidden',
-        }}>
-          <Box sx={{ display: "flex" }}>
-            <MiniDrawer/>
-            <div id={'outlet'} style={{ flexGrow: 1, height: '100vh', overflowX: 'hidden', overflowY: 'hidden' }}>
-              <Outlet />
-            </div>
-          </Box>
-        </div>
-      </Themed>
+      <BusyDialogContext.Provider value={busyDialogContext}>
+        <Themed theme={theme}>
+          {!isProjectDialogOpen ? busyDialog : null}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            overflow: 'hidden',
+          }}>
+            <Box sx={{ display: "flex" }}>
+              <MiniDrawer/>
+              <div id={'outlet'} style={{ flexGrow: 1, height: '100vh', overflowX: 'hidden', overflowY: 'hidden' }}>
+                <Outlet />
+              </div>
+            </Box>
+          </div>
+        </Themed>
+      </BusyDialogContext.Provider>
     </LayoutContext.Provider>
   );
 };

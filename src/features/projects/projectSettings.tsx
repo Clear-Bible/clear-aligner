@@ -489,7 +489,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
           onClick={handleClose}>Cancel</Button>
         <Button
           disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || isFormReadOnly}
-          onClick={e => {
+          onClick={e => { // TODO, wrap and force show dialog
             handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
               // handleClose() in the .then() ensures dialog doesn't close prematurely
               handleClose();

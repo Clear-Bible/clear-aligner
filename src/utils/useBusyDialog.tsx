@@ -20,16 +20,31 @@ import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
 import { isLoadingAnyCorpora } from '../workbench/query';
 import { Close } from '@mui/icons-material';
+import { BusyDialogContextProps } from './useBusyDialogContext';
 
-const BusyRefreshTimeInMs = 250;
+const BusyRefreshTimeInMs = 125;
 const DefaultBusyMessage = 'Please wait...';
 
 export interface UseBusyDialogStatus {
+  /**
+   * indicates whether the busy dialog is currently being shown
+   */
   isOpen: boolean;
   busyDialog: JSX.Element;
-};
+}
 
-const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseBusyDialogStatus => {
+/**
+ * busy dialog hook
+ * @param busyDialogContext parameters for the busy dialog
+ */
+const useBusyDialog = (busyDialogContext: BusyDialogContextProps): UseBusyDialogStatus => {
+  const {
+    customStatus,
+    setCustomStatus, // imported here to clear the status on close
+    onCancel,
+    setOnCancel, // imported here to clear the onCancel function on close
+    isForceShowBusyDialog
+  } = busyDialogContext;
   const { projectState } = useContext(AppContext);
   const [cancel, setCancel] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<{
@@ -142,7 +157,14 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
     setCancel(false);
   }, [customStatus]);
 
-  const isOpen = useMemo(() => !!spinnerParams.isBusy && !cancel, [spinnerParams.isBusy, cancel]);
+  const isOpen = useMemo(() => isForceShowBusyDialog || (!!spinnerParams.isBusy && !cancel), [isForceShowBusyDialog, spinnerParams.isBusy, cancel]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCustomStatus(undefined);
+      setOnCancel(undefined);
+    }
+  }, [ isOpen, setCustomStatus, setOnCancel ]);
 
   return {
     isOpen,
@@ -162,7 +184,11 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
               !!onCancel && (
                 <IconButton onClick={() => {
                   setCancel(true);
-                  onCancel();
+                  try {
+                    onCancel();
+                  } finally {
+                    setOnCancel(undefined);
+                  }
                 }} sx={{m: 0}}>
                   <Close sx={{height: 18, width: 'auto'}} />
                 </IconButton>
