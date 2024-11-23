@@ -40,7 +40,8 @@ const useInitialization = (): AppContextProps => {
     if (!preferences?.isFirstLaunch) {
       return;
     }
-    window.location.assign('/');
+    window.location.reload();
+    //window.location.assign('/');
     setPreferences((oldPreferences) => ({
       ...(oldPreferences ?? {}) as UserPreference,
       isFirstLaunch: false
