@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppContext } from '../../App';
 import { RepositoryLink } from '../../structs';
 import { databaseHookDebug, LinksTable } from './tableManager';
