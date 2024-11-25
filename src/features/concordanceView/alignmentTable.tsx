@@ -8,7 +8,7 @@ import {
   GridColDef,
   GridEventListener,
   GridInputRowSelectionModel,
-  GridRenderCellParams,
+  GridRenderCellParams, GridRowId,
   GridRowParams,
   GridRowSelectionModel,
   GridSortItem,
@@ -65,34 +65,31 @@ export const AlignmentTableContext = createContext({} as AlignmentTableContextPr
 
 /**
  * Custom cell component to display book, chapter, and verse in the AlignmentTable
+ * or display the PerRowLinkStateSelector component (depending on hover state).
  * @param row rendering params for this RefCell entry
  */
-export const RefCell = (
-  row: GridRenderCellParams<RepositoryLink, any, any>
+export const RefCell = ({row, rowHoveredId, setRowHoveredId}: {
+  row: GridRenderCellParams<RepositoryLink, any, any>,
+  rowHoveredId: GridRowId,
+  setRowHoveredId: React.Dispatch<React.SetStateAction<GridRowId>>,
+}
+
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
-  const [rowHovered, setRowHovered] = useState(false);
   const apiRef = useGridApiContext();
 
-  // this logic allows us to subscribe to mouse enter and mouse leave states
-  // inisde the datagrid
-  useEffect( () => {
-    if (apiRef.current.getRowElement(row.id)?.matches(":hover")){
-      setRowHovered(true);
-    }
-  },[apiRef, row.id])
   const handleRowEnter: GridEventListener<"rowMouseEnter"> = ({id})  => {
-    id === row.id && setRowHovered(true);
+    id === row.id && setRowHoveredId(id);
   }
   const handleRowLeave: GridEventListener<'rowMouseLeave'> = ({id})  => {
-    id === row.id && setRowHovered(false);
+    id === row.id && setRowHoveredId(-1);
   }
   useGridApiEventHandler(apiRef, "rowMouseEnter", handleRowEnter);
   useGridApiEventHandler(apiRef, "rowMouseLeave", handleRowLeave);
 
   return (
-    rowHovered ? <PerRowLinkStateSelector items={[
+    rowHoveredId === row.id ? <PerRowLinkStateSelector items={[
       {
         value: 'created',
         label: <LinkIcon />,
@@ -448,6 +445,8 @@ export const AlignmentTable = ({
 
   const sortModel = useMemo( () => sort ? [sort] : [], [sort])
 
+  const [rowHoveredId, setRowHoveredId] = useState<GridRowId>(-1);
+
   const columns: GridColDef[] = [
     {
       field: "__check__",
@@ -482,7 +481,11 @@ export const AlignmentTable = ({
       field: 'ref',
       headerName: 'Bible Ref',
       renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
-          <RefCell {...row} />
+          <RefCell
+            row={row}
+            rowHoveredId={rowHoveredId}
+            setRowHoveredId={setRowHoveredId}
+          />
       )
     },
     {
