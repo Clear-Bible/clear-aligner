@@ -1,4 +1,4 @@
-import { useDeleteProject } from './useDeleteProject';
+import { useDeleteRemoteProject } from '../../api/projects/useDeleteRemoteProject';
 import React, { useContext, useMemo, useState } from 'react';
 import { Button, Dialog, DialogContent, Grid, Typography } from '@mui/material';
 import { getUserGroups } from '../../server/amplifySetup';
@@ -6,7 +6,7 @@ import { ADMIN_GROUP } from '../../hooks/userInfoHooks';
 import { ProjectState } from '../../common/data/project/project';
 import { AppContext } from '../../App';
 import { Project } from '../../state/projects/tableManager';
-import { usePublishProject } from './usePublishProject';
+import { usePublishProject } from '../../api/projects/usePublishProject';
 
 /**
  * props for the hook
@@ -32,7 +32,7 @@ export const useDeleteProjectFromServerWithDialog = ({
                                                        project
 }: UseDeleteProjectFromServerWithDialogProps): UseDeleteProjectFromServerWithDialogState => {
   const { setSnackBarMessage, setIsSnackBarOpen } =  useContext(AppContext);
-  const { deleteProject } = useDeleteProject();
+  const { deleteProject } = useDeleteRemoteProject();
   const { publishProject, dialog: publishDialog } = usePublishProject();
   const [ isDialogOpen, setIsDialogOpen ] = useState<boolean>(false);
 

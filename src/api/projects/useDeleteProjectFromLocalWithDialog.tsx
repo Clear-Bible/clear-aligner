@@ -56,7 +56,7 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
           .then(() => { });
       };
       setProjects((ps: Project[]) => {
-        const newProjectsList = (ps || []).filter(p => (p.id || '').trim() !== (project.id || '').trim());
+        const newProjectsList = (ps ?? []).filter(p => p.id !== project.id);
         if (project.location === ProjectLocation.SYNCED) {
           return [ ...newProjectsList, {
             ...project,
@@ -65,21 +65,15 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
         }
         return newProjectsList;
       });
-      if (preferences?.currentProject === project.id) {
-        const currentProjectId = pickDeFactoCurrentProject((projects || []).filter(p => (p.id || '').trim() !== (project.id || '').trim()), DefaultProjectId);
-        projectState.linksTable.reset().catch(console.error);
-        projectState.linksTable.setSourceName(currentProjectId);
-        setPreferences((p: UserPreference | undefined) => ({
-          ...(p ?? {}) as UserPreference,
-          currentProject: currentProjectId,
-          initialized: InitializationStates.UNINITIALIZED,
-          onInitialized: [ ...(p?.onInitialized ?? []), cleanupDbFile ]
-        }));
-      } else {
-        setTimeout(cleanupDbFile, 1_000);
-        //if (project.location === ProjectLocation.LOCAL) {
-        //}
-      }
+      const currentProjectId = pickDeFactoCurrentProject((projects ?? []).filter(p => p.id !== project.id), preferences?.currentProject === project.id ? DefaultProjectId : preferences?.currentProject);
+      projectState.linksTable.reset().catch(console.error);
+      projectState.linksTable.setSourceName(currentProjectId);
+      setPreferences((p: UserPreference | undefined) => ({
+        ...(p ?? {}) as UserPreference,
+        currentProject: currentProjectId,
+        initialized: InitializationStates.UNINITIALIZED,
+        onInitialized: [ ...(p?.onInitialized ?? []), cleanupDbFile ]
+      }));
       setIsDialogOpen(false);
     }
   }, [project, projectState.projectTable, projects, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences, dbApi]);

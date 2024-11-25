@@ -5,7 +5,7 @@ import { ApiUtils } from '../utils';
 import ResponseObject = ApiUtils.ResponseObject;
 
 /**
- * Return values for hook {@link useDeleteProject}
+ * Return values for hook {@link useDeleteRemoteProject}
  */
 export interface DeleteState {
   deleteProject: (projectId: string) => Promise<ResponseObject<{}> | undefined>;
@@ -16,7 +16,7 @@ export interface DeleteState {
 /**
  * hook to delete a specified project from the server.
  */
-export const useDeleteProject = (): DeleteState => {
+export const useDeleteRemoteProject = (): DeleteState => {
   const [ progress, setProgress ] = useState<Progress>(Progress.IDLE);
   const abortController = useRef<AbortController|undefined>();
 

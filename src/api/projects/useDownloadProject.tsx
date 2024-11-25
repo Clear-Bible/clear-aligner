@@ -6,7 +6,7 @@ import { AppContext } from '../../App';
 import { DateTime } from 'luxon';
 import { InitializationStates } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
-import { useDeleteProject } from './useDeleteProject';
+import { useDeleteRemoteProject } from './useDeleteRemoteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import {
   mapServerAlignmentLinkToLinkEntity,
@@ -42,7 +42,7 @@ export interface SyncState {
  */
 export const useDownloadProject = (): SyncState => {
   const { projectState, setProjects, isBusyDialogOpen, ...appCtx } = useContext(AppContext);
-  const { deleteProject } = useDeleteProject();
+  const { deleteProject } = useDeleteRemoteProject();
   const { cancel, reset, cancelToken } = useCancelTask();
   const [progress, setProgress] = useState<ProjectDownloadProgress>(ProjectDownloadProgress.IDLE);
   const [projectId, setProjectId] = useState<string>();
