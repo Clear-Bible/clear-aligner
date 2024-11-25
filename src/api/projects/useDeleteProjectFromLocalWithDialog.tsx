@@ -50,7 +50,7 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
           break;
       }
       const cleanupDbFile = () => {
-        console.log('Remove db file', project.id);
+        console.debug('Remove db file', project.id);
         dbApi.removeSource(project.id)
           .then(() => { })
           .then(() => { });
