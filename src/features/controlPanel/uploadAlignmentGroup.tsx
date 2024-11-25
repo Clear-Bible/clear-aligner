@@ -15,16 +15,7 @@ import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject'
 import { Project } from '../../state/projects/tableManager';
 import { BusyDialogContext } from '../../utils/useBusyDialogContext';
 import { useGetAllLinks } from '../../state/links/useGetAllLinks';
-
-const wrapChangeEventHandler = (pre: () => Promise<void>, f: (e: ChangeEvent<HTMLInputElement>) => Promise<void>, postCall: () => Promise<void>): (e: ChangeEvent<HTMLInputElement>) => Promise<void> => {
-  return async (e) => {
-    pre()
-      .finally(() => {
-        f(e)
-          .finally(postCall);
-      });
-  };
-};
+import { wrapAsync } from '../../utils/wrapAsync';
 
 const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
   project?: Project,
@@ -129,7 +120,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                   // @ts-ignore
                   event.currentTarget.value = null;
                 }}
-                onChange={wrapChangeEventHandler(
+                onChange={wrapAsync(
                   async () => {
                     setForceShowBusyDialog(true);
                     setCustomStatus('Importing alignment file...');

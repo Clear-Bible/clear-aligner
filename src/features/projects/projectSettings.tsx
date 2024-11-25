@@ -39,6 +39,8 @@ import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
 import { useDeleteProject } from '../../api/projects/useDeleteProject';
 import { getUserGroups } from '../../server/amplifySetup';
+import { wrapAsync } from '../../utils/wrapAsync';
+import { BusyDialogContext } from '../../utils/useBusyDialogContext';
 
 enum ProjectDialogMode {
   CREATE = 'create',
@@ -98,8 +100,8 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                                                      }: ProjectSettingsProps) => {
   const dispatch = useAppDispatch();
   const { publishProject, dialog: publishDialog } = usePublishProject();
-  const { setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
-  const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
+  const { projectState, preferences, setProjects, setPreferences, projects, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
+  const { setForceShowBusyDialog } = useContext(BusyDialogContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = useState<Project>(initialProjectState);
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
@@ -124,7 +126,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
     setProjectUpdated(false);
     setUploadErrors([]);
     setProject(getInitialProjectState());
-    closeCallback();
+    closeCallback?.();
   }, [closeCallback, setProject, setUploadErrors, setFileContent]);
 
   const invalidProjectName = useMemo(() => {
@@ -489,12 +491,18 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
           onClick={handleClose}>Cancel</Button>
         <Button
           disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || isFormReadOnly}
-          onClick={e => { // TODO, wrap and force show dialog
-            handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
+          onClick={(e) => wrapAsync(
+            async () => {
+              setForceShowBusyDialog(true);
+            },
+            async (e) => { // TODO, wrap and force show dialog
+              await handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e);
               // handleClose() in the .then() ensures dialog doesn't close prematurely
               handleClose();
-            });
-          }}
+            },
+            async () => {
+              setForceShowBusyDialog(false);
+            })(e) }
         >{!projectId ? 'Create' : 'Save'}</Button>
       </Box>
       <Dialog
