@@ -37,7 +37,7 @@ import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/cor
 import { useDatabase } from '../../hooks/useDatabase';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
-import { useDeleteProject } from '../../api/projects/useDeleteProject';
+import { useDeleteRemoteProject } from '../../api/projects/useDeleteRemoteProject';
 import { getUserGroups } from '../../server/amplifySetup';
 
 enum ProjectDialogMode {
@@ -107,7 +107,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
   const [openConfirmUnpublish, setOpenConfirmUnpublish] = useState(false);
   const [fileContent, setFileContent] = useState('');
   const [projectUpdated, setProjectUpdated] = useState(false);
-  const { deleteProject } = useDeleteProject();
+  const { deleteProject } = useDeleteRemoteProject();
   const languageOptions = useMemo(() =>
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
       .sort((a, b) => a.localeCompare(b)), []);

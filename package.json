@@ -145,8 +145,8 @@
     },
     "extraFiles": [
       {
-        "from": "sql/projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite",
-        "to": "sql/projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite"
+        "from": "sql/projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite",
+        "to": "sql/projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite"
       },
       {
         "from": "sql/clear-aligner-template.sqlite",

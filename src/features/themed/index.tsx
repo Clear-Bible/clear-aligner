@@ -142,6 +142,9 @@ const lightTheme: Theme = createTheme({
       },
       excludedTokenButtons : {
         text: '#999999'
+      },
+      suggestedTokenButtons : {
+        icon: '#FAEBE9', // Coral 50
       }
     },
     background :{
@@ -298,7 +301,7 @@ const darkTheme = createTheme({
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: '#3C3C3C',
-        rollover: alpha('#FFEB3B', .08), // Yellow 500 @ 8%
+        rollover: alpha('#FFEB3B', .25), // Yellow 500 @ 25%
         selected: '#FFF176' // Yellow 300
       },
       alignedTokenButtons: {
@@ -343,6 +346,9 @@ const darkTheme = createTheme({
       },
       excludedTokenButtons : {
         text: '#999999'
+      },
+      suggestedTokenButtons : {
+        icon: '#FAEBE9', // Coral 50
       }
     },
     background : {

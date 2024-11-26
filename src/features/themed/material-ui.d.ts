@@ -138,6 +138,9 @@ declare module '@mui/material/styles' {
       excludedTokenButtons: {
         text: string;
       }
+      suggestedTokenButtons:{
+        icon: string;
+      }
     },
     background: {
       paper: string;

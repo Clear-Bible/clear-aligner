@@ -6,7 +6,6 @@ import { useCorpusContainers } from './useCorpusContainers';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 import { useDatabase } from './useDatabase';
 import { useMemoAsync } from './useMemoAsync';
-import { DefaultProjectId } from '../state/links/tableManager';
 import { AlignmentSide } from '../common/data/project/corpus';
 import _ from 'lodash';
 import { useAppDispatch, useAppSelector } from '../app/index';
@@ -178,11 +177,11 @@ export const useTokenSuggestionRelevancyScore = (token: Word, isAlreadyAligned?:
   const score = useMemoAsync<number|undefined>(async () => {
     if (!isTokenRelevantToSuggestions) return undefined;
     console.time('dbApi.findLinkStatusesByAlignedWord');
-    const groupedLinks = await dbApi.findLinkStatusesByAlignedWord(
-      preferences?.currentProject ?? DefaultProjectId,
+    const groupedLinks = !!preferences?.currentProject ? (await dbApi.findLinkStatusesByAlignedWord(
+      preferences?.currentProject,
       searchSourceText,
       searchTargetText,
-      true);
+      true)) : [];
     console.timeEnd('dbApi.findLinkStatusesByAlignedWord');
     return _.max(groupedLinks.map(generateRelevancyScoreFromGroup)) ?? 0;
   }, [ dbApi.findLinkStatusesByAlignedWord, preferences?.currentProject, searchSourceText, searchTargetText ]);
@@ -273,8 +272,8 @@ export const useRelevantSuggestions = (token: Word, isAlreadyAligned?: boolean):
   const similarLinks = useMemoAsync<RepositoryLink[] | undefined>(async () => {
     if (!isTokenRelevantToSuggestions || (!searchSourceText && !searchTargetText)) return undefined;
     console.time('dbApi.corporaGetLinksByAlignedWord');
-    const tmpLinks = await dbApi.corporaGetLinksByAlignedWord(
-      preferences?.currentProject ?? DefaultProjectId,
+    const tmpLinks = !!preferences?.currentProject ? (await dbApi.corporaGetLinksByAlignedWord(
+      preferences?.currentProject,
       searchSourceText,
       searchTargetText,
       {
@@ -282,7 +281,7 @@ export const useRelevantSuggestions = (token: Word, isAlreadyAligned?: boolean):
         sort: 'asc'
       },
       true,
-      10);
+      10)) : [];
     console.timeEnd('dbApi.corporaGetLinksByAlignedWord');
     return tmpLinks;
   }, [ dbApi, preferences?.currentProject, searchSourceText, searchTargetText, token.side, token.normalizedText ]);

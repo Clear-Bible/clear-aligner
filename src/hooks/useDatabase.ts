@@ -26,7 +26,7 @@ export interface ListedProjectDto {
 }
 
 export interface DatabaseApi {
-  getPreferences: (requery: boolean) => Promise<UserPreferenceDto|undefined>;
+  getPreferences: () => Promise<UserPreferenceDto|undefined>;
   createOrUpdatePreferences: (preferences: UserPreferenceDto) => Promise<void>;
   createBulkInsertJournalEntry: ({ projectId, links }: CreateBulkJournalEntryParams) => Promise<void>;
   /**
@@ -36,7 +36,9 @@ export interface DatabaseApi {
   getFirstJournalEntryUploadChunk: (sourceName: string) => Promise<JournalEntryDTO[]>;
   getAllJournalEntries: (projectId: string, itemLimit?: number, itemSkip?: number) => Promise<JournalEntryDTO[]>;
   getCount: (sourceName: string, tableName: string) => Promise<number>;
+  createDataSource: (sourceName: string) => Promise<boolean>;
   getDataSources: () => Promise<ListedProjectDto[]|undefined>;
+  removeSource: (projectId: string) => Promise<void>;
   getProjects: () => Promise<ProjectEntity[]|undefined>;
   projectSave: (project: ProjectEntity) => Promise<ProjectEntity>;
   removeSource: (sourceName: string) => Promise<undefined>;
@@ -112,7 +114,7 @@ export interface DatabaseApi {
    * Retrieve all corpora for the given project
    * @param sourceName project id to query corpora from
    */
-  getAllCorpora: (sourceName: string) => Promise<Corpus[]>;
+  getAllCorpora: (sourceName?: string) => Promise<Corpus[]>;
   /**
    * Turns off flag indicating corpora have been updated since last sync
    * @param projectId

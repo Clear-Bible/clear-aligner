@@ -25,7 +25,7 @@ export interface ProjectDTO {
   state?: ProjectState;
   corpora: CorpusDTO[];
   updatedAt?: number;
-  lastSyncTime?: number;
+  lastSyncTime?: number|null;
 }
 
 export enum ProjectLocation {
@@ -40,11 +40,11 @@ export class ProjectEntity {
   members: string;
   location: ProjectLocation;
   serverState?: ProjectState;
-  lastSyncTime?: number;
+  lastSyncTime?: number|null;
   createdAt?: Date;
   updatedAt?: number;
   serverUpdatedAt?: number;
-  lastSyncServerTime?: number;
+  lastSyncServerTime?: number|null;
   corpora?: Corpus[];
   constructor() {
     this.name = '';
