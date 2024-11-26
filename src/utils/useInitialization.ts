@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
-import { DefaultProjectId, LinksTable } from '../state/links/tableManager';
+import { LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
 import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
@@ -16,6 +16,7 @@ import { userState } from '../features/profileAvatar/profileAvatar';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 import { FeaturePreferences } from '../common/data/featurePreferences';
+import { pickDeFactoCurrentProject } from '../api/projects/pickDeFactoCurrentProject';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
@@ -35,6 +36,17 @@ const useInitialization = (): AppContextProps => {
     enableTokenSuggestions: true // defaults to enabled
   });
 
+  useEffect(() => {
+    if (!preferences?.isFirstLaunch) {
+      return;
+    }
+    window.location.reload();
+    setPreferences((oldPreferences) => ({
+      ...(oldPreferences ?? {}) as UserPreference,
+      isFirstLaunch: false
+    }));
+  }, [ preferences?.isFirstLaunch, setPreferences ]);
+
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
   }, [state.userPreferenceTable]);
@@ -46,7 +58,7 @@ const useInitialization = (): AppContextProps => {
         res && setProjects(p => [...(res.values() ?? p)]);
       });
     }
-  }, 1000);
+  }, 1_000);
 
   useEffect(() => {
     setUpdatedPreferences(preferences);
@@ -92,10 +104,10 @@ const useInitialization = (): AppContextProps => {
         initialized: InitializationStates.INITIALIZED
       }));
     };
-    if (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED) {
+    if (!!preferences?.currentProject && (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED)) {
       void loadContainers();
     }
-  }, [preferences, preferences?.currentProject, projects, containers, setContainers, state]);
+  }, [preferences, preferences?.initialized, preferences?.currentProject, projects, containers, setContainers, state]);
 
   useEffect(() => {
     if (!isLoaded.current) {
@@ -109,24 +121,21 @@ const useInitialization = (): AppContextProps => {
         projectTable: currProjectTable,
         userPreferenceTable: currUserPreferenceTable
       });
-      const initializeProject = () => new Promise((resolve) => {
+      const initializeProject = () => new Promise<Project[]>((resolve) => {
           let projects: Project[] = [];
         currProjectTable.getProjects(true).then(res => {
           projects = [...res!.values()];
           setProjects(projects);
           resolve(projects);
         });
-      }).then(() => {
+      }).then((projectsList: Project[]) => {
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
+          const currentProjectId = pickDeFactoCurrentProject(projectsList, res?.currentProject);
           setPreferences({
             ...(res ?? {}) as UserPreference,
-            currentProject: res?.currentProject
-              ?? projects?.[0]?.id
-              ?? DefaultProjectId
+            currentProject: currentProjectId
           });
-          currLinksTable.setSourceName(res?.currentProject
-            ?? projects?.[0]?.id
-            ?? DefaultProjectId);
+          currLinksTable.setSourceName(currentProjectId);
         });
       });
       initializeProject().catch(console.error);

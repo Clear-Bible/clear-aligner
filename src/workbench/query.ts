@@ -3,7 +3,7 @@
  */
 import { Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
-import { DefaultProjectId, EmptyWordId } from 'state/links/tableManager';
+import { EmptyWordId } from 'state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
 import { DatabaseApi } from '../hooks/useDatabase';
@@ -191,13 +191,14 @@ const WordQueryBatchSize = 100_000;
 export const getCorpusFromDatabase = async (
   inputCorpus: Corpus,
   projectId?: string
-): Promise<Corpus> => {
+): Promise<Corpus|undefined> => {
+  if (!projectId) return undefined;
   inputCorpus.wordsByVerse = {} as Record<string, Verse>;
   inputCorpus.words = [];
   let offset = 0;
   while (true) {
     const words = (await dbApi.getAllWordsByCorpus(
-      projectId ?? DefaultProjectId,
+      projectId,
       inputCorpus.side,
       inputCorpus.id,
       WordQueryBatchSize, offset));
@@ -243,8 +244,8 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
   IsLoadingAnyCorpora = true;
   try {
     const inputCorpora: Corpus[] = ((await dbApi.getAllCorpora(appCtx.preferences?.currentProject)) ?? []);
-    const corpusPromises: Promise<Corpus>[] = inputCorpora
-      .map(inputCorpus =>
+    const corpusPromises: Promise<Corpus|undefined>[] = inputCorpora
+      .map((inputCorpus) =>
         getCorpusFromDatabase({
           ...inputCorpus,
           words: [],
@@ -254,7 +255,9 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
           hasGloss: inputCorpus.side === AlignmentSide.SOURCE
         }, appCtx.preferences?.currentProject));
     const outputCorpora: Corpus[] =
-      (await Promise.all(corpusPromises));
+      (await Promise.all(corpusPromises))
+        .filter((c) => !!c)
+        .map((c) => c!);
     outputCorpora.forEach(
       outputCorpus => putVersesInCorpus(outputCorpus));
 

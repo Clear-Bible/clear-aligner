@@ -7,21 +7,13 @@ import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import uuid from 'uuid-random';
 import { DefaultProjectId } from '../links/tableManager';
 import { InitializationStates } from '../../workbench/query';
+import { DatabaseApi } from '../../hooks/useDatabase';
+
+const dbApi = (window as any).databaseApi as DatabaseApi;
 
 export enum ControlPanelFormat {
   VERTICAL,
   HORIZONTAL
-}
-
-export interface UserPreference {
-  id: string;
-  bcv: BCVWP | null;
-  alignmentDirection: string;
-  page: string;
-  showGloss: boolean;
-  currentProject: string;
-  initialized?: InitializationStates;
-  onInitialized?: (() => void)[];
 }
 
 export interface UserPreferenceDto {
@@ -33,13 +25,25 @@ export interface UserPreferenceDto {
   show_gloss: boolean;
 }
 
+export interface UserPreference {
+  id: string;
+  bcv: BCVWP | null;
+  alignmentDirection: string;
+  page: string;
+  showGloss: boolean;
+  currentProject?: string;
+  initialized?: InitializationStates;
+  onInitialized?: (() => void)[];
+  isFirstLaunch?: boolean;
+}
+
 const initialPreferences = {
   id: uuid(),
   bcv: null,
   alignmentDirection: ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
   page: '',
   showGloss: false,
-  currentProject: DefaultProjectId
+  currentProject: undefined
 };
 
 export class UserPreferenceTable extends VirtualTable {
@@ -64,10 +68,9 @@ export class UserPreferenceTable extends VirtualTable {
     }
   };
 
-  getPreferences = async (requery = false): Promise<UserPreference> => {
+  getPreferences = async (requery: boolean = false): Promise<UserPreference> => {
     if (requery) {
-      // @ts-ignore
-      const preferences = await window.databaseApi.getPreferences();
+      const preferences = await dbApi.getPreferences();
       if (preferences) {
         this.preferences = {
           id: preferences?.id,
@@ -77,6 +80,21 @@ export class UserPreferenceTable extends VirtualTable {
           currentProject: preferences?.current_project ?? DefaultProjectId,
           bcv: preferences?.bcv ? BCVWP.parseFromString(preferences.bcv.trim()) : null
         };
+      } else { // if first launch, create the default project
+        this.incrDatabaseBusyCtr();
+        this.setDatabaseBusyText('Initializing default project...');
+        try {
+          await dbApi.createDataSource(DefaultProjectId);
+        } finally {
+          this.preferences = {
+            ...this.preferences,
+            initialized: InitializationStates.UNINITIALIZED,
+            currentProject: DefaultProjectId,
+            page: '/',
+            isFirstLaunch: true
+          }
+          this.decrDatabaseBusyCtr();
+        }
       }
     }
 
