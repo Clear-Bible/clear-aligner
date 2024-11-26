@@ -23,10 +23,10 @@ export interface Project {
   linksTable?: LinksTable;
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
-  lastSyncTime?: number;
+  lastSyncTime?: number|null;
   updatedAt?: number;
   serverUpdatedAt?: number;
-  lastSyncServerTime?: number;
+  lastSyncServerTime?: number|null;
   location: ProjectLocation;
   state?: ProjectState;
   members?: string[];
