@@ -45,6 +45,8 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
         case ProjectLocation.SYNCED:
           await projectState.projectTable?.sync({
             ...project,
+            lastSyncTime: undefined,
+            lastSyncServerTime: undefined,
             location: ProjectLocation.REMOTE
           });
           break;
@@ -60,6 +62,8 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
         if (project.location === ProjectLocation.SYNCED) {
           return [ ...newProjectsList, {
             ...project,
+            lastSyncTime: undefined,
+            lastSyncServerTime: undefined,
             location: ProjectLocation.REMOTE
           } ];
         }
