@@ -495,7 +495,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
             async () => {
               setForceShowBusyDialog(true);
             },
-            async (e) => { // TODO, wrap and force show dialog
+            async (e) => {
               await handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e);
               // handleClose() in the .then() ensures dialog doesn't close prematurely
               handleClose();
