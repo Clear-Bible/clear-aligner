@@ -2,7 +2,7 @@
  * This file contains the useBusyDialog component that can be shown to users
  * while wait for an action in the background to complete.
  */
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   CircularProgress,
@@ -20,16 +20,30 @@ import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
 import { isLoadingAnyCorpora } from '../workbench/query';
 import { Close } from '@mui/icons-material';
+import { BusyDialogContextProps } from './useBusyDialogContext';
 
-const BusyRefreshTimeInMs = 250;
+const BusyRefreshTimeInMs = 125;
 const DefaultBusyMessage = 'Please wait...';
 
 export interface UseBusyDialogStatus {
+  /**
+   * indicates whether the busy dialog is currently being shown
+   */
   isOpen: boolean;
   busyDialog: JSX.Element;
-};
+}
 
-const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseBusyDialogStatus => {
+/**
+ * busy dialog hook
+ * @param busyDialogContext parameters for the busy dialog
+ */
+const useBusyDialog = ({
+    customStatus,
+    setCustomStatus, // imported here to clear the status on close
+    onCancel,
+    setOnCancel, // imported here to clear the onCancel function on close
+    isForceShowBusyDialog
+  }: BusyDialogContextProps): UseBusyDialogStatus => {
   const { projectState } = useContext(AppContext);
   const [cancel, setCancel] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<{
@@ -47,30 +61,32 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
     links: 0
   });
 
-  useInterval(() => {
-    const newLinkStatus = LinksTable.getLatestDatabaseStatus();
-    const newProjectStatus = projectState?.projectTable.getDatabaseStatus();
-    if (!_.isEqual({ projects: newProjectStatus, links: newLinkStatus }, databaseStatus)) {
-      setDatabaseStatus({
-        projects: newProjectStatus,
-        links: newLinkStatus
-      });
-      setBusyCount((cc) => ({
-        projects: newProjectStatus?.busyInfo.isBusy ? cc.projects + 1 : 0,
-        links: newLinkStatus?.busyInfo.isBusy ? cc.links + 1 : 0
-      }));
-    }
-    projectState?.projectTable?.getProjects(false)
-      .then(newProjects => {
-        if (newProjects?.size !== numProjects) {
-          setNumProjects(newProjects?.size);
-        }
-      });
-    const newIsLoadingCorpora = isLoadingAnyCorpora();
-    if (newIsLoadingCorpora !== isLoadingCorpora) {
-      setIsLoadingCorpora(newIsLoadingCorpora);
-    }
-  }, BusyRefreshTimeInMs);
+  const refreshCounts = useCallback(() => {
+      const newLinkStatus = LinksTable.getLatestDatabaseStatus();
+      const newProjectStatus = projectState?.projectTable.getDatabaseStatus();
+      if (!_.isEqual({ projects: newProjectStatus, links: newLinkStatus }, databaseStatus)) {
+        setDatabaseStatus({
+          projects: newProjectStatus,
+          links: newLinkStatus
+        });
+        setBusyCount((cc) => ({
+          projects: newProjectStatus?.busyInfo.isBusy ? cc.projects + 1 : 0,
+          links: newLinkStatus?.busyInfo.isBusy ? cc.links + 1 : 0
+        }));
+      }
+      projectState?.projectTable?.getProjects(false)
+        .then(newProjects => {
+          if (newProjects?.size !== numProjects) {
+            setNumProjects(newProjects?.size);
+          }
+        });
+      const newIsLoadingCorpora = isLoadingAnyCorpora();
+      if (newIsLoadingCorpora !== isLoadingCorpora) {
+        setIsLoadingCorpora(newIsLoadingCorpora);
+      }
+    }, [projectState?.projectTable, databaseStatus, numProjects, isLoadingCorpora]);
+
+  useInterval(refreshCounts, BusyRefreshTimeInMs);
 
   const busyCountAtLeastTwo = useMemo<boolean>(() =>
     [ busyCount.projects, busyCount.links ]
@@ -142,7 +158,14 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
     setCancel(false);
   }, [customStatus]);
 
-  const isOpen = useMemo(() => !!spinnerParams.isBusy && !cancel, [spinnerParams.isBusy, cancel]);
+  const isOpen = useMemo(() => isForceShowBusyDialog || (!!spinnerParams.isBusy && !cancel), [isForceShowBusyDialog, spinnerParams.isBusy, cancel]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCustomStatus(undefined);
+      setOnCancel(undefined);
+    }
+  }, [ isOpen, setCustomStatus, setOnCancel ]);
 
   return {
     isOpen,
@@ -162,7 +185,11 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseB
               !!onCancel && (
                 <IconButton onClick={() => {
                   setCancel(true);
-                  onCancel();
+                  try {
+                    onCancel();
+                  } finally {
+                    setOnCancel(undefined);
+                  }
                 }} sx={{m: 0}}>
                   <Close sx={{height: 18, width: 'auto'}} />
                 </IconButton>

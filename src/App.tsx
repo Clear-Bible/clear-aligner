@@ -41,7 +41,13 @@ export interface AppContextProps {
   setContainers: React.Dispatch<React.SetStateAction<Containers>>;
   isProjectDialogOpen: boolean;
   setIsProjectDialogOpen: Function;
+  /**
+   * indicates whether the busy dialog is currently being shown
+   */
   isBusyDialogOpen: boolean;
+  /**
+   * only for use in {@link AppLayout} to indicate that the busy dialog is being shown
+   */
   setIsBusyDialogOpen: Function;
   features: FeaturePreferences;
   setFeatures: React.Dispatch<React.SetStateAction<FeaturePreferences>>;
