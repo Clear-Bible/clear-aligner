@@ -17,7 +17,7 @@ import { BusyDialogContext } from '../../utils/useBusyDialogContext';
  */
 export const useGetAllLinks = (projectId?: string, getKey?: string) => {
   const { projectState } = useContext(AppContext);
-  const { setCustomStatus, setForceShowBusyDialog } = useContext(BusyDialogContext);
+  const { setForceShowBusyDialog } = useContext(BusyDialogContext);
   const [status, setStatus] = useState<{
     result?: RepositoryLink[];
   }>({});
@@ -35,8 +35,7 @@ export const useGetAllLinks = (projectId?: string, getKey?: string) => {
       return;
     }
     prevGetKey.current = getKey;
-    setCustomStatus('Preparing links for export...');
-    setForceShowBusyDialog(true)
+    setForceShowBusyDialog(true);
     databaseHookDebug('useGetAllLinks(): status', status);
     linksTable.getAll()
       .then(result => {
@@ -47,8 +46,10 @@ export const useGetAllLinks = (projectId?: string, getKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
       })
-      .finally(() => setForceShowBusyDialog(false));
-  }, [linksTable, prevGetKey, getKey, status, setCustomStatus, setForceShowBusyDialog]);
+      .finally(() => {
+        setForceShowBusyDialog(false);
+      });
+  }, [linksTable, prevGetKey, getKey, status, setForceShowBusyDialog]);
 
   return { ...status };
 };

@@ -2,7 +2,7 @@
  * This file contains the useBusyDialog component that can be shown to users
  * while wait for an action in the background to complete.
  */
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   CircularProgress,
@@ -37,14 +37,13 @@ export interface UseBusyDialogStatus {
  * busy dialog hook
  * @param busyDialogContext parameters for the busy dialog
  */
-const useBusyDialog = (busyDialogContext: BusyDialogContextProps): UseBusyDialogStatus => {
-  const {
+const useBusyDialog = ({
     customStatus,
     setCustomStatus, // imported here to clear the status on close
     onCancel,
     setOnCancel, // imported here to clear the onCancel function on close
     isForceShowBusyDialog
-  } = busyDialogContext;
+  }: BusyDialogContextProps): UseBusyDialogStatus => {
   const { projectState } = useContext(AppContext);
   const [cancel, setCancel] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<{
@@ -62,30 +61,32 @@ const useBusyDialog = (busyDialogContext: BusyDialogContextProps): UseBusyDialog
     links: 0
   });
 
-  useInterval(() => {
-    const newLinkStatus = LinksTable.getLatestDatabaseStatus();
-    const newProjectStatus = projectState?.projectTable.getDatabaseStatus();
-    if (!_.isEqual({ projects: newProjectStatus, links: newLinkStatus }, databaseStatus)) {
-      setDatabaseStatus({
-        projects: newProjectStatus,
-        links: newLinkStatus
-      });
-      setBusyCount((cc) => ({
-        projects: newProjectStatus?.busyInfo.isBusy ? cc.projects + 1 : 0,
-        links: newLinkStatus?.busyInfo.isBusy ? cc.links + 1 : 0
-      }));
-    }
-    projectState?.projectTable?.getProjects(false)
-      .then(newProjects => {
-        if (newProjects?.size !== numProjects) {
-          setNumProjects(newProjects?.size);
-        }
-      });
-    const newIsLoadingCorpora = isLoadingAnyCorpora();
-    if (newIsLoadingCorpora !== isLoadingCorpora) {
-      setIsLoadingCorpora(newIsLoadingCorpora);
-    }
-  }, BusyRefreshTimeInMs);
+  const refreshCounts = useCallback(() => {
+      const newLinkStatus = LinksTable.getLatestDatabaseStatus();
+      const newProjectStatus = projectState?.projectTable.getDatabaseStatus();
+      if (!_.isEqual({ projects: newProjectStatus, links: newLinkStatus }, databaseStatus)) {
+        setDatabaseStatus({
+          projects: newProjectStatus,
+          links: newLinkStatus
+        });
+        setBusyCount((cc) => ({
+          projects: newProjectStatus?.busyInfo.isBusy ? cc.projects + 1 : 0,
+          links: newLinkStatus?.busyInfo.isBusy ? cc.links + 1 : 0
+        }));
+      }
+      projectState?.projectTable?.getProjects(false)
+        .then(newProjects => {
+          if (newProjects?.size !== numProjects) {
+            setNumProjects(newProjects?.size);
+          }
+        });
+      const newIsLoadingCorpora = isLoadingAnyCorpora();
+      if (newIsLoadingCorpora !== isLoadingCorpora) {
+        setIsLoadingCorpora(newIsLoadingCorpora);
+      }
+    }, [projectState?.projectTable, databaseStatus, numProjects, isLoadingCorpora]);
+
+  useInterval(refreshCounts, BusyRefreshTimeInMs);
 
   const busyCountAtLeastTwo = useMemo<boolean>(() =>
     [ busyCount.projects, busyCount.links ]

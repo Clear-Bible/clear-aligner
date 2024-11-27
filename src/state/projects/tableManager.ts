@@ -142,11 +142,12 @@ export class ProjectTable extends VirtualTable {
         lastSyncServerTime: project.lastSyncServerTime
       };
       await dbApi.projectSave(projectEntity);
-      this.decrDatabaseBusyCtr();
       return true;
     } catch (e) {
       console.error('Error syncing project: ', e);
       return false;
+    } finally {
+      this.decrDatabaseBusyCtr();
     }
   };
 
