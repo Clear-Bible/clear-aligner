@@ -2,10 +2,10 @@
  * This file contains the UploadAlignment component which contains buttons used
  * in the Projects Mode for uploading and saving alignment data
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ChangeEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile } from '../../structs/alignmentFile';
-import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
+import { useImportAlignmentFile } from '../../state/links/tableManager';
 import { Button } from '@mui/material';
 import uuid from 'uuid-random';
 import { AlignmentFileCheckResults, checkAlignmentFile, saveAlignmentFile } from '../../helpers/alignmentFile';
@@ -13,6 +13,9 @@ import { AlignmentValidationErrorDialog } from '../../components/alignmentValida
 import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { Project } from '../../state/projects/tableManager';
+import { BusyDialogContext } from '../../utils/useBusyDialogContext';
+import { useGetAllLinks } from '../../state/links/useGetAllLinks';
+import { wrapAsync } from '../../utils/wrapAsync';
 
 const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
   project?: Project,
@@ -33,6 +36,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     preserveFileIds?: boolean,
     fromServer?: boolean
   }>();
+
+  const { setForceShowBusyDialog, setCustomStatus } = useContext(BusyDialogContext);
 
   const [alignmentFileCheckResults, setAlignmentFileCheckResults] = useState<{
     checkResults?: AlignmentFileCheckResults,
@@ -115,25 +120,33 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                   // @ts-ignore
                   event.currentTarget.value = null;
                 }}
-                onChange={async (event) => {
-                  // grab file content
-                  const file = event!.target!.files![0];
-                  const checkResults = checkAlignmentFile(await file.text(), 20);
+                onChange={wrapAsync(
+                  async () => {
+                    setForceShowBusyDialog(true);
+                    setCustomStatus('Importing alignment file...');
+                  },
+                  async (event: ChangeEvent<HTMLInputElement>) => {
+                    // grab file content
+                    const file = event!.target!.files![0];
+                    const checkResults = checkAlignmentFile(await file.text(), 20);
 
-                  setAlignmentFileCheckResults({
-                    checkResults: checkResults,
-                    showDialog: !checkResults.isFileValid
-                  });
+                    setAlignmentFileCheckResults({
+                      checkResults: checkResults,
+                      showDialog: !checkResults.isFileValid
+                    });
 
-                  setAlignmentFileSaveState({
-                    alignmentFile: checkResults.isFileValid ? checkResults.validatedFile : undefined,
-                    saveKey: uuid(),
-                    suppressJournaling: false,
-                    removeAllFirst: false,
-                    preserveFileIds: false,
-                    fromServer: false
-                  });
-                }}
+                    setAlignmentFileSaveState({
+                      alignmentFile: checkResults.isFileValid ? checkResults.validatedFile : undefined,
+                      saveKey: uuid(),
+                      suppressJournaling: false,
+                      removeAllFirst: false,
+                      preserveFileIds: false,
+                      fromServer: false
+                    });
+                  },
+                  async () => {
+                    setForceShowBusyDialog(false);
+                  })}
               />
               <Button
                 size={size as 'medium' | 'small' | undefined}
