@@ -66,7 +66,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         }
         const localOnlyProjects: Project[] = Array.from(localProjects.values())
           .filter((localProject: Project) =>
-            !serverProjects.some(p => localProject.id === p.id));
+            !serverProjects.some(serverProject => localProject.id === serverProject.id));
         const localizedServerProjects: Project[] = localOnlyProjects.filter((localOnlyProject: Project) =>
           ProjectTable.projectHasCorpora(localOnlyProject));
         for (const localizedServerProject of localizedServerProjects) {
