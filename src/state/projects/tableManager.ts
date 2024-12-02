@@ -300,8 +300,16 @@ export class ProjectTable extends VirtualTable {
     corpora: [...(project.sourceCorpora?.corpora || []), ...(project.targetCorpora?.corpora || [])]
   });
 
-  static projectHasCorpora = (project: Project): boolean => {
-    return (project.sourceCorpora?.corpora?.length ?? 0)
-      + (project.targetCorpora?.corpora?.length ?? 0) > 0;
+  static projectHasSourceCorpora = (project: Project): boolean => {
+    return (project.sourceCorpora?.corpora?.length ?? 0) > 0;
+  };
+  
+  static projectHasTargetCorpora = (project: Project): boolean => {
+    return (project.targetCorpora?.corpora?.length ?? 0) > 0;
+  };
+
+  static projectHasBothCorpora = (project: Project): boolean => {
+    return ProjectTable.projectHasSourceCorpora(project)
+      && ProjectTable.projectHasTargetCorpora(project);
   };
 }

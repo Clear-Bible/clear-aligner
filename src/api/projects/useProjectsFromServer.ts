@@ -50,14 +50,14 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
       // Save in local database if persist is specified.
       if (persist) {
         const localProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
-        for (const serverProject of serverProjects.filter(p => p?.targetCorpora?.corpora?.length)) {
+        for (const serverProject of serverProjects
+          .filter(foundProject => ProjectTable.projectHasTargetCorpora(foundProject))) {
           serverProject.sourceCorpora = undefined;
-
           const localProject: Project = localProjects.get(serverProject.id);
           // Update valid projects stored locally that are local or synced.
           if (localProject?.lastSyncTime) serverProject.lastSyncTime = localProject.lastSyncTime;
           if (localProject?.updatedAt) serverProject.updatedAt = localProject.updatedAt;
-          if (localProject?.targetCorpora?.corpora?.[0]) {
+          if (ProjectTable.projectHasTargetCorpora(localProject)) {
             serverProject.location = ProjectLocation.SYNCED;
             await projectState.projectTable?.update?.(serverProject, false);
           } else {
@@ -67,16 +67,16 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         const localOnlyProjects: Project[] = Array.from(localProjects.values())
           .filter((localProject: Project) =>
             !serverProjects.some(serverProject => localProject.id === serverProject.id));
-        const localizedServerProjects: Project[] = localOnlyProjects.filter((localOnlyProject: Project) =>
-          ProjectTable.projectHasCorpora(localOnlyProject));
+        const localizedServerProjects: Project[] = localOnlyProjects.filter((foundProject: Project) =>
+          ProjectTable.projectHasTargetCorpora(foundProject));
         for (const localizedServerProject of localizedServerProjects) {
           localizedServerProject.location = ProjectLocation.LOCAL;
           localizedServerProject.lastSyncTime = 0;
           localizedServerProject.updatedAt = DateTime.now().toMillis();
           await projectState.projectTable?.update?.(localizedServerProject, false);
         }
-        const removedServerProjects: Project[] = localOnlyProjects.filter((localOnlyProject: Project) =>
-          !ProjectTable.projectHasCorpora(localOnlyProject));
+        const removedServerProjects: Project[] = localOnlyProjects.filter((foundProject: Project) =>
+          !ProjectTable.projectHasTargetCorpora(foundProject));
         for (const removedServerProject of removedServerProjects) {
           await projectState.projectTable?.remove(removedServerProject?.id);
         }
