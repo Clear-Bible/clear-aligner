@@ -23,10 +23,10 @@ export interface Project {
   linksTable?: LinksTable;
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
-  lastSyncTime?: number|null;
+  lastSyncTime?: number | null;
   updatedAt?: number;
   serverUpdatedAt?: number;
-  lastSyncServerTime?: number|null;
+  lastSyncServerTime?: number | null;
   location: ProjectLocation;
   state?: ProjectState;
   members?: string[];
@@ -187,7 +187,7 @@ export class ProjectTable extends VirtualTable {
       this.setDatabaseBusyText('Finishing project creation...');
       this.decrDatabaseBusyCtr();
     } catch (e) {
-      console.error("Failed to insert tokens: ", e);
+      console.error('Failed to insert tokens: ', e);
     }
   };
 
@@ -299,4 +299,9 @@ export class ProjectTable extends VirtualTable {
     name: project.name,
     corpora: [...(project.sourceCorpora?.corpora || []), ...(project.targetCorpora?.corpora || [])]
   });
+
+  static projectHasCorpora = (project: Project): boolean => {
+    return (project.sourceCorpora?.corpora?.length ?? 0)
+      + (project.targetCorpora?.corpora?.length ?? 0) > 0;
+  };
 }
