@@ -68,28 +68,29 @@ export const AlignmentTableContext = createContext({} as AlignmentTableContextPr
  * or display the PerRowLinkStateSelector component (depending on hover state).
  * @param row rendering params for this RefCell entry
  */
-export const RefCell = ({row, rowHoveredId, setRowHoveredId}: {
+export const RefCell = ({row}: {
   row: GridRenderCellParams<RepositoryLink, any, any>,
-  rowHoveredId: GridRowId,
-  setRowHoveredId: React.Dispatch<React.SetStateAction<GridRowId>>,
-}
+}) => {
 
-) => {
   const tableCtx = useContext(AlignmentTableContext);
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
   const apiRef = useGridApiContext();
 
+  const [isHovered, setIsHovered] = React.useState(false)
+
   const handleRowEnter: GridEventListener<"rowMouseEnter"> = ({id})  => {
-    id === row.id && setRowHoveredId(id);
+    if(id === row.id){
+      setIsHovered(true)
+    }
   }
   const handleRowLeave: GridEventListener<'rowMouseLeave'> = ({id})  => {
-    id === row.id && setRowHoveredId(-1);
+      setIsHovered(false)
   }
   useGridApiEventHandler(apiRef, "rowMouseEnter", handleRowEnter);
   useGridApiEventHandler(apiRef, "rowMouseLeave", handleRowLeave);
 
   return (
-    rowHoveredId === row.id ? <PerRowLinkStateSelector items={[
+    isHovered ? <PerRowLinkStateSelector items={[
       {
         value: 'created',
         label: <LinkIcon />,
@@ -445,8 +446,6 @@ export const AlignmentTable = ({
 
   const sortModel = useMemo( () => sort ? [sort] : [], [sort])
 
-  const [rowHoveredId, setRowHoveredId] = useState<GridRowId>(-1);
-
   const columns: GridColDef[] = [
     {
       field: "__check__",
@@ -483,8 +482,6 @@ export const AlignmentTable = ({
       renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
           <RefCell
             row={row}
-            rowHoveredId={rowHoveredId}
-            setRowHoveredId={setRowHoveredId}
           />
       )
     },
