@@ -303,13 +303,18 @@ export class ProjectTable extends VirtualTable {
   static projectHasSourceCorpora = (project: Project): boolean => {
     return (project.sourceCorpora?.corpora?.length ?? 0) > 0;
   };
-  
+
   static projectHasTargetCorpora = (project: Project): boolean => {
     return (project.targetCorpora?.corpora?.length ?? 0) > 0;
   };
 
-  static projectHasBothCorpora = (project: Project): boolean => {
+  static projectHasAllCorpora = (project: Project): boolean => {
     return ProjectTable.projectHasSourceCorpora(project)
       && ProjectTable.projectHasTargetCorpora(project);
+  };
+
+  static projectHasAnyCorpora = (project: Project): boolean => {
+    return ProjectTable.projectHasSourceCorpora(project)
+      || ProjectTable.projectHasTargetCorpora(project);
   };
 }

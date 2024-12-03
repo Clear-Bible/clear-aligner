@@ -55,9 +55,9 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           serverProject.sourceCorpora = undefined;
           const localProject: Project = localProjects.get(serverProject.id);
           // Update valid projects stored locally that are local or synced.
-          if (localProject?.lastSyncTime) serverProject.lastSyncTime = localProject.lastSyncTime;
-          if (localProject?.updatedAt) serverProject.updatedAt = localProject.updatedAt;
-          if (ProjectTable.projectHasTargetCorpora(localProject)) {
+          serverProject.lastSyncTime = localProject.lastSyncTime ?? serverProject.lastSyncTime;
+          serverProject.updatedAt = localProject.updatedAt ?? localProject?.updatedAt;
+          if (ProjectTable.projectHasAllCorpora(localProject)) {
             serverProject.location = ProjectLocation.SYNCED;
             await projectState.projectTable?.update?.(serverProject, false);
           } else {
@@ -68,7 +68,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           .filter((localProject: Project) =>
             !serverProjects.some(serverProject => localProject.id === serverProject.id));
         const localizedServerProjects: Project[] = localOnlyProjects.filter((foundProject: Project) =>
-          ProjectTable.projectHasTargetCorpora(foundProject));
+          ProjectTable.projectHasAnyCorpora(foundProject));
         for (const localizedServerProject of localizedServerProjects) {
           localizedServerProject.location = ProjectLocation.LOCAL;
           localizedServerProject.lastSyncTime = 0;
@@ -76,7 +76,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           await projectState.projectTable?.update?.(localizedServerProject, false);
         }
         const removedServerProjects: Project[] = localOnlyProjects.filter((foundProject: Project) =>
-          !ProjectTable.projectHasTargetCorpora(foundProject));
+          !ProjectTable.projectHasAnyCorpora(foundProject));
         for (const removedServerProject of removedServerProjects) {
           await projectState.projectTable?.remove(removedServerProject?.id);
         }
