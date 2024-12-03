@@ -301,11 +301,11 @@ export class ProjectTable extends VirtualTable {
   });
 
   static projectHasSourceCorpora = (project: Project): boolean => {
-    return (project.sourceCorpora?.corpora?.length ?? 0) > 0;
+    return (project?.sourceCorpora?.corpora?.length ?? 0) > 0;
   };
 
   static projectHasTargetCorpora = (project: Project): boolean => {
-    return (project.targetCorpora?.corpora?.length ?? 0) > 0;
+    return (project?.targetCorpora?.corpora?.length ?? 0) > 0;
   };
 
   static projectHasAllCorpora = (project: Project): boolean => {
