@@ -40,6 +40,24 @@ function sanitizeExclude(inputExclude: string){
   return 1
 }
 
+/*
+ function that handles any input from the required column in the tsv files
+ */
+function sanitizeRequired(inputRequired: string){
+  if(!inputRequired){
+    return 0
+  }
+  let workingExclude = inputRequired.trim().toLowerCase();
+  if (workingExclude.length < 1){
+    return 0
+  }
+  let firstLetter = workingExclude[0];
+  if (firstLetter === 'n' || firstLetter === 'f'){
+    return 0
+  }
+  return 1
+}
+
 export const parseTsv = (fileContent: string, refCorpus: Corpus, side: AlignmentSide, fileType: CorpusFileFormat) => {
   const [header, ...rows] = fileContent.split('\n');
   const headerMap: Record<string, number> = {};
@@ -56,7 +74,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
   rows.forEach((row) => {
     const values = row.split('\t');
 
-    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse, exclude: number;
+    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse, exclude: number, required: number;
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
@@ -111,6 +129,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         const gloss = values[headerMap['english']] || values[headerMap['gloss']] || '-';
 
         exclude = sanitizeExclude(values[headerMap['exclude']]);
+        required = sanitizeRequired(values[headerMap['required']]);
 
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -123,6 +142,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
             ? gloss.replaceAll('.', ' ')
             : gloss,
           exclude: exclude,
+          required: required,
         } as Word;
 
         wordRef = BCVWP.parseFromString(id);

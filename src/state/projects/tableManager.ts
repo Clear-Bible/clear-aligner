@@ -290,7 +290,8 @@ export class ProjectTable extends VirtualTable {
       source_verse_bcvid: word.sourceVerse,
       language_id: corpus.language.code,
       side: word.side,
-      exclude: word.exclude
+      exclude: word.exclude,
+      required: word.required
     });
   };
 
