@@ -130,6 +130,7 @@ class WordsOrParts {
   source_verse_bcvid?: string;
   language_id?: string;
   exclude?: number;
+  required?: number;
 
   constructor() {
     this.id = undefined;
@@ -147,6 +148,7 @@ class WordsOrParts {
     this.source_verse_bcvid = undefined;
     this.language_id = undefined;
     this.exclude = undefined;
+    this.required = undefined;
   }
 }
 
@@ -275,8 +277,9 @@ const wordsOrPartsSchema = new EntitySchema({
       type: 'text'
     }, exclude: {
       type: 'integer'
+    }, required: {
+      type: 'integer'
     }
-
   }
 });
 
@@ -970,7 +973,9 @@ export class ProjectRepository extends BaseRepository {
                                                          w.position_part                   as position,
                                                          w.source_verse_bcvid              as sourceVerse,
                                                          w.normalized_text                 as normalizedText,
-                                                         CASE WHEN w.exclude = 1 THEN 1 ELSE 0 END AS exclude
+                                                         CASE WHEN w.exclude = 1 THEN 1 ELSE 0 END AS exclude,
+                                                         CASE WHEN w.required = 1 THEN 1 ELSE 0 END AS required
+
                                                   from words_or_parts w
                                                   where w.side = ?
                                                     and w.corpus_id = ?
