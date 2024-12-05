@@ -55,8 +55,8 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           serverProject.sourceCorpora = undefined;
           const localProject: Project = localProjects.get(serverProject.id);
           // Update valid projects stored locally that are local or synced.
-          serverProject.lastSyncTime = localProject.lastSyncTime ?? serverProject.lastSyncTime;
-          serverProject.updatedAt = localProject.updatedAt ?? localProject?.updatedAt;
+          serverProject.lastSyncTime = localProject?.lastSyncTime ?? serverProject?.lastSyncTime;
+          serverProject.updatedAt = localProject?.updatedAt ?? serverProject?.updatedAt;
           if (ProjectTable.projectHasAllCorpora(localProject)) {
             serverProject.location = ProjectLocation.SYNCED;
             await projectState.projectTable?.update?.(serverProject, false);
