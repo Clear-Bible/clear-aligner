@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { ADMIN_GROUP, useIsSignedIn } from '../../hooks/userInfoHooks';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
@@ -37,6 +37,9 @@ import {
   projectCardMargin,
   projectCardWidth
 } from './styleConstants';
+import { AlignmentFile } from '../../structs/alignmentFile';
+import { useImportAlignmentFile } from '../../state/links/tableManager';
+import uuid from 'uuid-random';
 
 /**
  * props for the project card component
@@ -94,6 +97,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                                                         }) => {
   useCorpusContainers();
 
+  const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
+    alignmentFile?: AlignmentFile,
+    saveKey?: string
+  }>();
   const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
 
   const { downloadProject, dialog: downloadProjectDialog } = useDownloadProject();
@@ -102,8 +109,25 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     progress: syncingProject,
     dialog: syncDialog,
     uniqueNameError,
-    setUniqueNameError
+    setUniqueNameError,
+    syncedAlignments
   } = useSyncProject();
+
+  useImportAlignmentFile(
+    project?.id,
+    alignmentFileSaveState?.alignmentFile,
+    alignmentFileSaveState?.saveKey,
+    false, true, true, true, true);
+
+  useEffect(() => {
+    if (!syncedAlignments) {
+      return;
+    }
+    setAlignmentFileSaveState({
+      alignmentFile: syncedAlignments,
+      saveKey: uuid()
+    });
+  }, [syncedAlignments]);
 
   const { setPreferences, projectState, preferences, userStatus, setProjects } = useContext(AppContext);
   const isCurrentProject = useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
@@ -143,30 +167,30 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   }, [project.location]);
 
   const serverActionButtonDisabled: boolean = useMemo<boolean>(() => {
-    switch (project.location) {
-      case ProjectLocation.SYNCED:
-        if (!project) {
-          return true;
-        }
-        if (disableProjectButtons) {
-          return true;
-        }
-        const containers = [project.sourceCorpora, project.targetCorpora];
-        if (!isSignedIn || containers.length < 1) {
-          return true;
-        }
-        if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
-          return false;
-        }
-        if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
-          return false;
-        }
-        return !([...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-          .some((corpus) => !!corpus.updatedSinceSync));
-      default:
-        return ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons;
-    }
-  },
+      switch (project.location) {
+        case ProjectLocation.SYNCED:
+          if (!project) {
+            return true;
+          }
+          if (disableProjectButtons) {
+            return true;
+          }
+          const containers = [project.sourceCorpora, project.targetCorpora];
+          if (!isSignedIn || containers.length < 1) {
+            return true;
+          }
+          if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
+            return false;
+          }
+          if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
+            return false;
+          }
+          return !([...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+            .some((corpus) => !!corpus.updatedSinceSync));
+        default:
+          return ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons;
+      }
+    },
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
     [
       project,
@@ -282,7 +306,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     );
   }, [isSignedIn, usingCustomEndpoint, syncLocalProjectWithServer, downloadProject, syncProject, project, isAdmin, serverActionButtonDisabled]);
 
-  const [ isProjectSharingDialogOpen, setIsProjectSharingDialogOpen ] = useState<boolean>();
+  const [isProjectSharingDialogOpen, setIsProjectSharingDialogOpen] = useState<boolean>();
 
   const {
     dialog: deleteRemoteProjectDialog,

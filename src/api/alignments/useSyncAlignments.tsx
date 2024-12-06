@@ -1,8 +1,9 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import { useMemo, useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   mapLinkEntityToServerAlignmentLink,
-  ServerAlignmentLinkDTO, ServerLinksDTO
+  ServerAlignmentLinkDTO,
+  ServerLinksDTO
 } from '../../common/data/serverAlignmentLinkDTO';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName, LinksTable } from '../../state/links/tableManager';
@@ -12,10 +13,10 @@ import { ApiUtils } from '../utils';
 import ResponseObject = ApiUtils.ResponseObject;
 
 export interface SyncState {
-  file?: AlignmentFile;
+  syncedAlignments?: AlignmentFile;
   progress: Progress;
   sync: (projectId?: string, controller?: AbortController) => Promise<boolean>;
-  upload: (projectId?: string, controller?: AbortController) => Promise<ResponseObject<{}>|undefined>;
+  upload: (projectId?: string, controller?: AbortController) => Promise<ResponseObject<{}> | undefined>;
   dialog: any;
 }
 
@@ -24,7 +25,7 @@ export interface SyncState {
  */
 export const useSyncAlignments = (): SyncState => {
   const [progress, setProgress] = useState<Progress>(Progress.IDLE);
-  const [file, setFile] = useState<AlignmentFile | undefined>();
+  const [syncedAlignments, setSyncedAlignments] = useState<AlignmentFile | undefined>();
   const abortController = useRef<AbortController | undefined>();
   const dbApi = useDatabase();
 
@@ -39,9 +40,9 @@ export const useSyncAlignments = (): SyncState => {
       await ApiUtils.generateRequest({
         requestPath: `/api/projects/${projectId}/alignment_links`,
         requestType: ApiUtils.RequestType.PATCH,
-            signal,
+        signal,
         payload: journalEntriesToUpload
-          });
+      });
       await dbApi.deleteByIds({
         projectId: projectId!,
         table: JournalEntryTableName,
@@ -56,17 +57,17 @@ export const useSyncAlignments = (): SyncState => {
   const fetchLinks = useCallback(async (signal: AbortSignal, projectId?: string) => {
     let resultLinks: ServerAlignmentLinkDTO[] = [];
     try {
-      const { body: alignmentLinkResponse } = await ApiUtils.generateRequest<ServerLinksDTO>({
+      const { body: alignmentLinks } = await ApiUtils.generateRequest<ServerLinksDTO>({
         requestPath: `/api/projects/${projectId}/alignment_links`,
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
-          });
-      resultLinks = alignmentLinkResponse?.links ?? [];
+      });
+      resultLinks = alignmentLinks?.links ?? [];
     } catch (x) {
       cleanupRequest();
       throw new Error('Aborted');
     }
-    const tmpFile = {
+    const newSyncedAlignments: AlignmentFile = {
       type: 'translation',
       meta: { creator: 'api' },
       records: resultLinks
@@ -80,7 +81,7 @@ export const useSyncAlignments = (): SyncState => {
           target: l.targets
         } as AlignmentRecord))
     };
-    setFile(tmpFile);
+    setSyncedAlignments(newSyncedAlignments);
     cleanupRequest();
   }, [cleanupRequest]);
 
@@ -107,7 +108,7 @@ export const useSyncAlignments = (): SyncState => {
         requestPath: `/api/projects/${alignmentProjectId}/alignment_links`,
         requestType: ApiUtils.RequestType.POST,
         signal,
-        payload: linksInDb,
+        payload: linksInDb
       });
     } catch (x) {
       console.error(x);
@@ -138,7 +139,7 @@ export const useSyncAlignments = (): SyncState => {
   }, [progress, cleanupRequest]);
 
   return {
-    file,
+    syncedAlignments: syncedAlignments,
     progress,
     sync: syncLinks,
     upload: uploadLinks,

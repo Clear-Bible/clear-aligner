@@ -56,14 +56,14 @@ export const useSyncWordsOrParts = (): SyncState => {
         .map(mapWordOrPartToWordOrPartDTO);
 
       if (tokensToUpload.length > 0) {
-        const tokenResponse = await ApiUtils.generateRequest<ProjectTokenReport>({
+        const tokensResponse = await ApiUtils.generateRequest<ProjectTokenReport>({
           requestPath: `/api/projects/${project.id}/tokens`,
           requestType: ApiUtils.RequestType.POST,
           signal: abortController.current?.signal,
           payload: tokensToUpload
         });
-        setProgress(tokenResponse.success ? Progress.SUCCESS : Progress.FAILED);
-        return tokenResponse;
+        setProgress(tokensResponse.success ? Progress.SUCCESS : Progress.FAILED);
+        return tokensResponse;
       } else {
         setProgress(Progress.SUCCESS);
         return {

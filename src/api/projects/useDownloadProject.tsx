@@ -73,12 +73,24 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_PROJECT);
 
-      const projectResponse = await ApiUtils.generateRequest<ProjectDTO>({
+      const projectsResponse = await ApiUtils.generateRequest<ProjectDTO>({
         requestPath: `/api/projects/${projectId}`,
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
       });
-      const projectData = projectResponse.body;
+
+      if (!projectsResponse.success) { // failure, perform cleanup
+        appCtx.setSnackBarMessage('Project is not available for download as the current user');
+        appCtx.setIsSnackBarOpen(true);
+        setProgress(ProjectDownloadProgress.FAILED);
+        // perform cleanup
+        await projectState.projectTable?.remove(projectId);
+        const refreshedProjectList = Array.from((await projectState.projectTable?.getProjects(true))?.values() ?? []);
+        setProjects(refreshedProjectList);
+        return;
+      }
+
+      const projectData = projectsResponse.body;
       const tmpProject = mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!;
       tmpProject.lastSyncServerTime = tmpProject.serverUpdatedAt;
       Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
@@ -89,13 +101,13 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      const resultTokens = ((await ApiUtils.generateRequest<any>({
+      const tokensResponse = ((await ApiUtils.generateRequest<any>({
         requestPath: `/api/projects/${projectId}/tokens?side=targets`,
         requestType: ApiUtils.RequestType.GET,
-          signal: abortController.current?.signal,
+        signal: abortController.current?.signal
       })).body?.tokens ?? []) as WordOrPartDTO[];
 
-      if (projectResponse.success) {
+      if (projectsResponse.success) {
         if (cancelToken.canceled) return;
         const targetCorpora = projectData.corpora
           .filter((c) => c.side === AlignmentSide.TARGET);
@@ -107,7 +119,7 @@ export const useDownloadProject = (): SyncState => {
         targetCorpora.forEach((c) => c.words = []);
         const targetCorporaMap = new Map(targetCorpora.map(c => [c.id, c]));
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
-        for (const chunk of _.chunk(resultTokens, 2_000)) {
+        for (const chunk of _.chunk(tokensResponse, 2_000)) {
           chunk
             .map(mapWordOrPartDtoToWordOrPart)
             .forEach((w) => targetCorporaMap.get(w.corpusId)?.words!.push(w));
@@ -129,7 +141,7 @@ export const useDownloadProject = (): SyncState => {
           ? await projectState.projectTable?.update?.(project, true)
           : await projectState.projectTable?.save?.(project, true);
 
-        const alignmentResponse = await ApiUtils.generateRequest<ServerLinksDTO>({
+        const alignmentsResponse = await ApiUtils.generateRequest<ServerLinksDTO>({
           requestPath: `/api/projects/${project.id}/alignment_links`,
           requestType: ApiUtils.RequestType.GET,
           signal: abortController.current?.signal
@@ -137,7 +149,7 @@ export const useDownloadProject = (): SyncState => {
 
         const linksBody: {
           links: ServerAlignmentLinkDTO[]
-        } | undefined = alignmentResponse.body;
+        } | undefined = alignmentsResponse.body;
         const prevSourceName = projectState.linksTable.getSourceName();
         if (prevSourceName !== project.id) {
           projectState.linksTable.setSourceName(project.id);
@@ -163,7 +175,7 @@ export const useDownloadProject = (): SyncState => {
       setProgress(ProjectDownloadProgress.SUCCESS);
       return projectData;
     } catch (x) {
-      console.error("Unable to download project: ", x);
+      console.error('Unable to download project: ', x);
       cleanupRequest().catch(console.error);
       setProgress(ProjectDownloadProgress.FAILED);
       setTimeout(() => {

@@ -4,7 +4,7 @@ import { Project } from '../../state/projects/tableManager';
 import { DefaultProjectId } from '../../state/links/tableManager';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
-import { AppContext } from '../../App';
+import { AppContext, AppContextProps } from '../../App';
 import { useDatabase } from '../../hooks/useDatabase';
 import { ProjectLocation } from '../../common/data/project/project';
 import { pickDeFactoCurrentProject } from './pickDeFactoCurrentProject';
@@ -25,13 +25,32 @@ export interface UseDeleteProjectFromLocalWithDialogState {
   dialog: JSX.Element;
 }
 
+export const deleteLocalProject = async (projectId: string, {
+  projectState,
+  preferences,
+  setPreferences,
+  setProjects
+}: Partial<AppContextProps>) => {
+  await projectState!.projectTable?.remove?.(projectId);
+  setProjects!((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
+  if (preferences?.currentProject === projectId) {
+    projectState!.linksTable.reset().catch(console.error);
+    projectState!.linksTable.setSourceName(DefaultProjectId);
+    setPreferences!((p: UserPreference | undefined) => ({
+      ...(p ?? {}) as UserPreference,
+      currentProject: DefaultProjectId,
+      initialized: InitializationStates.UNINITIALIZED
+    }));
+  }
+};
+
 /**
  * hook to delete a local project with a confirmation dialog
  * @param project project the hook would be used to delete
  */
 export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjectFromLocalWithDialogProps): UseDeleteProjectFromLocalWithDialogState => {
   const { projectState, projects, setProjects, preferences, setPreferences } = useContext(AppContext);
-  const [ isDialogOpen, setIsDialogOpen ] = useState<boolean>(false);
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const dbApi = useDatabase();
 
   const handleDelete = useCallback(async () => {
@@ -54,18 +73,20 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
       const cleanupDbFile = () => {
         console.debug('Remove db file', project.id);
         dbApi.removeSource(project.id)
-          .then(() => { })
-          .then(() => { });
+          .then(() => {
+          })
+          .then(() => {
+          });
       };
       setProjects((ps: Project[]) => {
         const newProjectsList = (ps ?? []).filter(p => p.id !== project.id);
         if (project.location === ProjectLocation.SYNCED) {
-          return [ ...newProjectsList, {
+          return [...newProjectsList, {
             ...project,
             lastSyncTime: null,
             lastSyncServerTime: null,
             location: ProjectLocation.REMOTE
-          } ];
+          }];
         }
         return newProjectsList;
       });
@@ -76,7 +97,7 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
         ...(p ?? {}) as UserPreference,
         currentProject: currentProjectId,
         initialized: InitializationStates.UNINITIALIZED,
-        onInitialized: [ ...(p?.onInitialized ?? []), cleanupDbFile ]
+        onInitialized: [...(p?.onInitialized ?? []), cleanupDbFile]
       }));
       setIsDialogOpen(false);
     }
@@ -109,4 +130,4 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
     showDeleteProjectDialog: () => setIsDialogOpen(true),
     dialog
   };
-}
+};
