@@ -9,8 +9,10 @@ import {
   DeleteParams,
   InsertParams,
   LanguageInfo,
-  RepositoryLink, LinkStatus,
-  SaveParams, Word
+  LinkStatus,
+  RepositoryLink,
+  SaveParams,
+  Word
 } from '../structs';
 import { PivotWordFilter } from '../features/concordanceView/concordanceView';
 import { GridSortItem } from '@mui/x-data-grid';
@@ -22,11 +24,11 @@ import { AlignmentSide } from '../common/data/project/corpus';
 
 export interface ListedProjectDto {
   id: string;
-  corpora: Corpus[]
+  corpora: Corpus[];
 }
 
 export interface DatabaseApi {
-  getPreferences: () => Promise<UserPreferenceDto|undefined>;
+  getPreferences: () => Promise<UserPreferenceDto | undefined>;
   createOrUpdatePreferences: (preferences: UserPreferenceDto) => Promise<void>;
   createBulkInsertJournalEntry: ({ projectId, links }: CreateBulkJournalEntryParams) => Promise<void>;
   /**
@@ -37,10 +39,11 @@ export interface DatabaseApi {
   getAllJournalEntries: (projectId: string, itemLimit?: number, itemSkip?: number) => Promise<JournalEntryDTO[]>;
   getCount: (sourceName: string, tableName: string) => Promise<number>;
   createDataSource: (sourceName: string) => Promise<boolean>;
-  getDataSources: () => Promise<ListedProjectDto[]|undefined>;
-  removeSource: (projectId: string) => Promise<void>;
-  getProjects: () => Promise<ProjectEntity[]|undefined>;
+  getDataSources: () => Promise<ListedProjectDto[] | undefined>;
+  getProjects: () => Promise<ProjectEntity[] | undefined>;
   projectSave: (project: ProjectEntity) => Promise<ProjectEntity>;
+  removeSource: (sourceName: string) => Promise<undefined>;
+  projectRemove: (sourceName: string) => Promise<undefined>;
   corporaGetPivotWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<{
     t: string, // normalized text
     l: string, // language id
@@ -55,7 +58,7 @@ export interface DatabaseApi {
     c: number // frequency
   }[]>;
   removeTargetWordsOrParts: (sourceName: string) => Promise<void>;
-  insert: <T,>({ projectId, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => Promise<boolean>;
+  insert: <T, >({ projectId, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => Promise<boolean>;
   deleteAll: ({ projectId, table }: DeleteParams) => Promise<boolean>;
   deleteByIds: ({ projectId, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => Promise<boolean>;
   /**
@@ -64,15 +67,15 @@ export interface DatabaseApi {
    * @param table table to save into
    * @param itemOrItems entities to persist
    */
-  save: <T,>({ projectId, table, itemOrItems, disableJournaling }: SaveParams<T>) => Promise<boolean>;
-  getAll: <T,>(sourceName: string, table: string, itemLimit?: number, itemSkip?: number) => Promise<T[]>;
+  save: <T, >({ projectId, table, itemOrItems, disableJournaling }: SaveParams<T>) => Promise<boolean>;
+  getAll: <T, >(sourceName: string, table: string, itemLimit?: number, itemSkip?: number) => Promise<T[]>;
   /**
    * Call to trigger an update to the `sources_text` and `targets_text` fields
    * in the `links` table
    * @param sourceName datasource to be accessed
    * @param linkIdOrIds links for which to update the text fields
    */
-  updateLinkText: (sourceName: string, linkIdOrIds: string|string[]) => Promise<boolean|any[]>;
+  updateLinkText: (sourceName: string, linkIdOrIds: string | string[]) => Promise<boolean | any[]>;
   updateAllLinkText: (sourceName: string) => Promise<boolean>;
   /**
    * Retrieve links by source text, target text or both
@@ -102,7 +105,7 @@ export interface DatabaseApi {
                                   sourcesText?: string,
                                   targetsText?: string,
                                   excludeRejected?: boolean) => Promise<{ status: LinkStatus, count: number }[]>;
-  findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
+  findByIds: <T, K>(sourceName: string, table: string, ids: K[]) => Promise<T[] | undefined>;
   findLinksByBCV: (sourceName: string, side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number) => Promise<RepositoryLink[]>;
   findLinksByWordId: (sourceName: string, side: AlignmentSide, referenceString: string) => Promise<RepositoryLink[]>;
   languageGetAll: (sourceName: string) => Promise<LanguageInfo[]>;
@@ -121,7 +124,6 @@ export interface DatabaseApi {
 }
 
 export const useDatabase = (): DatabaseApi => {
-  // @ts-ignore
-  const dbDelegate = useMemo(() => window.databaseApi, []);
+  const dbDelegate = useMemo(() => (window as any).databaseApi as DatabaseApi, []);
   return dbDelegate as DatabaseApi;
-}
+};

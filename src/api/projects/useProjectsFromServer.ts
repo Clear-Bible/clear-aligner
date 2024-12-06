@@ -38,10 +38,12 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         requestPath: '/api/projects',
         requestType: RequestType.GET
       });
-      const projectDtos = (projectsResponse.body ?? []) as ProjectDTO[];
+      if (!projectsResponse.success) return undefined;
+
+      const projectsDtos = (projectsResponse.body ?? []) as ProjectDTO[];
       const serverProjects = (
-        Array.isArray(projectDtos)
-          ? projectDtos
+        Array.isArray(projectsDtos)
+          ? projectsDtos
             .filter(p => p.state === ProjectState.PUBLISHED)
             .map(p => mapProjectDtoToProject(p, ProjectLocation.REMOTE))
           : []
@@ -84,7 +86,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
       const updatedLocalProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
       setProjects(prevResults => Array.from(updatedLocalProjects.values() ?? prevResults));
       setProgress(Progress.SUCCESS);
-      return projectDtos;
+      return projectsDtos;
     } catch (x) {
       console.error(x);
       setProgress(Progress.FAILED);

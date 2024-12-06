@@ -73,12 +73,24 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_PROJECT);
 
-      const projectResponse = await ApiUtils.generateRequest<ProjectDTO>({
+      const projectsResponse = await ApiUtils.generateRequest<ProjectDTO>({
         requestPath: `/api/projects/${projectId}`,
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
       });
-      const projectData = projectResponse.body;
+
+      if (!projectsResponse.success) { // failure, perform cleanup
+        appCtx.setSnackBarMessage('Project is not available for download as the current user');
+        appCtx.setIsSnackBarOpen(true);
+        setProgress(ProjectDownloadProgress.FAILED);
+        // perform cleanup
+        await projectState.projectTable?.remove(projectId);
+        const refreshedProjectList = Array.from((await projectState.projectTable?.getProjects(true))?.values() ?? []);
+        setProjects(refreshedProjectList);
+        return;
+      }
+
+      const projectData = projectsResponse.body;
       const tmpProject = mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!;
       tmpProject.lastSyncServerTime = tmpProject.serverUpdatedAt;
       Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
@@ -92,10 +104,10 @@ export const useDownloadProject = (): SyncState => {
       const resultTokens = ((await ApiUtils.generateRequest<any>({
         requestPath: `/api/projects/${projectId}/tokens?side=targets`,
         requestType: ApiUtils.RequestType.GET,
-          signal: abortController.current?.signal,
+        signal: abortController.current?.signal
       })).body?.tokens ?? []) as WordOrPartDTO[];
 
-      if (projectResponse.success) {
+      if (projectsResponse.success) {
         if (cancelToken.canceled) return;
         const targetCorpora = projectData.corpora
           .filter((c) => c.side === AlignmentSide.TARGET);
@@ -163,7 +175,7 @@ export const useDownloadProject = (): SyncState => {
       setProgress(ProjectDownloadProgress.SUCCESS);
       return projectData;
     } catch (x) {
-      console.error("Unable to download project: ", x);
+      console.error('Unable to download project: ', x);
       cleanupRequest().catch(console.error);
       setProgress(ProjectDownloadProgress.FAILED);
       setTimeout(() => {

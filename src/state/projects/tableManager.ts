@@ -25,6 +25,7 @@ export interface Project {
   targetCorpora?: CorpusContainer;
   lastSyncTime?: number | null;
   updatedAt?: number;
+  serverState?: ProjectState;
   serverUpdatedAt?: number;
   lastSyncServerTime?: number | null;
   location: ProjectLocation;
@@ -75,10 +76,8 @@ export class ProjectTable extends VirtualTable {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
-      // @ts-ignore Remove the local project database.
-      await window.databaseApi.removeSource(projectId);
-      // @ts-ignore Remove the project from the user database.
-      await window.databaseApi.projectRemove(projectId);
+      await dbApi.removeSource(projectId);
+      await dbApi.projectRemove(projectId);
       this.projects.delete(projectId);
       this.decrDatabaseBusyCtr();
     } catch (e) {
@@ -213,7 +212,8 @@ export class ProjectTable extends VirtualTable {
 
   getProjectTableData = async (): Promise<ProjectEntity[]> => {
     try {
-      return (await dbApi.getProjects()) ?? [];
+      const dbProjects = (await dbApi.getProjects());
+      return dbProjects ?? [];
     } catch (ex) {
       console.error('Unable to convert data source to project: ', ex);
       return [];
@@ -239,12 +239,13 @@ export class ProjectTable extends VirtualTable {
       }
       this.projects = new Map<string, Project>(projectEntities.map((entity) => {
         const p: Project | undefined = dataSources?.find(src => src.id === entity.id);
-        return [entity.id!, {
+        const project = {
           ...(p ?? {}),
           ...entity,
           name: entity.name,
           members: JSON.parse(entity.members ?? '[]')
-        } as Project];
+        } as Project;
+        return [entity.id!, project];
       }));
     }
     return this.projects;
