@@ -17,8 +17,9 @@ import { getUserGroups } from '../../server/amplifySetup';
 import { ProjectState as ProjectStateType } from '../../state/databaseManagement';
 import { Containers } from '../../hooks/useCorpusContainers';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import ResponseObject = ApiUtils.ResponseObject;
 import { JournalEntryTableName } from '../../state/links/tableManager';
+import ResponseObject = ApiUtils.ResponseObject;
+import { AlignmentFile } from '../../structs/alignmentFile';
 
 /**
  * enum for indicating which step of the sync operation is in progress
@@ -45,7 +46,7 @@ export interface SyncState {
   sync: (project: Project) => void;
   progress: SyncProgress;
   dialog: any;
-  file: any;
+  syncedAlignments?: AlignmentFile;
   uniqueNameError: boolean;
   setUniqueNameError: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -63,17 +64,17 @@ export interface SyncState {
  * @param projectState {@link ProjectStateType}
  */
 export const stepSwitchToProject = async (progress: SyncProgress,
-                                    setProgress: (s: SyncProgress) => void,
-                                    preferences: UserPreference|undefined,
-                                    setPreferences: React.Dispatch<React.SetStateAction<UserPreference|undefined>>,
-                                    project: Project,
-                                    projectState: ProjectStateType) => {
+                                          setProgress: (s: SyncProgress) => void,
+                                          preferences: UserPreference | undefined,
+                                          setPreferences: React.Dispatch<React.SetStateAction<UserPreference | undefined>>,
+                                          project: Project,
+                                          projectState: ProjectStateType) => {
   if (preferences?.currentProject && preferences?.currentProject === project?.id && preferences?.initialized === InitializationStates.INITIALIZED) {
     setProgress(SyncProgress.SYNCING_PROJECT);
   } else {
     try {
       await projectState.linksTable.reset();
-    } catch(x) {
+    } catch (x) {
       console.error(x);
     }
     projectState.linksTable.setSourceName(project.id);
@@ -81,7 +82,7 @@ export const stepSwitchToProject = async (progress: SyncProgress,
       ...(p ?? {}) as UserPreference,
       currentProject: project.id,
       initialized: InitializationStates.UNINITIALIZED,
-      onInitialized: [ ...(p?.onInitialized ?? []), () => setProgress(SyncProgress.SYNCING_PROJECT) ]
+      onInitialized: [...(p?.onInitialized ?? []), () => setProgress(SyncProgress.SYNCING_PROJECT)]
     }));
   }
 };
@@ -107,26 +108,26 @@ export const stepSyncingProject = async (
   setSnackBarMessage: Function,
   setIsSnackBarOpen: Function
 ) => {
-  if ((project.location === ProjectLocation.SYNCED)
-      || (project.location === ProjectLocation.LOCAL)) {
-    const res = await ApiUtils.generateRequest<any>({
+  if (project.location === ProjectLocation.SYNCED
+    || project.location === ProjectLocation.LOCAL) {
+    const projectsResponse = await ApiUtils.generateRequest<any>({
       requestPath: '/api/projects',
       requestType: project.location === ProjectLocation.SYNCED ? ApiUtils.RequestType.PATCH : ApiUtils.RequestType.POST,
       signal: abortController.current?.signal,
       payload: mapProjectEntityToProjectDTO(project)
     });
-    if (res.success) {
+    if (projectsResponse.success) {
       setProgress(SyncProgress.SYNCING_CORPORA);
     } else {
-      if (res.response.statusCode === 403) {
+      if (projectsResponse.response.statusCode === 403) {
         setSnackBarMessage('You do not have permission to complete this operation');
-      } else if ((res.body?.message ?? "").includes("duplicate key")) {
+      } else if ((projectsResponse.body?.message ?? '').includes('duplicate key')) {
         setUniqueNameError(true);
-        setSnackBarMessage("Failed to sync project. Project name already exists");
+        setSnackBarMessage('Failed to sync project. Project name already exists');
       } else {
-        setSnackBarMessage("Failed to sync project.");
+        setSnackBarMessage('Failed to sync project.');
       }
-      console.error("Response failed: ", res.body);
+      console.error('Response failed: ', projectsResponse.body);
       setIsSnackBarOpen(true);
       setProgress(SyncProgress.FAILED);
     }
@@ -154,10 +155,10 @@ export const stepSyncingCorpora = async (
   containers: Containers,
   setSnackBarMessage: Function,
   setIsSnackBarOpen: Function,
-  syncWordsOrParts: (project: Project, side?: AlignmentSide) => Promise<ResponseObject<ProjectTokenReport>|undefined>
+  syncWordsOrParts: (project: Project, side?: AlignmentSide) => Promise<ResponseObject<ProjectTokenReport> | undefined>
 ) => {
-  if (project.sourceCorpora?.corpora.some((c) => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some((c) => !c.words || c.words.length < 1)) {
-    if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some((c) => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some((c) => !c.words || c.words.length < 1)) {
+  if (project.sourceCorpora?.corpora.some(c => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some(c => !c.words || c.words.length < 1)) {
+    if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some(c => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some(c => !c.words || c.words.length < 1)) {
       setProgress(SyncProgress.FAILED);
       return;
     }
@@ -196,7 +197,7 @@ export const stepSyncingAlignments = async (
   project: Project,
   setSnackBarMessage: Function,
   setIsSnackBarOpen: Function,
-  uploadAlignments: (projectId?: string, controller?: AbortController) => Promise<ResponseObject<{}>|undefined>,
+  uploadAlignments: (projectId?: string, controller?: AbortController) => Promise<ResponseObject<{}> | undefined>,
   syncAlignments: (projectId?: string, controller?: AbortController) => Promise<boolean>
 ) => {
   if (project.location === ProjectLocation.LOCAL) {
@@ -213,7 +214,7 @@ export const stepSyncingAlignments = async (
       await dbApi.deleteByIds({
         projectId: project.id!,
         table: JournalEntryTableName,
-        itemIdOrIds: allJournalEntries.map((journalEntry) => journalEntry.id!)
+        itemIdOrIds: allJournalEntries.map(journalEntry => journalEntry.id!)
       });
     }
   } else {
@@ -232,7 +233,7 @@ export const stepSyncingAlignments = async (
  * WARNING: exported for testing, not intended for reuse in other parts of the application
  * @param progress current progress
  * @param setProgress setter callback
- * @param project project being operated on
+ * @param inputProject project being operated on
  * @param dbApi {@link DatabaseApi}
  * @param publishProject publish project dependency from {@link usePublishProject}
  * @param projectState {@link ProjectStateType}
@@ -241,30 +242,30 @@ export const stepSyncingAlignments = async (
 export const stepUpdatingProject = async (
   progress: SyncProgress,
   setProgress: (s: SyncProgress) => void,
-  project: Project,
+  inputProject: Project,
   dbApi: DatabaseApi,
-  publishProject: (project: Project, state: ProjectState) => Promise<Project|undefined>,
+  publishProject: (project: Project, state: ProjectState) => Promise<Project | undefined>,
   projectState: ProjectStateType,
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>
 ) => {
   const currentTime = DateTime.now().toMillis();
-  project.updatedAt = currentTime;
-  project.lastSyncTime = currentTime;
-  project.location = ProjectLocation.SYNCED;
-  await dbApi.toggleCorporaUpdatedFlagOff(project.id);
+  inputProject.updatedAt = currentTime;
+  inputProject.lastSyncTime = currentTime;
+  inputProject.location = ProjectLocation.SYNCED;
+  await dbApi.toggleCorporaUpdatedFlagOff(inputProject.id);
   // Update project state to Published.
-  const publishedProject = await publishProject(project, ProjectState.PUBLISHED);
-  project.lastSyncServerTime = publishedProject?.serverUpdatedAt;
-  project.serverUpdatedAt = publishedProject?.serverUpdatedAt;
-  await projectState.projectTable?.sync?.(project).catch(console.error);
-  setProjects((projects) =>
-    projects.map((p) => {
-      if (p.id !== project.id) return p;
-      p.updatedAt = project.updatedAt;
-      p.lastSyncTime = project.lastSyncTime;
-      p.serverUpdatedAt = project.serverUpdatedAt;
-      p.lastSyncServerTime = project.lastSyncServerTime;
-      return p;
+  const publishedProject = await publishProject(inputProject, ProjectState.PUBLISHED);
+  inputProject.lastSyncServerTime = publishedProject?.serverUpdatedAt;
+  inputProject.serverUpdatedAt = publishedProject?.serverUpdatedAt;
+  await projectState.projectTable?.sync?.(inputProject).catch(console.error);
+  setProjects(projects =>
+    projects.map(foundProject => {
+      if (foundProject.id !== inputProject.id) return foundProject;
+      foundProject.updatedAt = inputProject.updatedAt;
+      foundProject.lastSyncTime = inputProject.lastSyncTime;
+      foundProject.serverUpdatedAt = inputProject.serverUpdatedAt;
+      foundProject.lastSyncServerTime = inputProject.lastSyncServerTime;
+      return foundProject;
     }));
   setProgress(SyncProgress.IDLE);
 };
@@ -275,11 +276,21 @@ export const stepUpdatingProject = async (
 export const useSyncProject = (): SyncState => {
   const dbApi = useDatabase();
   const { publishProject } = usePublishProject();
-  const { refetch: getProjects } = useProjectsFromServer({enabled: false});
+  const { refetch: getProjects } = useProjectsFromServer({ enabled: false });
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
-  const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
+  const { sync: syncAlignments, upload: uploadAlignments, syncedAlignments} = useSyncAlignments();
   const { deleteProject } = useDeleteRemoteProject();
-  const { projectState, containers, setIsProjectDialogOpen, isBusyDialogOpen, setIsSnackBarOpen, setSnackBarMessage, preferences, setPreferences, setProjects } = useContext(AppContext);
+  const {
+    projectState,
+    containers,
+    setIsProjectDialogOpen,
+    isBusyDialogOpen,
+    setIsSnackBarOpen,
+    setSnackBarMessage,
+    preferences,
+    setPreferences,
+    setProjects
+  } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
@@ -288,13 +299,13 @@ export const useSyncProject = (): SyncState => {
   const abortController = useRef<AbortController | undefined>();
 
   const cleanupRequest = useCallback(async () => {
-    if(initialProjectState) {
-      const project = {...initialProjectState};
-      if(project.location === ProjectLocation.LOCAL) {
+    if (initialProjectState) {
+      const project = { ...initialProjectState };
+      if (project.location === ProjectLocation.LOCAL) {
         project.lastSyncTime = 0;
         // Remove the remote project if it exists on the server.
         const remoteProjects = await getProjects();
-        if((remoteProjects ?? []).some(p => p.id === project.id)) {
+        if ((remoteProjects ?? []).some(p => p.id === project.id)) {
           await deleteProject(project.id);
         }
       }
@@ -312,7 +323,7 @@ export const useSyncProject = (): SyncState => {
   }, []);
 
   const syncProject = useCallback(async () => {
-    const project = {...(initialProjectState ?? {})} as Project;
+    const project = { ...(initialProjectState ?? {}) } as Project;
     try {
       // Fallthrough cases are intentional
       /* eslint-disable no-fallthrough */
@@ -386,7 +397,7 @@ export const useSyncProject = (): SyncState => {
       }
     } catch (x) {
       setProgress(SyncProgress.FAILED);
-      console.error("Failed to sync this project: ", x);
+      console.error('Failed to sync this project: ', x);
       await publishProject(project, ProjectState.PUBLISHED);
     }
   }, [progress, projectState, cleanupRequest, publishProject,
@@ -401,7 +412,7 @@ export const useSyncProject = (): SyncState => {
     initialProjectState]);
 
   useEffect(() => {
-    if(syncTime && initialProjectState && !canceled) {
+    if (syncTime && initialProjectState && !canceled) {
       syncProject().catch(console.error);
     } else if (canceled) {
       setProgress(SyncProgress.IDLE);
@@ -411,15 +422,15 @@ export const useSyncProject = (): SyncState => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
-  useEffect(() =>{
+  useEffect(() => {
     // Prevent the Database busyDialog from showing concurrently
     // with this project dialog
     setIsProjectDialogOpen(![
       SyncProgress.IDLE,
       SyncProgress.SUCCESS,
       SyncProgress.FAILED
-    ].includes(progress))
-  }, [progress, setIsProjectDialogOpen])
+    ].includes(progress));
+  }, [progress, setIsProjectDialogOpen]);
 
   const dialog = useMemo(() => {
     let dialogMessage = 'Loading...';
@@ -436,35 +447,34 @@ export const useSyncProject = (): SyncState => {
         dialogMessage = 'Syncing with the server...';
         break;
       case SyncProgress.CANCELED:
-        dialogMessage = 'Resetting project changes...'
+        dialogMessage = 'Resetting project changes...';
     }
 
-    return (
-      <Dialog
-        scroll="paper"
-        open={![
-          SyncProgress.IDLE,
-          SyncProgress.SUCCESS,
-          SyncProgress.FAILED
-        ].includes(progress) && !isBusyDialogOpen}
-      >
-        <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
-          <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>
-          <Typography variant="subtitle1">
-            {canceled ? 'Resetting project changes...' : dialogMessage}
-          </Typography>
-          {
-            progress !== SyncProgress.CANCELED && !canceled
-              ? <Button variant="text" sx={{textTransform: 'none', ml: 2}} onClick={onCancel}>Cancel</Button>
-              : <Grid />
-          }
-        </Grid>
-      </Dialog>
-    );
+    return <Dialog
+      scroll="paper"
+      open={![
+        SyncProgress.IDLE,
+        SyncProgress.SUCCESS,
+        SyncProgress.FAILED
+      ].includes(progress) && !isBusyDialogOpen}
+    >
+      <Grid container alignItems="center" justifyContent="space-between"
+            sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>
+        <CircularProgress sx={{ mr: 2, height: 10, width: 'auto' }} />
+        <Typography variant="subtitle1">
+          {canceled ? 'Resetting project changes...' : dialogMessage}
+        </Typography>
+        {
+          progress !== SyncProgress.CANCELED && !canceled
+            ? <Button variant="text" sx={{ textTransform: 'none', ml: 2 }} onClick={onCancel}>Cancel</Button>
+            : <Grid />
+        }
+      </Grid>
+    </Dialog>;
   }, [progress, onCancel, canceled, isBusyDialogOpen]);
 
   return {
-    sync: (project) => {
+    sync: project => {
       setCanceled(false);
       setInitialProjectState(project);
       setSyncTime(DateTime.now().toMillis());
@@ -472,7 +482,7 @@ export const useSyncProject = (): SyncState => {
     },
     progress,
     dialog: dialog,
-    file,
+    syncedAlignments,
     uniqueNameError,
     setUniqueNameError
   };

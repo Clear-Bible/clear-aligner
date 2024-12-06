@@ -101,7 +101,7 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      const resultTokens = ((await ApiUtils.generateRequest<any>({
+      const tokensResponse = ((await ApiUtils.generateRequest<any>({
         requestPath: `/api/projects/${projectId}/tokens?side=targets`,
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
@@ -119,7 +119,7 @@ export const useDownloadProject = (): SyncState => {
         targetCorpora.forEach((c) => c.words = []);
         const targetCorporaMap = new Map(targetCorpora.map(c => [c.id, c]));
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
-        for (const chunk of _.chunk(resultTokens, 2_000)) {
+        for (const chunk of _.chunk(tokensResponse, 2_000)) {
           chunk
             .map(mapWordOrPartDtoToWordOrPart)
             .forEach((w) => targetCorporaMap.get(w.corpusId)?.words!.push(w));
@@ -141,7 +141,7 @@ export const useDownloadProject = (): SyncState => {
           ? await projectState.projectTable?.update?.(project, true)
           : await projectState.projectTable?.save?.(project, true);
 
-        const alignmentResponse = await ApiUtils.generateRequest<ServerLinksDTO>({
+        const alignmentsResponse = await ApiUtils.generateRequest<ServerLinksDTO>({
           requestPath: `/api/projects/${project.id}/alignment_links`,
           requestType: ApiUtils.RequestType.GET,
           signal: abortController.current?.signal
@@ -149,7 +149,7 @@ export const useDownloadProject = (): SyncState => {
 
         const linksBody: {
           links: ServerAlignmentLinkDTO[]
-        } | undefined = alignmentResponse.body;
+        } | undefined = alignmentsResponse.body;
         const prevSourceName = projectState.linksTable.getSourceName();
         if (prevSourceName !== project.id) {
           projectState.linksTable.setSourceName(project.id);
