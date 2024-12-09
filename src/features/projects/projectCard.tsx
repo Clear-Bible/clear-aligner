@@ -29,7 +29,7 @@ import ProjectCreationDialog from './projectCreationDialog';
 import { Project } from '../../state/projects/tableManager';
 import useProjectCardSettingsMenu from './projectCardSettingsMenu';
 import useProjectSharingDialog from './useProjectSharingDialog';
-import { useDeleteProjectFromServerWithDialog } from '../../api/projects/useDeleteProjectFromServerWithDialog';
+import { useDeleteProjectFromServerWithDialog } from '../projectManagement/useDeleteProjectFromServerWithDialog';
 import { useDeleteProjectFromLocalWithDialog } from '../../api/projects/useDeleteProjectFromLocalWithDialog';
 import {
   currentProjectBorderIndicatorHeight,

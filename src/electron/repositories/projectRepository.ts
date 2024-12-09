@@ -48,7 +48,7 @@ export const CorporaTableName = 'corpora';
 export const LanguageTableName = 'language';
 export const LinksToSourceWordsName = 'links__source_words';
 export const LinksToTargetWordsName = 'links__target_words';
-export const DefaultProjectId = '00000000-0000-4000-8000-000000000000';
+export const DefaultProjectId = '00000000-0000-4000-9000-000000000000';
 export const ProjectDatabaseDirectory = 'projects';
 export const JournalEntryDirectory = 'journal_entries';
 export const JournalEntryTableName = 'journal_entries';
@@ -295,22 +295,21 @@ const languageSchema = new EntitySchema({
 
 export class ProjectRepository extends BaseRepository {
 
-  getDataSource: (sourceName: string) => Promise<DataSource | undefined>;
+  getDataSource: (sourceName: string, allowCreate?: boolean) => Promise<DataSource | undefined>;
 
   constructor() {
     super();
     this.isLoggingTime = true;
     this.dataSources = new Map();
-    this.getDataSource = async (projectId: string) => {
+    this.getDataSource = async (projectId: string, allowCreate?: boolean) => {
       return await this.getDataSourceWithEntities(projectId || DefaultProjectId,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema, JournalEntryEntity],
         path.join(this.getTemplatesDirectory(), DefaultProjectId === projectId
-          ? 'projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite'
+          ? 'projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite'
           : 'clear-aligner-template.sqlite'),
-        path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
+        path.join(this.getDataDirectory(), ProjectDatabaseDirectory), allowCreate);
     };
   }
-
 
   convertCorpusToDataSource = (corpus: any) => ({
     id: corpus.id,
@@ -393,7 +392,7 @@ export class ProjectRepository extends BaseRepository {
   createSourceFromProject = async (project: ProjectDto) => {
     try {
       // Creates the data source
-      const projectDataSource = await this.getDataSource(project.id!);
+      const projectDataSource = await this.getDataSource(project.id!, true);
       // Inserts corpora to the {project.id} data source
       const corpora = [...project.corpora].filter(Boolean);
       await this.insert({
@@ -485,10 +484,10 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  createDataSource = async (sourceName: string) => {
+  createDataSource = async (sourceName: string): Promise<boolean> => {
     this.logDatabaseTime('createDataSource()');
     try {
-      const result = !!(await this.getDataSource(sourceName));
+      const result = !!(await this.getDataSource(sourceName, true));
       this.logDatabaseTimeLog('createDataSource()', sourceName, result);
       return result;
     } catch (ex) {

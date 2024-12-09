@@ -23,10 +23,10 @@ export interface Project {
   linksTable?: LinksTable;
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
-  lastSyncTime?: number;
+  lastSyncTime?: number|null;
   updatedAt?: number;
   serverUpdatedAt?: number;
-  lastSyncServerTime?: number;
+  lastSyncServerTime?: number|null;
   location: ProjectLocation;
   state?: ProjectState;
   members?: string[];
@@ -101,6 +101,9 @@ export class ProjectTable extends VirtualTable {
 
       await this.sync(project).catch(console.error);
       if (!!createDataSource || updateWordsOrParts) {
+        if (createDataSource) {
+          await dbApi.createDataSource(project.id);
+        }
         // @ts-ignore
         const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
         updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
@@ -139,11 +142,12 @@ export class ProjectTable extends VirtualTable {
         lastSyncServerTime: project.lastSyncServerTime
       };
       await dbApi.projectSave(projectEntity);
-      this.decrDatabaseBusyCtr();
       return true;
     } catch (e) {
       console.error('Error syncing project: ', e);
       return false;
+    } finally {
+      this.decrDatabaseBusyCtr();
     }
   };
 

@@ -8,8 +8,7 @@ import {
   GridColDef,
   GridEventListener,
   GridInputRowSelectionModel,
-  GridRenderCellParams,
-  GridRowParams,
+  GridRenderCellParams, GridRowParams,
   GridRowSelectionModel,
   GridSortItem,
   useGridApiContext,
@@ -65,34 +64,32 @@ export const AlignmentTableContext = createContext({} as AlignmentTableContextPr
 
 /**
  * Custom cell component to display book, chapter, and verse in the AlignmentTable
+ * or display the PerRowLinkStateSelector component (depending on hover state).
  * @param row rendering params for this RefCell entry
  */
-export const RefCell = (
-  row: GridRenderCellParams<RepositoryLink, any, any>
-) => {
+export const RefCell = ({row}: {
+  row: GridRenderCellParams<RepositoryLink, any, any>,
+}) => {
+
   const tableCtx = useContext(AlignmentTableContext);
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
-  const [rowHovered, setRowHovered] = useState(false);
   const apiRef = useGridApiContext();
 
-  // this logic allows us to subscribe to mouse enter and mouse leave states
-  // inisde the datagrid
-  useEffect( () => {
-    if (apiRef.current.getRowElement(row.id)?.matches(":hover")){
-      setRowHovered(true);
-    }
-  },[apiRef, row.id])
+  const [isHovered, setIsHovered] = React.useState(false)
+
   const handleRowEnter: GridEventListener<"rowMouseEnter"> = ({id})  => {
-    id === row.id && setRowHovered(true);
+    if(id === row.id){
+      setIsHovered(true)
+    }
   }
   const handleRowLeave: GridEventListener<'rowMouseLeave'> = ({id})  => {
-    id === row.id && setRowHovered(false);
+      setIsHovered(false)
   }
   useGridApiEventHandler(apiRef, "rowMouseEnter", handleRowEnter);
   useGridApiEventHandler(apiRef, "rowMouseLeave", handleRowLeave);
 
   return (
-    rowHovered ? <PerRowLinkStateSelector items={[
+    isHovered ? <PerRowLinkStateSelector items={[
       {
         value: 'created',
         label: <LinkIcon />,
@@ -482,7 +479,9 @@ export const AlignmentTable = ({
       field: 'ref',
       headerName: 'Bible Ref',
       renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
-          <RefCell {...row} />
+          <RefCell
+            row={row}
+          />
       )
     },
     {

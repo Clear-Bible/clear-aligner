@@ -6,7 +6,7 @@ import { AppContext } from '../../App';
 import { ProjectTokenReport, useSyncWordsOrParts } from './useSyncWordsOrParts';
 import { InitializationStates } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
-import { useDeleteProject } from './useDeleteProject';
+import { useDeleteRemoteProject } from './useDeleteRemoteProject';
 import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
@@ -278,7 +278,7 @@ export const useSyncProject = (): SyncState => {
   const { refetch: getProjects } = useProjectsFromServer({enabled: false});
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
-  const { deleteProject } = useDeleteProject();
+  const { deleteProject } = useDeleteRemoteProject();
   const { projectState, containers, setIsProjectDialogOpen, isBusyDialogOpen, setIsSnackBarOpen, setSnackBarMessage, preferences, setPreferences, setProjects } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);

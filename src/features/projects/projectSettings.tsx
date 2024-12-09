@@ -37,8 +37,10 @@ import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/cor
 import { useDatabase } from '../../hooks/useDatabase';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
-import { useDeleteProject } from '../../api/projects/useDeleteProject';
+import { useDeleteRemoteProject } from '../../api/projects/useDeleteRemoteProject';
 import { getUserGroups } from '../../server/amplifySetup';
+import { wrapAsync } from '../../utils/wrapAsync';
+import { BusyDialogContext } from '../../utils/useBusyDialogContext';
 
 enum ProjectDialogMode {
   CREATE = 'create',
@@ -98,8 +100,8 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                                                      }: ProjectSettingsProps) => {
   const dispatch = useAppDispatch();
   const { publishProject, dialog: publishDialog } = usePublishProject();
-  const { setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
-  const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
+  const { projectState, preferences, setProjects, setPreferences, projects, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
+  const { setForceShowBusyDialog } = useContext(BusyDialogContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = useState<Project>(initialProjectState);
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
@@ -107,7 +109,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
   const [openConfirmUnpublish, setOpenConfirmUnpublish] = useState(false);
   const [fileContent, setFileContent] = useState('');
   const [projectUpdated, setProjectUpdated] = useState(false);
-  const { deleteProject } = useDeleteProject();
+  const { deleteProject } = useDeleteRemoteProject();
   const languageOptions = useMemo(() =>
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
       .sort((a, b) => a.localeCompare(b)), []);
@@ -124,7 +126,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
     setProjectUpdated(false);
     setUploadErrors([]);
     setProject(getInitialProjectState());
-    closeCallback();
+    closeCallback?.();
   }, [closeCallback, setProject, setUploadErrors, setFileContent]);
 
   const invalidProjectName = useMemo(() => {
@@ -489,12 +491,18 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
           onClick={handleClose}>Cancel</Button>
         <Button
           disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || isFormReadOnly}
-          onClick={e => {
-            handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
+          onClick={(e) => wrapAsync(
+            async () => {
+              setForceShowBusyDialog(true);
+            },
+            async (e) => {
+              await handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e);
               // handleClose() in the .then() ensures dialog doesn't close prematurely
               handleClose();
-            });
-          }}
+            },
+            async () => {
+              setForceShowBusyDialog(false);
+            })(e) }
         >{!projectId ? 'Create' : 'Save'}</Button>
       </Box>
       <Dialog

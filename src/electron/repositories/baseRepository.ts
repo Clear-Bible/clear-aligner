@@ -1,8 +1,7 @@
 /**
  * This file contains classes to set up the database with TypeORM.
  */
-//@ts-nocheck
-import path from 'path';
+const path = require('path');
 
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
@@ -19,7 +18,7 @@ const isMac = platform() === 'darwin';
 class DataSourceStatus {
   isLoading: boolean;
   isLoaded: boolean;
-  dataSource: DataSource | undefined;
+  dataSource: typeof DataSource | undefined;
 
   constructor() {
     this.isLoading = false;
@@ -41,13 +40,13 @@ export interface RepositoryWithMigrations {
    * by typeorm (strings with globs indicating file paths, migration data
    * classes, etc)
    */
-  getMigrations?: () => Promise<any[]>;
+  getMigrations?: (() => Promise<any[]>)|undefined;
 }
 
 /**
  * This class facilitates the database initialization
  */
-export class BaseRepository implements RepositoryWithMigrations {
+export abstract class BaseRepository implements RepositoryWithMigrations {
   static DB_WAIT_IN_MS = 1000;
 
   isLoggingTime: boolean;
@@ -58,19 +57,21 @@ export class BaseRepository implements RepositoryWithMigrations {
     this.dataSources = new Map<string, DataSourceStatus>();
   }
 
-  logDatabaseTime = (label) => {
+  abstract getMigrations(): Promise<any[]>;
+
+  logDatabaseTime = (label: string) => {
     if (this.isLoggingTime) {
       console.time(label);
     }
   };
 
-  logDatabaseTimeLog = (label, ...args) => {
+  logDatabaseTimeLog = (label: string, ...args: any[]) => {
     if (this.isLoggingTime) {
       console.timeLog(label, ...args);
     }
   };
 
-  logDatabaseTimeEnd = (label) => {
+  logDatabaseTimeEnd = (label: string) => {
     if (this.isLoggingTime) {
       console.timeEnd(label);
     }
@@ -89,7 +90,7 @@ export class BaseRepository implements RepositoryWithMigrations {
       : path.dirname(app.getPath('exe'))), 'sql');
   };
 
-  removeDataSource = async (sourceName) => {
+  removeDataSource = async (sourceName: string) => {
     this.logDatabaseTime('removeDataSource()');
     try {
       const sourceStatus = this.dataSources.get(sourceName);
@@ -104,7 +105,7 @@ export class BaseRepository implements RepositoryWithMigrations {
     }
   };
 
-  getDataSourceWithEntities = async (sourceName, entities, generationFile = '', databaseDirectory = '') => {
+  getDataSourceWithEntities = async (sourceName: string, entities: any[], generationFile: string = '', databaseDirectory: string = '', allowCreate: boolean = false) => {
     if (!sourceName || sourceName.length < 1) {
       throw new Error('sourceName cannot be empty or undefined!');
     }
@@ -128,6 +129,12 @@ export class BaseRepository implements RepositoryWithMigrations {
       const workDatabaseDirectory = databaseDirectory ? databaseDirectory : this.getDataDirectory();
       const databaseFile = path.join(workDatabaseDirectory, fileName);
 
+      if (!allowCreate) { // if allowCreate isn't allowed
+        if (!fs.existsSync(path.dirname(databaseFile)) || !fs.existsSync(databaseFile)) { // if the directory doesn't exist or the db file doesn't exist
+          console.error(`Attempted to access '${databaseFile}' but allowCreate is false and it doesn't exist`);
+          return undefined;
+        }
+      }
 
       this.logDatabaseTime('getDataSourceWithEntities(): copied template');
       try {
@@ -153,7 +160,7 @@ export class BaseRepository implements RepositoryWithMigrations {
             migrationsRun: true,
             migrations: [...migrations]
           } : {}),
-          prepareDatabase: (db) => {
+          prepareDatabase: (db: any) => {
             db.pragma('journal_mode = MEMORY');
             db.pragma('cache_size = -8000000');
             db.pragma('read_uncommitted = true');
@@ -162,9 +169,10 @@ export class BaseRepository implements RepositoryWithMigrations {
           },
           entities
         });
+        sourceStatus.dataSource = newDataSource;
+
         await newDataSource.initialize();
 
-        sourceStatus.dataSource = newDataSource;
         sourceStatus.isLoaded = true;
 
         this.logDatabaseTimeLog('getDataSourceWithEntities(): created data source', sourceName, databaseFile);
