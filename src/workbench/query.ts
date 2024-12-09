@@ -49,7 +49,7 @@ function sanitizeRequired(inputRequired: string){
   }
   let workingExclude = inputRequired.trim().toLowerCase();
   if (workingExclude.length < 1){
-    return 0
+    return 1
   }
   let firstLetter = workingExclude[0];
   if (firstLetter === 'n' || firstLetter === 'f'){
