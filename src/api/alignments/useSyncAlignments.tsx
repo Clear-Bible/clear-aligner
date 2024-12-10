@@ -57,6 +57,7 @@ export const useSyncAlignments = (): SyncState => {
   const fetchLinks = useCallback(async (signal: AbortSignal, projectId?: string) => {
     let resultLinks: ServerAlignmentLinkDTO[] = [];
     try {
+      console.log("retrieving links")
       const { body: alignmentLinks } = await ApiUtils.generateRequest<ServerLinksDTO>({
         requestPath: `/api/projects/${projectId}/alignment_links`,
         requestType: ApiUtils.RequestType.GET,
@@ -75,7 +76,8 @@ export const useSyncAlignments = (): SyncState => {
           meta: {
             id: l.id,
             origin: l.meta.origin,
-            status: l.meta.status
+            status: l.meta.status,
+            note: l.meta.note
           },
           source: l.sources,
           target: l.targets
