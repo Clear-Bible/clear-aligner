@@ -2,7 +2,7 @@ import { mapProjectDtoToProject, ProjectDTO, ProjectLocation, ProjectState } fro
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppContext } from '../../App';
 import { Progress } from '../ApiModels';
-import { Project } from '../../state/projects/tableManager';
+import { Project, ProjectTable } from '../../state/projects/tableManager';
 import { DateTime } from 'luxon';
 import { ApiUtils } from '../utils';
 import RequestType = ApiUtils.RequestType;
@@ -38,11 +38,12 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         requestPath: '/api/projects',
         requestType: RequestType.GET
       });
-      const projectDtos = (projectsResponse.body ?? []) as ProjectDTO[];
+      if (!projectsResponse.success) return undefined;
 
-      const projects = (
-        Array.isArray(projectDtos)
-          ? projectDtos
+      const projectsDtos = (projectsResponse.body ?? []) as ProjectDTO[];
+      const serverProjects = (
+        Array.isArray(projectsDtos)
+          ? projectsDtos
             .filter(p => p.state === ProjectState.PUBLISHED)
             .map(p => mapProjectDtoToProject(p, ProjectLocation.REMOTE))
           : []
@@ -51,34 +52,41 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
       // Save in local database if persist is specified.
       if (persist) {
         const localProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
-        for (const project of projects.filter(p => p?.targetCorpora?.corpora?.length)) {
-          project.sourceCorpora = undefined;
-
-          const localProject: Project = localProjects.get(project.id);
+        for (const serverProject of serverProjects
+          .filter(foundProject => ProjectTable.projectHasTargetCorpora(foundProject))) {
+          serverProject.sourceCorpora = undefined;
+          const localProject: Project = localProjects.get(serverProject.id);
           // Update valid projects stored locally that are local or synced.
-          if (localProject?.lastSyncTime) project.lastSyncTime = localProject.lastSyncTime;
-          if (localProject?.updatedAt) project.updatedAt = localProject.updatedAt;
-          if (localProject?.targetCorpora?.corpora?.[0]) {
-            project.location = ProjectLocation.SYNCED;
-            await projectState.projectTable?.update?.(project, false);
+          serverProject.lastSyncTime = localProject?.lastSyncTime ?? serverProject?.lastSyncTime;
+          serverProject.updatedAt = localProject?.updatedAt ?? serverProject?.updatedAt;
+          if (ProjectTable.projectHasAllCorpora(localProject)) {
+            serverProject.location = ProjectLocation.SYNCED;
+            await projectState.projectTable?.update?.(serverProject, false);
           } else {
-            await projectState.projectTable?.save?.(project, false);
+            await projectState.projectTable?.save?.(serverProject, false);
           }
         }
-        const removedProjects: Project[] = Array.from(localProjects.values()).filter((lp: Project) =>
-          !projects.some(p => lp.id === p.id) && lp.targetCorpora?.corpora?.reduce((a, b) => a && b)
-        );
-        for (const removedProject of removedProjects) {
-          removedProject.location = ProjectLocation.LOCAL;
-          removedProject.lastSyncTime = 0;
-          removedProject.updatedAt = DateTime.now().toMillis();
-          await projectState.projectTable?.update?.(removedProject, false);
+        const localOnlyProjects: Project[] = Array.from(localProjects.values())
+          .filter((localProject: Project) =>
+            !serverProjects.some(serverProject => localProject.id === serverProject.id));
+        const localizedServerProjects: Project[] = localOnlyProjects.filter((foundProject: Project) =>
+          ProjectTable.projectHasAnyCorpora(foundProject));
+        for (const localizedServerProject of localizedServerProjects) {
+          localizedServerProject.location = ProjectLocation.LOCAL;
+          localizedServerProject.lastSyncTime = 0;
+          localizedServerProject.updatedAt = DateTime.now().toMillis();
+          await projectState.projectTable?.update?.(localizedServerProject, false);
+        }
+        const removedServerProjects: Project[] = localOnlyProjects.filter((foundProject: Project) =>
+          !ProjectTable.projectHasAnyCorpora(foundProject));
+        for (const removedServerProject of removedServerProjects) {
+          await projectState.projectTable?.remove(removedServerProject?.id);
         }
       }
-      const updatedProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
-      setProjects(p => Array.from(updatedProjects.values() ?? p));
+      const updatedLocalProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
+      setProjects(prevResults => Array.from(updatedLocalProjects.values() ?? prevResults));
       setProgress(Progress.SUCCESS);
-      return projectDtos;
+      return projectsDtos;
     } catch (x) {
       console.error(x);
       setProgress(Progress.FAILED);
