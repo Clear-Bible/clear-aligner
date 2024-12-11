@@ -45,7 +45,7 @@ function sanitizeExclude(inputExclude: string){
  */
 function sanitizeRequired(inputRequired: string){
   if(!inputRequired){
-    return 0
+    return 1
   }
   let workingExclude = inputRequired.trim().toLowerCase();
   if (workingExclude.length < 1){
@@ -90,6 +90,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         if (!wordText || wordText.length < 1) return;
         const normalizedText = wordText.toLowerCase();
         exclude = sanitizeExclude(values[headerMap['exclude']]);
+        required = sanitizeRequired(values[headerMap['required']]);
 
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -100,6 +101,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           sourceVerse: values[headerMap['source_verse']] || '',
           normalizedText,
           exclude: exclude,
+          required: required,
         };
 
         wordKey = normalizedText;
