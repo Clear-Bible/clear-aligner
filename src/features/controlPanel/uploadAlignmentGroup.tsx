@@ -27,15 +27,11 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
 }) => {
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
     alignmentFile?: AlignmentFile,
     saveKey?: string,
-    suppressJournaling?: boolean,
-    removeAllFirst?: boolean,
-    preserveFileIds?: boolean,
-    fromServer?: boolean
-  }>();
+    isFromServer: boolean
+  }>({ isFromServer: false });
 
   const { setForceShowBusyDialog, setCustomStatus } = useContext(BusyDialogContext);
 
@@ -50,36 +46,36 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     alignmentFileSaveState?.alignmentFile,
     alignmentFileSaveState?.saveKey,
     false,
-    alignmentFileSaveState?.suppressJournaling,
-    alignmentFileSaveState?.removeAllFirst,
-    alignmentFileSaveState?.preserveFileIds,
-    alignmentFileSaveState?.fromServer);
-  const { progress, dialog, file: alignmentFileFromServer } = useSyncProject();
+    alignmentFileSaveState?.isFromServer,
+    alignmentFileSaveState?.isFromServer,
+    alignmentFileSaveState?.isFromServer,
+    alignmentFileSaveState?.isFromServer);
+  const { progress, dialog, syncedAlignments } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(project?.id, getAllLinksKey);
 
   useEffect(() => {
     saveAlignmentFile(allLinks);
   }, [allLinks]);
+
   useEffect(() => {
-    if (!alignmentFileFromServer) {
+    if (!syncedAlignments) {
       return;
     }
+
     // clear errors, if any
     setAlignmentFileCheckResults({
       checkResults: undefined,
       showDialog: undefined
     });
+
     // import/save file
     setAlignmentFileSaveState({
-      alignmentFile: alignmentFileFromServer,
+      alignmentFile: syncedAlignments,
       saveKey: uuid(),
-      suppressJournaling: true,
-      removeAllFirst: true,
-      preserveFileIds: true,
-      fromServer: true
+      isFromServer: true
     });
-  }, [alignmentFileFromServer, setAlignmentFileSaveState]);
+  }, [syncedAlignments, setAlignmentFileSaveState]);
 
   const inProgress = useMemo(() => (
     [
@@ -138,10 +134,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                     setAlignmentFileSaveState({
                       alignmentFile: checkResults.isFileValid ? checkResults.validatedFile : undefined,
                       saveKey: uuid(),
-                      suppressJournaling: false,
-                      removeAllFirst: false,
-                      preserveFileIds: false,
-                      fromServer: false
+                      isFromServer: false
                     });
                   },
                   async () => {
@@ -157,7 +150,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                   mr: '2px',
                   borderRadius: 10,
                   width: 'calc(50% - 2px)'
-              }}
+                }}
                 onClick={() => {
                   // delegate file loading to regular file input
                   fileInputRef?.current?.click();
@@ -183,7 +176,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                   ml: '2px',
                   borderRadius: 10,
                   width: 'calc(50% - 2px)'
-              }}
+                }}
                 onClick={() => new Promise<undefined>((resolve) => {
                   setTimeout(async () => {
                     setGetAllLinksKey(String(Date.now()));
