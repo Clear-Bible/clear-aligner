@@ -17,6 +17,7 @@ import { getCurrentUser } from 'aws-amplify/auth';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 import { FeaturePreferences } from '../common/data/featurePreferences';
 import { pickDeFactoCurrentProject } from '../api/projects/pickDeFactoCurrentProject';
+import { SnackBarObjectInterface } from '../features/snackbar';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
@@ -29,7 +30,7 @@ const useInitialization = (): AppContextProps => {
   const [userStatus, setUserStatus] = React.useState<{color: string, label: string}>(userState.LoggedOut)
   const network = useNetworkState();
   const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
-  const [snackBarMessage, setSnackBarMessage] = React.useState("")
+  const [snackBarObject, setSnackBarObject] = React.useState({} as SnackBarObjectInterface)
   const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
   const [ isBusyDialogOpen, setIsBusyDialogOpen ] = useState<boolean>(false);
   const [ features, setFeatures ] = useState<FeaturePreferences>({
@@ -170,11 +171,11 @@ const useInitialization = (): AppContextProps => {
   // trigger snackbar messages indicating network status
   useEffect( () => {
     if(network && network.online){
-      setSnackBarMessage('Internet Connection Detected')
+      setSnackBarObject({ message: 'Internet Connection Detected', autoHide: true})
       setIsSnackBarOpen(true)
     }
     else{
-      setSnackBarMessage('No internet connection')
+      setSnackBarObject({ message: 'No internet connection', autoHide: true})
       setIsSnackBarOpen(true)
     }
   },[network])
@@ -194,8 +195,8 @@ const useInitialization = (): AppContextProps => {
     setUserStatus,
     isSnackBarOpen,
     setIsSnackBarOpen,
-    snackBarMessage,
-    setSnackBarMessage,
+    snackBarObject,
+    setSnackBarObject,
     isProjectDialogOpen,
     setIsProjectDialogOpen,
     isBusyDialogOpen,

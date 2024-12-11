@@ -7,13 +7,18 @@ import { IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { AppContext } from '../../App';
 
+export interface SnackBarObjectInterface {
+  message: string,
+  autoHide?: boolean
+}
+
 /**
  * CustomSnackbar displays a temporary informational
  * toast, aka snackbar
  */
 export const CustomSnackbar= () => {
 
-  const {isSnackBarOpen, setIsSnackBarOpen, snackBarMessage } = useContext(AppContext)
+  const {isSnackBarOpen, setIsSnackBarOpen, snackBarObject } = useContext(AppContext)
 
   const handleCloseSnackbar = (event: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -38,9 +43,9 @@ export const CustomSnackbar= () => {
   return (
     <Snackbar
       open={isSnackBarOpen}
-      autoHideDuration={3500}
+      autoHideDuration={snackBarObject.autoHide ? 3500: null}
       onClose={handleCloseSnackbar}
-      message={snackBarMessage}
+      message={snackBarObject.message}
       action={action}
       anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
     />

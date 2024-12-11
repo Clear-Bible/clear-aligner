@@ -31,7 +31,7 @@ export interface UseDeleteProjectFromServerWithDialogState {
 export const useDeleteProjectFromServerWithDialog = ({
                                                        project
 }: UseDeleteProjectFromServerWithDialogProps): UseDeleteProjectFromServerWithDialogState => {
-  const { setSnackBarMessage, setIsSnackBarOpen } =  useContext(AppContext);
+  const { setSnackBarObject, setIsSnackBarOpen } =  useContext(AppContext);
   const { deleteProject } = useDeleteRemoteProject();
   const { publishProject, dialog: publishDialog } = usePublishProject();
   const [ isDialogOpen, setIsDialogOpen ] = useState<boolean>(false);
@@ -57,7 +57,7 @@ export const useDeleteProjectFromServerWithDialog = ({
                       .then((groups) => {
                         const isAdmin = (groups ?? [] as string[])?.includes(ADMIN_GROUP);
                         const displayPermissionsErrorMsg = () => {
-                          setSnackBarMessage('You do not have permission to complete this operation');
+                          setSnackBarObject({ message: 'You do not have permission to complete this operation'});
                           setIsSnackBarOpen(true);
                         }
                         if (!isAdmin) {
@@ -89,7 +89,7 @@ export const useDeleteProjectFromServerWithDialog = ({
         {publishDialog}
       </>
       );
-  }, [isDialogOpen, setSnackBarMessage, setIsSnackBarOpen, publishProject, project, deleteProject, publishDialog]);
+  }, [isDialogOpen, setSnackBarObject, setIsSnackBarOpen, publishProject, project, deleteProject, publishDialog]);
 
   return {
     isOpen: isDialogOpen,
