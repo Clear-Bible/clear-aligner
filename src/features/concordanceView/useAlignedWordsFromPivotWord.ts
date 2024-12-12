@@ -58,7 +58,7 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridS
     };
 
     void load();
-  }, [db, sort, setAlignedWords, pivotWord, languages, preferences?.currentProject, lastUpdate]);
+  }, [db, sort, setAlignedWords, pivotWord, languages, preferences?.currentProject, lastUpdate, useLemma]);
 
   return alignedWords;
 };

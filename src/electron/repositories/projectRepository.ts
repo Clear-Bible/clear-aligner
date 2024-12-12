@@ -42,6 +42,7 @@ import {
 import { LinkNote } from '../../common/data/project/linkNote';
 import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728604421335-add-notes-to-links';
 import { LinkEntity } from '../../common/data/project/linkEntity';
+import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -346,7 +347,8 @@ export class ProjectRepository extends BaseRepository {
       AddBulkInserts1720060108764,
       CorporaTimestamps1720241454613,
       JournalEntriesDiffToBody1720419515419,
-      AddNotesToLinks1728604421335
+      AddNotesToLinks1728604421335,
+      AddLemmaToWordsOrParts1734038034739
     ];
   };
 
