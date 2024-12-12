@@ -82,6 +82,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           sourceVerse: values[headerMap['source_verse']] || '',
           normalizedText,
           exclude: exclude,
+          lemma: (values[headerMap['lemma']] || '').toLowerCase()
         };
 
         wordKey = normalizedText;

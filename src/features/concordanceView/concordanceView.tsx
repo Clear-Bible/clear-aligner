@@ -17,7 +17,7 @@ import {
   Paper,
   Select,
   Stack,
-  Toolbar,
+  Toolbar, Tooltip,
   Typography, useTheme
 } from '@mui/material';
 import { Box } from '@mui/system';
@@ -280,15 +280,16 @@ export const ConcordanceView = () => {
   /**
    * pivot words
    */
-  const [wordSource, setWordSource] = useState('targets' as AlignmentSide);
+  const [wordSource, setWordSource] = useState(AlignmentSide.SOURCE);
   const [wordFilter, setWordFilter] = useState('all' as PivotWordFilter);
   const [pivotWordSortData, setPivotWordSortData] = useState({
     field: 'frequency',
     sort: 'desc'
   } as GridSortItem | null);
+  const [lemmaToggled, setLemmaToggled] = useState(true);
   const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, RepositoryLink>>(new Map());
-  const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<RepositoryLink[]>([])
-  const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
+  const [updatedSelectedRows, setUpdatedSelectedRows] = useState<RepositoryLink[]>([])
+  const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData, lemmaToggled);
 
   useMemo(() => !!pivotWords, [pivotWords]);
   const [selectedPivotWord, setSelectedPivotWord] = useState<
@@ -359,7 +360,7 @@ export const ConcordanceView = () => {
     if (searchParams.has('pivotWord')) {
       const pivotWordId = searchParams.get('pivotWord')!;
       const pivotWord = pivotWords.find(
-        (pivotWord) => pivotWord.normalizedText === pivotWordId
+        (pivotWord) => pivotWord.word === pivotWordId
       );
 
       if (pivotWord) {
@@ -424,7 +425,7 @@ export const ConcordanceView = () => {
                       gap: '0',
                       marginTop: '0',
                     }}>
-                    <Box display={'inline'} >
+                    <Box>
                       <SingleSelectButtonGroup
                         sx={{ flexGrow: 1 }}
                         value={wordSource}
@@ -440,10 +441,27 @@ export const ConcordanceView = () => {
                             tooltip: 'Target'
                           }
                         ]}
-                        onSelect={(value) => setWordSource(value as AlignmentSide)}
+                        onSelect={(value) => {
+                          const alignmentSide = value as AlignmentSide;
+                          if(alignmentSide === AlignmentSide.TARGET && lemmaToggled) {
+                            setLemmaToggled(false);
+                          }
+                          setWordSource(alignmentSide)
+                        }}
                       />
                     </Box>
-
+                    <Tooltip title="Group by Lemma">
+                      <Button
+                        onClick={() => setLemmaToggled(lt => !lt)}
+                        variant={lemmaToggled ? 'contained' : 'outlined'}
+                        disabled={wordSource === AlignmentSide.TARGET}
+                        sx={{minWidth: 0, width: 42, height: 37, ml: '6px'}}
+                      >
+                        <Box component="span" sx={{fontSize: 25, fontWeight: 500, textTransform: 'none' }}>
+                          λ
+                        </Box>
+                      </Button>
+                    </Tooltip>
                     {/*Pivot Word Filter*/}
                     <FormControl sx={{ marginLeft: '6px', display: 'inline' }}>
                       <InputLabel id={'pivot-word-filter'}>Pivot Word Filter</InputLabel>
@@ -455,7 +473,7 @@ export const ConcordanceView = () => {
                         onChange={({ target: { value } }) =>
                           setWordFilter(value as PivotWordFilter)
                         }
-                        sx={{maxHeight: '37px', width: '154px'}}
+                        sx={{height: 37, width: '154px'}}
                       >
                           <MenuItem value={'aligned' as PivotWordFilter}>
                             <Box display={'flex'}>
@@ -604,6 +622,7 @@ export const ConcordanceView = () => {
                     handleUpdateSelectedAlignedWord(alignedWord)
                   }
                   onChangeSort={setAlignedWordSortData}
+                  lemmaToggled={lemmaToggled}
                 />
               </Paper>
           </Grid>

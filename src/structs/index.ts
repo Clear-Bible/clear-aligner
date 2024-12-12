@@ -87,6 +87,7 @@ export interface Word {
   position: number;
   gloss?: string;
   normalizedText: string;
+  lemma: string;
   sourceVerse?: string;
   exclude?: number;
 }

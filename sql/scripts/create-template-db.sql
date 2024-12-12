@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS "words_or_parts"
     position_word      integer not null,
     position_part      integer,
     normalized_text    TEXT    not null,
+    lemma              TEXT,
     source_verse_bcvid TEXT,
     exclude            integer
 );
@@ -83,6 +84,8 @@ CREATE INDEX words_or_parts_after_index
     on words_or_parts (after);
 CREATE INDEX words_or_parts_normalized_text_index
     on words_or_parts (normalized_text);
+CREATE INDEX words_or_parts_lemma_index
+    on words_or_parts (lemma);
 CREATE INDEX words_or_parts_text_index
     on words_or_parts (text);
 CREATE INDEX idx__word_or_part_side_index

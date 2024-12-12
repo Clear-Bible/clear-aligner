@@ -21,6 +21,7 @@ import { UserPreferenceDto } from '../state/preferences/tableManager';
 import { ProjectEntity } from '../common/data/project/project';
 import { JournalEntryDTO } from '../common/data/journalEntryDTO';
 import { AlignmentSide } from '../common/data/project/corpus';
+import { ConcordanceAlignedWord, ConcordancePivotWord } from '../common/repositories/projectRepository';
 
 export interface ListedProjectDto {
   id: string;
@@ -44,19 +45,10 @@ export interface DatabaseApi {
   projectSave: (project: ProjectEntity) => Promise<ProjectEntity>;
   removeSource: (sourceName: string) => Promise<undefined>;
   projectRemove: (sourceName: string) => Promise<undefined>;
-  corporaGetPivotWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<{
-    t: string, // normalized text
-    l: string, // language id
-    c: number  // frequency
-  }[]>;
-  corporaGetAlignedWordsByPivotWord: (sourceName: string, side: AlignmentSide, normalizedText: string, sort?: GridSortItem | null) => Promise<{
-    t: string, // normalized text (pivot word)
-    sl: string, // sources text language id
-    st: string, // sources text
-    tl: string, // targets text language id
-    tt: string, // targets text
-    c: number // frequency
-  }[]>;
+  corporaGetSourceWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<ConcordancePivotWord[]>;
+  corporaGetLemmas: (sourceName: string, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<ConcordancePivotWord[]>;
+  corporaGetAlignedWordsBySourceWord: (sourceName: string, side: AlignmentSide, normalizedText: string, sort?: GridSortItem | null) => Promise<ConcordanceAlignedWord[]>;
+  corporaGetAlignedWordsByLemma: (sourceName: string, lemma: string, sort?: GridSortItem | null) => Promise<ConcordanceAlignedWord[]>;
   removeTargetWordsOrParts: (sourceName: string) => Promise<void>;
   insert: <T, >({ projectId, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => Promise<boolean>;
   deleteAll: ({ projectId, table }: DeleteParams) => Promise<boolean>;

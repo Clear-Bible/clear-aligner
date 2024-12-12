@@ -6,6 +6,7 @@ export interface WordOrPartDTO {
   side: AlignmentSide;
   corpusId: string;
   text: string;
+  lemma: string;
   after?: string;
   gloss?: string;
   sourceVerseBcv?: string;
@@ -20,7 +21,8 @@ export const mapWordOrPartToWordOrPartDTO = (wordOrPart: Word): WordOrPartDTO =>
   after: wordOrPart.after,
   gloss: wordOrPart.gloss,
   sourceVerseBcv: wordOrPart.sourceVerse,
-  exclude: wordOrPart.exclude
+  exclude: wordOrPart.exclude,
+  lemma: wordOrPart.lemma
 });
 
 export const mapWordOrPartDtoToWordOrPart = (wordOrPart: WordOrPartDTO): Word => ({
@@ -33,5 +35,6 @@ export const mapWordOrPartDtoToWordOrPart = (wordOrPart: WordOrPartDTO): Word =>
   sourceVerse: wordOrPart.sourceVerseBcv,
   position: 0,
   normalizedText: wordOrPart.text?.toLowerCase() ?? '',
+  lemma: wordOrPart.lemma?.toLowerCase() ?? '',
   exclude: wordOrPart.exclude
 });
