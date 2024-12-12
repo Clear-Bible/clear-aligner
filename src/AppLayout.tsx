@@ -9,6 +9,7 @@ import { Box } from '@mui/system';
 import BCVWP from './features/bcvwp/BCVWPSupport';
 import { DEFAULT_DOCUMENT_TITLE } from './common/constants';
 import { BusyDialogContext, BusyDialogContextProps, useBusyDialogContext } from './utils/useBusyDialogContext';
+import { CustomSnackbar } from './features/snackbar';
 
 export interface LayoutContextProps {
   windowTitle: string;
@@ -75,6 +76,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
               </div>
             </Box>
           </div>
+          <CustomSnackbar />
         </Themed>
       </BusyDialogContext.Provider>
     </LayoutContext.Provider>

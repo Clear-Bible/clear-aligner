@@ -92,6 +92,9 @@ const lightTheme: Theme = createTheme({
     highlightedText: {
       alignmentEditor: yellow[200],
     },
+    snackbar: {
+      errorText: '#e57373', // MUI Red[300]
+    },
     tokenButtons: {
       defaultTokenButtons: {
         default: '#00000000', // Transparent
@@ -294,6 +297,9 @@ const darkTheme = createTheme({
     },
     highlightedText: {
       alignmentEditor: yellow[700],
+    },
+    snackbar: {
+      errorText: '#ef5350', // MUI Red[400]
     },
     tokenButtons: {
       defaultTokenButtons: {

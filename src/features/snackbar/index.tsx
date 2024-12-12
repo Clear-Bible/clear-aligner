@@ -3,13 +3,16 @@
  */
 import React, { useContext } from 'react';
 import Snackbar from '@mui/material/Snackbar';
-import { IconButton } from '@mui/material';
+import { IconButton, useTheme } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { AppContext } from '../../App';
+
+type SnackBarObjectVariants = 'error';
 
 export interface SnackBarObjectInterface {
   message: string,
   autoHide?: boolean
+  variant?: SnackBarObjectVariants
 }
 
 /**
@@ -17,8 +20,10 @@ export interface SnackBarObjectInterface {
  * toast, aka snackbar
  */
 export const CustomSnackbar= () => {
-
   const {isSnackBarOpen, setIsSnackBarOpen, snackBarObject } = useContext(AppContext)
+  const theme = useTheme();
+
+  const isErrorVariant = snackBarObject.variant === 'error'
 
   const handleCloseSnackbar = (event: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -48,7 +53,14 @@ export const CustomSnackbar= () => {
       message={snackBarObject.message}
       action={action}
       anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
-    />
+      ContentProps={{
+        sx: {
+          color: isErrorVariant ? theme.palette.snackbar.errorText : null
+        }
+      }}
+    >
+
+    </Snackbar>
   );
 };
 
