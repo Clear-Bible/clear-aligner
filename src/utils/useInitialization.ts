@@ -171,11 +171,11 @@ const useInitialization = (): AppContextProps => {
   // trigger snackbar messages indicating network status
   useEffect( () => {
     if(network && network.online){
-      setSnackBarObject({ message: 'Internet Connection Detected', autoHide: true})
+      setSnackBarObject({ message: 'Internet Connection Detected.', autoHide: true})
       setIsSnackBarOpen(true)
     }
     else{
-      setSnackBarObject({ message: 'No internet connection', autoHide: true})
+      setSnackBarObject({ message: 'No internet connection.', autoHide: true})
       setIsSnackBarOpen(true)
     }
   },[network])

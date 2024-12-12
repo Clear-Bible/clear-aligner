@@ -80,7 +80,7 @@ export const useDownloadProject = (): SyncState => {
       });
 
       if (!projectsResponse.success) { // failure, perform cleanup
-        appCtx.setSnackBarObject({message: 'Project is not available for download as the current user'});
+        appCtx.setSnackBarObject({message: 'Project is not available for download as the current user.', variant: 'error'});
         appCtx.setIsSnackBarOpen(true);
         setProgress(ProjectDownloadProgress.FAILED);
         // perform cleanup

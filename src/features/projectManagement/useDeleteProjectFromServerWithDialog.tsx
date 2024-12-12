@@ -57,7 +57,7 @@ export const useDeleteProjectFromServerWithDialog = ({
                       .then((groups) => {
                         const isAdmin = (groups ?? [] as string[])?.includes(ADMIN_GROUP);
                         const displayPermissionsErrorMsg = () => {
-                          setSnackBarObject({ message: 'You do not have permission to complete this operation'});
+                          setSnackBarObject({ message: 'You do not have permission to complete this operation.', variant: 'error'});
                           setIsSnackBarOpen(true);
                         }
                         if (!isAdmin) {

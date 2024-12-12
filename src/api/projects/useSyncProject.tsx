@@ -121,12 +121,12 @@ export const stepSyncingProject = async (
       setProgress(SyncProgress.SYNCING_CORPORA);
     } else {
       if (projectsResponse.response.statusCode === 403) {
-        setSnackBarObject({message: 'You do not have permission to complete this operation'});
+        setSnackBarObject({message: 'You do not have permission to complete this operation.', variant: 'error'});
       } else if ((projectsResponse.body?.message ?? '').includes('duplicate key')) {
         setUniqueNameError(true);
-        setSnackBarObject({message: 'Failed to sync project. Project name already exists'});
+        setSnackBarObject({message: 'Failed to sync project. Project name already exists.', variant: 'error'});
       } else {
-        setSnackBarObject({message: 'Failed to sync project.'});
+        setSnackBarObject({message: 'Failed to sync project.', variant: 'error'});
       }
       console.error('Response failed: ', projectsResponse.body);
       setIsSnackBarOpen(true);
@@ -169,9 +169,9 @@ export const stepSyncingCorpora = async (
   const res = await syncWordsOrParts(project);
   if (!res?.success) {
     if (res?.response.statusCode === 403) {
-      setSnackBarObject({message: 'You do not have permission to sync corpora. Skipping corpora'});
+      setSnackBarObject({message: 'You do not have permission to sync corpora. Skipping corpora.', variant: 'error'});
     } else {
-      setSnackBarObject({message: 'An unknown error occurred while attempting to sync corpora. Skipping corpora'});
+      setSnackBarObject({message: 'An unknown error occurred while attempting to sync corpora. Skipping corpora.', variant: 'error'});
     }
     setIsSnackBarOpen(true);
   }
@@ -205,9 +205,9 @@ export const stepSyncingAlignments = async (
     const uploadResponse = await uploadAlignments(project.id);
     if (!uploadResponse?.success) {
       if (uploadResponse?.response.statusCode === 403) {
-        setSnackBarObject({message: 'You do not have permission to upload alignment links. Skipping links'});
+        setSnackBarObject({message: 'You do not have permission to upload alignment links. Skipping links.', variant: 'error'});
       } else {
-        setSnackBarObject({message: 'An unknown error occurred while attempting to upload alignment links. Skipping links'});
+        setSnackBarObject({message: 'An unknown error occurred while attempting to upload alignment links. Skipping links.', variant: 'error'});
       }
       setIsSnackBarOpen(true);
     } else {
@@ -221,7 +221,7 @@ export const stepSyncingAlignments = async (
   } else {
     const syncResponse = await syncAlignments(project.id);
     if (!syncResponse) {
-      setSnackBarObject({message: 'An error occurred while attempting to synchronize alignment links. Skipping links'});
+      setSnackBarObject({message: 'An error occurred while attempting to synchronize alignment links. Skipping links.', variant: 'error'});
       setIsSnackBarOpen(true);
     }
   }
