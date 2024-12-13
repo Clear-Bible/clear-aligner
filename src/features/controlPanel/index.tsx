@@ -3,8 +3,7 @@
  * create link, delete link, toggle glosses, swap to vertical mode, etc.
  */
 import { ReactElement, useMemo, useState } from 'react';
-import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
-import { AddLink, LinkOff, RestartAlt } from '@mui/icons-material';
+import { Button, Stack, SxProps, Theme, Tooltip } from '@mui/material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import { EditedLink } from '../../structs';
@@ -13,6 +12,17 @@ import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useHotkeys } from 'react-hotkeys-hook';
+
+const ControlPanelButtonSx: Partial<SxProps<Theme>> = {
+  borderRadius: 16,
+  width: '150px',
+  marginX: 0,
+  boxShadow: 0,
+  height: '42px',
+  fontSize: '15px',
+  font: 'Roboto',
+  fontWeight: 500,
+};
 
 export const ControlPanel = (): ReactElement => {
   useDebug('ControlPanel');
@@ -80,7 +90,7 @@ export const ControlPanel = (): ReactElement => {
     <>
       <Stack
         direction="row"
-        spacing={2}
+        spacing={.5}
         justifyContent="center"
         alignItems="baseline"
         style={{
@@ -89,30 +99,41 @@ export const ControlPanel = (): ReactElement => {
           flexGrow: 0,
           flexShrink: 0
         }}>
-        <ButtonGroup>
-          <Tooltip title="Create Link" arrow describeChild>
+        <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button
               variant="contained"
               disabled={!linkHasBothSides}
               onClick={() => createLink()}
+              sx={theme => ({
+                ...ControlPanelButtonSx,
+                backgroundColor: theme.palette.primary.main
+              })}
             >
-              <AddLink />
+              Save
             </Button>
           </span>
-          </Tooltip>
-          <Tooltip title="Delete Link" arrow describeChild>
+        </Tooltip>
+        <Tooltip title="Delete Link" arrow describeChild>
           <span>
             <Button
               variant="contained"
               disabled={!inProgressLink?.id}
               onClick={() => deleteLink()}
+              sx={theme => ({
+                ...ControlPanelButtonSx,
+                backgroundColor: theme.palette.controlPanel.cancel.main,
+                color: '#000000',
+                '&:hover': {
+                  backgroundColor: theme.palette.controlPanel.cancel.main
+                }
+              })}
             >
-              <LinkOff />
+              Cancel
             </Button>
           </span>
-          </Tooltip>
-          <Tooltip title="Reset" arrow describeChild>
+        </Tooltip>
+        <Tooltip title="Reset" arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -120,12 +141,18 @@ export const ControlPanel = (): ReactElement => {
               onClick={() => {
                 dispatch(resetTextSegments());
               }}
+              sx={theme => ({
+                ...ControlPanelButtonSx,
+                backgroundColor: theme.palette.error.light,
+                '&:hover': {
+                  backgroundColor: theme.palette.error.light
+                }
+              })}
             >
-              <RestartAlt />
+              Delete
             </Button>
           </span>
-          </Tooltip>
-        </ButtonGroup>
+        </Tooltip>
       </Stack>
     </>
   );

@@ -142,6 +142,14 @@ declare module '@mui/material/styles' {
         icon: string;
       }
     },
+    controlPanel: {
+      cancel: {
+        main: string;
+      },
+      delete: {
+        main: string;
+      }
+    },
     background: {
       paper: string;
       default: string;
