@@ -99,60 +99,54 @@ export const ControlPanel = (): ReactElement => {
           flexGrow: 0,
           flexShrink: 0
         }}>
-        <Tooltip title="Create Link" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={!linkHasBothSides}
-              onClick={() => createLink()}
-              sx={theme => ({
-                ...ControlPanelButtonSx,
-                backgroundColor: theme.palette.primary.main
-              })}
-            >
-              Save
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title="Delete Link" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={!inProgressLink?.id}
-              onClick={() => deleteLink()}
-              sx={theme => ({
-                ...ControlPanelButtonSx,
-                backgroundColor: theme.palette.controlPanel.cancel.main,
-                color: '#000000',
-                '&:hover': {
-                  backgroundColor: theme.palette.controlPanel.cancel.main
-                }
-              })}
-            >
-              Cancel
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title="Reset" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={!anySegmentsSelected}
-              onClick={() => {
-                dispatch(resetTextSegments());
-              }}
-              sx={theme => ({
-                ...ControlPanelButtonSx,
-                backgroundColor: theme.palette.error.light,
-                '&:hover': {
-                  backgroundColor: theme.palette.error.light
-                }
-              })}
-            >
-              Delete
-            </Button>
-          </span>
-        </Tooltip>
+        <span>
+          <Button
+            variant="contained"
+            disabled={!linkHasBothSides}
+            onClick={() => createLink()}
+            sx={theme => ({
+              ...ControlPanelButtonSx,
+              backgroundColor: theme.palette.primary.main
+            })}
+          >
+            Save
+          </Button>
+        </span>
+        <span>
+          <Button
+            variant="contained"
+            disabled={!anySegmentsSelected}
+            onClick={() => {
+              dispatch(resetTextSegments());
+            }}
+            sx={theme => ({
+              ...ControlPanelButtonSx,
+              backgroundColor: theme.palette.controlPanel.cancel.main,
+              color: '#000000',
+              '&:hover': {
+                backgroundColor: theme.palette.controlPanel.cancel.main
+              }
+            })}
+          >
+            Cancel
+          </Button>
+        </span>
+        <span>
+          <Button
+            variant="contained"
+            disabled={!inProgressLink?.id}
+            onClick={() => deleteLink()}
+            sx={theme => ({
+              ...ControlPanelButtonSx,
+              backgroundColor: theme.palette.error.light,
+              '&:hover': {
+                backgroundColor: theme.palette.error.light
+              }
+            })}
+          >
+            Delete
+          </Button>
+        </span>
       </Stack>
     </>
   );
