@@ -14,7 +14,7 @@ import { Project } from './state/projects/tableManager';
 import useInitialization from './utils/useInitialization';
 import { Containers } from './hooks/useCorpusContainers';
 import { useMediaQuery } from '@mui/material';
-import { CustomSnackbar, SnackBarObjectInterface } from './features/snackbar';
+import { SnackBarObjectInterface } from './features/snackbar';
 import { NetworkState } from '@uidotdev/usehooks';
 import { setUpAmplify } from './server/amplifySetup';
 import { InitializationStates } from './workbench/query';
