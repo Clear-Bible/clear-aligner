@@ -28,10 +28,10 @@ def sanitize_exclude(input_exclude):
 
 def sanitize_required(input_required):
     #trim and lower case
-    working_exclude = input_required.strip().lower()
-    if len(working_exclude) < 1:
+    working_required = input_required.strip().lower()
+    if len(working_required) < 1:
         return 1
-    first_letter = working_exclude[0]
+    first_letter = working_required[0]
     if first_letter == 'n' or first_letter == 'f':
         return 0
     return 1
