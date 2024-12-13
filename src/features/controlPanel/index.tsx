@@ -3,7 +3,7 @@
  * create link, delete link, toggle glosses, swap to vertical mode, etc.
  */
 import { ReactElement, useMemo, useState } from 'react';
-import { Button, Stack, SxProps, Theme, Tooltip } from '@mui/material';
+import { Button, Stack, SxProps, Theme } from '@mui/material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import { EditedLink } from '../../structs';
