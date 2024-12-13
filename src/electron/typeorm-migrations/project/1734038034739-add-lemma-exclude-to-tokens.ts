@@ -1,5 +1,4 @@
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
-import { LINKS_TABLE_NAME } from '../../../common/data/serverAlignmentLinkDTO';
 
 const WORDS_OR_PARTS_TABLE_NAME = "words_or_parts";
 const LEMMA_COLUMN_NAME = "lemma";
