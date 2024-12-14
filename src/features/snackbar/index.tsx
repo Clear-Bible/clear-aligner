@@ -55,7 +55,9 @@ export const CustomSnackbar= () => {
       anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
       ContentProps={{
         sx: {
-          color: isErrorVariant ? theme.palette.snackbar.errorText : null
+          color: isErrorVariant ? theme.palette.snackbar.errorText : null,
+          fontWeight: isErrorVariant ? 'bold' : null,
+          backgroundColor: theme.palette.background.paper
         }
       }}
     >
