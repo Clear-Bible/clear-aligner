@@ -57,7 +57,7 @@ export const CustomSnackbar= () => {
         sx: {
           color: isErrorVariant ? theme.palette.snackbar.errorText : null,
           fontWeight: isErrorVariant ? 'bold' : null,
-          backgroundColor: theme.palette.background.paper
+          backgroundColor: isErrorVariant ? theme.palette.background.paper : null
         }
       }}
     >
