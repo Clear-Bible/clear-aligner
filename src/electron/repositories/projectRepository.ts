@@ -42,6 +42,9 @@ import {
 import { LinkNote } from '../../common/data/project/linkNote';
 import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728604421335-add-notes-to-links';
 import { LinkEntity } from '../../common/data/project/linkEntity';
+import {
+  AddRequiredToWordsOrParts1734371090123
+} from '../typeorm-migrations/project/1734371090123-add-required-to-words-or-parts';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -345,7 +348,8 @@ export class ProjectRepository extends BaseRepository {
       AddBulkInserts1720060108764,
       CorporaTimestamps1720241454613,
       JournalEntriesDiffToBody1720419515419,
-      AddNotesToLinks1728604421335
+      AddNotesToLinks1728604421335,
+      AddRequiredToWordsOrParts1734371090123
     ];
   };
 
