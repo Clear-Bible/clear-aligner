@@ -147,6 +147,14 @@ const lightTheme: Theme = createTheme({
         icon: '#FAEBE9', // Coral 50
       }
     },
+    controlPanel: {
+      cancel: {
+        main: grey[300]
+      },
+      delete: {
+        main: '#EF5350'
+      }
+    },
     background :{
       paper: '#FAFAFA',
       default: '#FAFAFA'
@@ -349,6 +357,14 @@ const darkTheme = createTheme({
       },
       suggestedTokenButtons : {
         icon: '#FAEBE9', // Coral 50
+      }
+    },
+    controlPanel: {
+      cancel: {
+        main: grey[300],
+      },
+      delete: {
+        main: '#E57373'
       }
     },
     background : {
