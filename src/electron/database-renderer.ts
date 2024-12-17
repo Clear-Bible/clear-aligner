@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('databaseApi', {
   getFirstJournalEntryUploadChunk: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:getFirstJournalEntryUploadChunk`, sourceName),
   createBulkInsertJournalEntry: (paramObject) => ipcRenderer.invoke(`${ChannelPrefix}:createBulkInsertJournalEntry`, paramObject),
   getCount: (sourceName: string, tableName: string) => ipcRenderer.invoke(`${ChannelPrefix}:getCount`, sourceName, tableName),
+  getDataSourceLemmaCount: (sourceName: string, side?: string) => ipcRenderer.invoke(`${ChannelPrefix}:getDataSourceLemmaCount`, sourceName, side),
   createDataSource: (database) => ipcRenderer.invoke(`${ChannelPrefix}:createDataSource`, database),
   insert: (args) => ipcRenderer.invoke(`${ChannelPrefix}:insert`, args),
   deleteAll: (args) => ipcRenderer.invoke(`${ChannelPrefix}:deleteAll`, args),

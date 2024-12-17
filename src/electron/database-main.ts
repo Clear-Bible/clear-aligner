@@ -52,6 +52,7 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:createBulkInsertJournalEntry`, async (event, ...args) => await ProjectRepositoryInstance.createBulkInsertJournalEntry(...args));
     ipcMain.handle(`${ChannelPrefix}:getFirstJournalEntryUploadChunk`, async (event, ...args) => await ProjectRepositoryInstance.getFirstJournalEntryUploadChunk(...args));
     ipcMain.handle(`${ChannelPrefix}:getCount`, async (event, ...args) => await ProjectRepositoryInstance.getCount(...args));
+    ipcMain.handle(`${ChannelPrefix}:getDataSourceLemmaCount`, async (event, ...args) => await ProjectRepositoryInstance.getDataSourceLemmaCount(...args));
     ipcMain.handle(`${ChannelPrefix}:toggleCorporaUpdatedFlagOff`, async (event, projectId: string) => await ProjectRepositoryInstance.toggleCorporaUpdatedFlagOff(projectId));
     //@ts-ignore
     ipcMain.handle(`${ChannelPrefix}:getDataSources`, async (event, ...args) => {return await ProjectRepositoryInstance.getDataSources(...args);});

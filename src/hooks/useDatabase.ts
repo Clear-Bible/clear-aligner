@@ -39,6 +39,7 @@ export interface DatabaseApi {
   getFirstJournalEntryUploadChunk: (sourceName: string) => Promise<JournalEntryDTO[]>;
   getAllJournalEntries: (projectId: string, itemLimit?: number, itemSkip?: number) => Promise<JournalEntryDTO[]>;
   getCount: (sourceName: string, tableName: string) => Promise<number>;
+  getDataSourceLemmaCount: (sourceName: string, side?: string) => Promise<number>;
   createDataSource: (sourceName: string) => Promise<boolean>;
   getDataSources: () => Promise<ListedProjectDto[] | undefined>;
   getProjects: () => Promise<ProjectEntity[] | undefined>;

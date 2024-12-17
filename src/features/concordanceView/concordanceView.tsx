@@ -31,7 +31,7 @@ import { GridInputRowSelectionModel, GridSortItem } from '@mui/x-data-grid';
 import { Blocker, Location, useBlocker, useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
-import { useAppDispatch } from '../../app/index';
+import { useAppDispatch } from '../../app';
 import {
   CropFree,
   GpsFixed,
@@ -45,6 +45,8 @@ import AppBar from '@mui/material/AppBar';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
+import { useDatabase } from '../../hooks/useDatabase';
+import { AppContext } from '../../App';
 
 /**
  * PivotWordFilter type
@@ -271,6 +273,7 @@ export const AlignmentTableControlPanel = ({
 export const ConcordanceView = () => {
   const theme = useTheme();
   useContext(LayoutContext);
+  const {preferences} = useContext(AppContext);
   const dispatch = useAppDispatch();
   const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
   const [selectedRows, setSelectedRows] = React.useState([]);
@@ -387,6 +390,18 @@ export const ConcordanceView = () => {
     setSelectedAlignmentLink,
     selectedAlignmentLink
   ]);
+
+  const dbApi = useDatabase();
+
+  const [allowLemmaToggle, setAllowLemmaToggle] = React.useState(false);
+   React.useEffect(() => {
+    if(preferences?.currentProject) {
+      dbApi.getDataSourceLemmaCount(preferences.currentProject).then(lc => {
+        setAllowLemmaToggle(!!lc);
+      }).catch(console.error);
+    }
+  }, [preferences]);
+  console.log("allowLemmaToggle: ", allowLemmaToggle)
 
   // block route changes when there are unsaved changes
   const blocker = useBlocker(

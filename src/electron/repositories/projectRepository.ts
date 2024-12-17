@@ -1619,4 +1619,12 @@ export class ProjectRepository extends BaseRepository {
     const repo = dataSource.getRepository(tableName);
     return await repo.count();
   };
+
+  getDataSourceLemmaCount = async (sourceName: string, side = 'sources'): Promise<number> => {
+    const dataSource = await this.getDataSource(sourceName);
+    const entityManager = dataSource!.manager;
+    return await entityManager.query(
+      `SELECT count(*) from words_or_parts wp where wp.side = '${side}' and wp.lemma not null`
+    );
+  };
 }
