@@ -206,7 +206,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
           });
           if (type === 'update') {
             setPreferences(p => ({
-                ...(p ?? {}) as UserPreference,
+              ...(p ?? {}) as UserPreference,
               initialized: InitializationStates.INITIALIZED,
             }));
           }
