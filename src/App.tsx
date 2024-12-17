@@ -14,7 +14,7 @@ import { Project } from './state/projects/tableManager';
 import useInitialization from './utils/useInitialization';
 import { Containers } from './hooks/useCorpusContainers';
 import { useMediaQuery } from '@mui/material';
-import { CustomSnackbar } from './features/snackbar';
+import { SnackBarObjectInterface } from './features/snackbar';
 import { NetworkState } from '@uidotdev/usehooks';
 import { setUpAmplify } from './server/amplifySetup';
 import { InitializationStates } from './workbench/query';
@@ -36,8 +36,8 @@ export interface AppContextProps {
   setUserStatus: Function;
   isSnackBarOpen: boolean;
   setIsSnackBarOpen: Function;
-  snackBarMessage: string;
-  setSnackBarMessage: Function;
+  snackBarObject: SnackBarObjectInterface;
+  setSnackBarObject: React.Dispatch<React.SetStateAction<SnackBarObjectInterface>>;
   setContainers: React.Dispatch<React.SetStateAction<Containers>>;
   isProjectDialogOpen: boolean;
   setIsProjectDialogOpen: Function;
@@ -126,7 +126,6 @@ const App = () => {
         <Provider store={store}>
           <RouterProvider router={router} />
         </Provider>
-        <CustomSnackbar />
       </AppContext.Provider>
     </>
   );

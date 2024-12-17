@@ -74,10 +74,13 @@ declare module '@mui/material/styles' {
         color: string;
         stroke: string;
       },
-    }
+    },
     highlightedText: {
       alignmentEditor: string,
-    }
+    },
+    snackbar: {
+      errorText: string
+    },
     tokenButtons: {
       defaultTokenButtons: {
         default: string;
