@@ -678,9 +678,9 @@
     tslib "^2.6.2"
 
 "@aws-sdk/types@^3.222.0":
-  version "3.709.0"
-  resolved "https://registry.yarnpkg.com/@aws-sdk/types/-/types-3.709.0.tgz#f8d7ab07e253d3ed0e3b360e09fc67c7430a73b9"
-  integrity sha512-ArtLTMxgjf13Kfu3gWH3Ez9Q5TkDdcRZUofpKH3pMGB/C6KAbeSCtIIDKfoRTUABzyGlPyCrZdnFjKyH+ypIpg==
+  version "3.713.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/types/-/types-3.713.0.tgz#8d857b1b72a76c58129f305a24ce8d5b261385bc"
+  integrity sha512-AMSYVKi1MxrJqGGbjcFC7/4g8E+ZHGfg/eW0+GXQJmsVjMjccHtU+s1dYloX4KEDgrY42QPep+dpSVRR4W7U1Q==
   dependencies:
     "@smithy/types" "^3.7.2"
     tslib "^2.6.2"

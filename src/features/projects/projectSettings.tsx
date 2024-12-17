@@ -207,7 +207,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
           if (type === 'update') {
             setPreferences(p => ({
               ...(p ?? {}) as UserPreference,
-              initialized: InitializationStates.UNINITIALIZED
+              initialized: InitializationStates.INITIALIZED,
             }));
           }
           const updatedProjects = await projectState.projectTable?.getProjects(true);
