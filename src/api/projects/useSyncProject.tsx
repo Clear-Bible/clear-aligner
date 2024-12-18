@@ -20,6 +20,7 @@ import { AlignmentSide } from '../../common/data/project/corpus';
 import { JournalEntryTableName } from '../../state/links/tableManager';
 import ResponseObject = ApiUtils.ResponseObject;
 import { AlignmentFile } from '../../structs/alignmentFile';
+import { SnackBarObjectInterface } from '../../features/snackbar';
 
 /**
  * enum for indicating which step of the sync operation is in progress
@@ -96,7 +97,7 @@ export const stepSwitchToProject = async (progress: SyncProgress,
  * @param project project being operated on
  * @param abortController React ref for a {@link AbortController}
  * @param setUniqueNameError dependency, callback for setting an error state
- * @param setSnackBarMessage dependency for setting the snackbar message
+ * @param setSnackBarObject dependency for setting the snackbar message
  * @param setIsSnackBarOpen dependency for opening the snackbar
  */
 export const stepSyncingProject = async (
@@ -105,7 +106,7 @@ export const stepSyncingProject = async (
   project: Project,
   abortController: React.MutableRefObject<AbortController | undefined>,
   setUniqueNameError: (s: boolean) => void,
-  setSnackBarMessage: Function,
+  setSnackBarObject:  React.Dispatch<React.SetStateAction<SnackBarObjectInterface>>,
   setIsSnackBarOpen: Function
 ) => {
   if (project.location === ProjectLocation.SYNCED
@@ -120,12 +121,12 @@ export const stepSyncingProject = async (
       setProgress(SyncProgress.SYNCING_CORPORA);
     } else {
       if (projectsResponse.response.statusCode === 403) {
-        setSnackBarMessage('You do not have permission to complete this operation');
+        setSnackBarObject({message: 'You do not have permission to complete this operation.', variant: 'error'});
       } else if ((projectsResponse.body?.message ?? '').includes('duplicate key')) {
         setUniqueNameError(true);
-        setSnackBarMessage('Failed to sync project. Project name already exists');
+        setSnackBarObject({message: 'Failed to sync project. Project name already exists.', variant: 'error'});
       } else {
-        setSnackBarMessage('Failed to sync project.');
+        setSnackBarObject({message: 'Failed to sync project.', variant: 'error'});
       }
       console.error('Response failed: ', projectsResponse.body);
       setIsSnackBarOpen(true);
@@ -144,7 +145,7 @@ export const stepSyncingProject = async (
  * @param setProgress setter callback
  * @param project project being operated on
  * @param containers dependency, corpus {@link Containers}
- * @param setSnackBarMessage dependency for setting the snackbar message
+ * @param setSnackBarObject dependency for setting the snackbar message
  * @param setIsSnackBarOpen dependency for opening the snackbar
  * @param syncWordsOrParts dependency for synchronization callback from {@link useSyncWordsOrParts}
  */
@@ -153,7 +154,7 @@ export const stepSyncingCorpora = async (
   setProgress: (s: SyncProgress) => void,
   project: Project,
   containers: Containers,
-  setSnackBarMessage: Function,
+  setSnackBarObject: React.Dispatch<React.SetStateAction<SnackBarObjectInterface>>,
   setIsSnackBarOpen: Function,
   syncWordsOrParts: (project: Project, side?: AlignmentSide) => Promise<ResponseObject<ProjectTokenReport> | undefined>
 ) => {
@@ -168,9 +169,9 @@ export const stepSyncingCorpora = async (
   const res = await syncWordsOrParts(project);
   if (!res?.success) {
     if (res?.response.statusCode === 403) {
-      setSnackBarMessage('You do not have permission to sync corpora. Skipping corpora');
+      setSnackBarObject({message: 'You do not have permission to sync corpora. Skipping corpora.', variant: 'error'});
     } else {
-      setSnackBarMessage('An unknown error occurred while attempting to sync corpora. Skipping corpora');
+      setSnackBarObject({message: 'An unknown error occurred while attempting to sync corpora. Skipping corpora.', variant: 'error'});
     }
     setIsSnackBarOpen(true);
   }
@@ -185,7 +186,7 @@ export const stepSyncingCorpora = async (
  * @param dbApi database API access
  * @param setProgress setter callback
  * @param project project being operated on
- * @param setSnackBarMessage dependency for setting the snackbar message
+ * @param setSnackBarObject dependency for setting the snackbar message
  * @param setIsSnackBarOpen dependency for opening the snackbar
  * @param uploadAlignments dependency for uploading alignments to the server
  * @param syncAlignments dependency for performing a synchronization (journal entry upload)
@@ -195,7 +196,7 @@ export const stepSyncingAlignments = async (
   dbApi: DatabaseApi,
   setProgress: (s: SyncProgress) => void,
   project: Project,
-  setSnackBarMessage: Function,
+  setSnackBarObject: React.Dispatch<React.SetStateAction<SnackBarObjectInterface>>,
   setIsSnackBarOpen: Function,
   uploadAlignments: (projectId?: string, controller?: AbortController) => Promise<ResponseObject<{}> | undefined>,
   syncAlignments: (projectId?: string, controller?: AbortController) => Promise<boolean>
@@ -204,9 +205,9 @@ export const stepSyncingAlignments = async (
     const uploadResponse = await uploadAlignments(project.id);
     if (!uploadResponse?.success) {
       if (uploadResponse?.response.statusCode === 403) {
-        setSnackBarMessage('You do not have permission to upload alignment links. Skipping links');
+        setSnackBarObject({message: 'You do not have permission to upload alignment links. Skipping links.', variant: 'error'});
       } else {
-        setSnackBarMessage('An unknown error occurred while attempting to upload alignment links. Skipping links');
+        setSnackBarObject({message: 'An unknown error occurred while attempting to upload alignment links. Skipping links.', variant: 'error'});
       }
       setIsSnackBarOpen(true);
     } else {
@@ -220,7 +221,7 @@ export const stepSyncingAlignments = async (
   } else {
     const syncResponse = await syncAlignments(project.id);
     if (!syncResponse) {
-      setSnackBarMessage('An error occurred while attempting to synchronize alignment links. Skipping links');
+      setSnackBarObject({message: 'An error occurred while attempting to synchronize alignment links. Skipping links.', variant: 'error'});
       setIsSnackBarOpen(true);
     }
   }
@@ -286,7 +287,7 @@ export const useSyncProject = (): SyncState => {
     setIsProjectDialogOpen,
     isBusyDialogOpen,
     setIsSnackBarOpen,
-    setSnackBarMessage,
+    setSnackBarObject,
     preferences,
     setPreferences,
     setProjects
@@ -356,7 +357,7 @@ export const useSyncProject = (): SyncState => {
             project,
             abortController,
             setUniqueNameError,
-            setSnackBarMessage,
+            setSnackBarObject,
             setIsSnackBarOpen);
           break;
         }
@@ -366,7 +367,7 @@ export const useSyncProject = (): SyncState => {
             setProgress,
             project,
             containers,
-            setSnackBarMessage,
+            setSnackBarObject,
             setIsSnackBarOpen,
             syncWordsOrParts);
           break;
@@ -377,7 +378,7 @@ export const useSyncProject = (): SyncState => {
             dbApi,
             setProgress,
             project,
-            setSnackBarMessage,
+            setSnackBarObject,
             setIsSnackBarOpen,
             uploadAlignments,
             syncAlignments);
@@ -402,7 +403,7 @@ export const useSyncProject = (): SyncState => {
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setIsSnackBarOpen,
-    setSnackBarMessage, syncAlignments, syncWordsOrParts,
+    setSnackBarObject, syncAlignments, syncWordsOrParts,
     dbApi,
     setProjects,
     preferences,

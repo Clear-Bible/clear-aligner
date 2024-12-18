@@ -100,7 +100,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                                                      }: ProjectSettingsProps) => {
   const dispatch = useAppDispatch();
   const { publishProject, dialog: publishDialog } = usePublishProject();
-  const { projectState, preferences, setProjects, setPreferences, projects, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
+  const { projectState, preferences, setProjects, setPreferences, projects, setIsSnackBarOpen, setSnackBarObject } = useContext(AppContext);
   const { setForceShowBusyDialog } = useContext(BusyDialogContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = useState<Project>(initialProjectState);
@@ -207,7 +207,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
           if (type === 'update') {
             setPreferences(p => ({
               ...(p ?? {}) as UserPreference,
-              initialized: InitializationStates.UNINITIALIZED
+              initialized: InitializationStates.INITIALIZED,
             }));
           }
           const updatedProjects = await projectState.projectTable?.getProjects(true);
@@ -542,7 +542,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                     .then((groups) => {
                       const isAdmin = (groups ?? [] as string[])?.includes(ADMIN_GROUP);
                       const displayPermissionsErrorMsg = () => {
-                        setSnackBarMessage('You do not have permission to complete this operation');
+                        setSnackBarObject({message: 'You do not have permission to complete this operation.', variant: 'error'});
                         setIsSnackBarOpen(true);
                       }
                       if (!isAdmin) {
