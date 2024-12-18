@@ -1623,8 +1623,8 @@ export class ProjectRepository extends BaseRepository {
   getDataSourceLemmaCount = async (sourceName: string, side = 'sources'): Promise<number> => {
     const dataSource = await this.getDataSource(sourceName);
     const entityManager = dataSource!.manager;
-    return await entityManager.query(
-      `SELECT count(*) from words_or_parts wp where wp.side = '${side}' and wp.lemma not null`
-    );
+    return (await entityManager.query(
+      `SELECT count(*) as count from words_or_parts wp where wp.side = '${side}' and wp.lemma not null`
+    ))?.[0]?.count ?? 0;
   };
 }

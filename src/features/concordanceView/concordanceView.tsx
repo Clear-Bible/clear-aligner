@@ -290,9 +290,10 @@ export const ConcordanceView = () => {
     sort: 'desc'
   } as GridSortItem | null);
   const [lemmaToggled, setLemmaToggled] = useState(true);
+  const [allowLemmaToggle, setAllowLemmaToggle] = React.useState(false);
   const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, RepositoryLink>>(new Map());
   const [updatedSelectedRows, setUpdatedSelectedRows] = useState<RepositoryLink[]>([])
-  const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData, lemmaToggled);
+  const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData, lemmaToggled && allowLemmaToggle);
 
   useMemo(() => !!pivotWords, [pivotWords]);
   const [selectedPivotWord, setSelectedPivotWord] = useState<
@@ -393,15 +394,13 @@ export const ConcordanceView = () => {
 
   const dbApi = useDatabase();
 
-  const [allowLemmaToggle, setAllowLemmaToggle] = React.useState(false);
    React.useEffect(() => {
     if(preferences?.currentProject) {
       dbApi.getDataSourceLemmaCount(preferences.currentProject).then(lc => {
         setAllowLemmaToggle(!!lc);
       }).catch(console.error);
     }
-  }, [preferences]);
-  console.log("allowLemmaToggle: ", allowLemmaToggle)
+  }, [preferences, dbApi]);
 
   // block route changes when there are unsaved changes
   const blocker = useBlocker(
@@ -468,8 +467,8 @@ export const ConcordanceView = () => {
                     <Tooltip title="Group by Lemma">
                       <Button
                         onClick={() => setLemmaToggled(lt => !lt)}
-                        variant={lemmaToggled ? 'contained' : 'outlined'}
-                        disabled={wordSource === AlignmentSide.TARGET}
+                        variant={lemmaToggled && allowLemmaToggle ? 'contained' : 'outlined'}
+                        disabled={wordSource === AlignmentSide.TARGET || !allowLemmaToggle}
                         sx={{minWidth: 0, width: 42, height: 37, ml: '6px'}}
                       >
                         <Box component="span" sx={{fontSize: 25, fontWeight: 500, textTransform: 'none' }}>
@@ -637,7 +636,7 @@ export const ConcordanceView = () => {
                     handleUpdateSelectedAlignedWord(alignedWord)
                   }
                   onChangeSort={setAlignedWordSortData}
-                  lemmaToggled={lemmaToggled}
+                  lemmaToggled={lemmaToggled && allowLemmaToggle}
                 />
               </Paper>
           </Grid>
