@@ -17,7 +17,7 @@ export class AddRequiredToWordsOrParts1734371090123 implements MigrationInterfac
         name: REQUIRED_COLUMN_NAME,
         isNullable: true,
         type: 'INTEGER',
-        //default: '1'
+        default: '1'
       }));
     }
   }

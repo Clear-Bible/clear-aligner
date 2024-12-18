@@ -44,7 +44,10 @@ import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728
 import { LinkEntity } from '../../common/data/project/linkEntity';
 import {
   AddRequiredToWordsOrParts1734371090123
-} from '../typeorm-migrations/project/1734371090123-add-required-to-words-or-parts';
+} from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
+import {
+  AddExcludeToWordsOrParts1734561207123
+} from '../typeorm-migrations/project/1734371090123-add-exclude-to-words-or-parts';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -349,7 +352,8 @@ export class ProjectRepository extends BaseRepository {
       CorporaTimestamps1720241454613,
       JournalEntriesDiffToBody1720419515419,
       AddNotesToLinks1728604421335,
-      AddRequiredToWordsOrParts1734371090123
+      AddExcludeToWordsOrParts1734561207123,
+      AddRequiredToWordsOrParts1734371090123,
     ];
   };
 
