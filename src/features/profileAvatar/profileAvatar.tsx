@@ -51,7 +51,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
   const [showLoginError, setShowLoginError] = React.useState(false);
   const { network, setUserStatus } = useContext(AppContext);
-  const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
+  const {setIsSnackBarOpen, setSnackBarObject } = useContext(AppContext)
   const [showPasswordResetURL, setShowPasswordResetURL] = React.useState(false);
   const [emailAddress, setEmailAddress] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -80,7 +80,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
     try{
       await signOut();
       setIsSnackBarOpen(true);
-      setSnackBarMessage("Signed out of ClearAligner Sync.")
+      setSnackBarObject({message: "Signed out of ClearAligner Sync.", autoHide: true})
       setUserStatus(userState.LoggedOut);
       handleClose();
     }

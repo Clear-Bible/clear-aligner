@@ -74,10 +74,13 @@ declare module '@mui/material/styles' {
         color: string;
         stroke: string;
       },
-    }
+    },
     highlightedText: {
       alignmentEditor: string,
-    }
+    },
+    snackbar: {
+      errorText: string
+    },
     tokenButtons: {
       defaultTokenButtons: {
         default: string;
@@ -140,6 +143,14 @@ declare module '@mui/material/styles' {
       }
       suggestedTokenButtons:{
         icon: string;
+      }
+    },
+    controlPanel: {
+      cancel: {
+        main: string;
+      },
+      delete: {
+        main: string;
       }
     },
     background: {

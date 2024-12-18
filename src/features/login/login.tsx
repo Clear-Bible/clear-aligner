@@ -47,7 +47,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                                              password,
                                              setPassword}): ReactElement => {
   const theme = useTheme();
-  const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
+  const {setIsSnackBarOpen, setSnackBarObject } = useContext(AppContext)
 
   const handleLogin = async() => {
     setShowLoginError(false);
@@ -61,7 +61,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       if(signInResponse.isSignedIn){
         setUserStatus(userState.LoggedIn);
         setShowLoginError(false)
-        setSnackBarMessage("Signed in to ClearAligner Sync.")
+        setSnackBarObject({ message: "Signed in to ClearAligner Sync.", autoHide: true})
         setIsSnackBarOpen(true);
       }
       else if (signInResponse.nextStep?.signInStep ===
