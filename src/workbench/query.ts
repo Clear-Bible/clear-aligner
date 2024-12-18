@@ -23,35 +23,17 @@ const dbApi = window.databaseApi as DatabaseApi;
 export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 
 /*
- function that handles any input from the exclude column in the tsv files
+ function that handles any input from the a column in the tsv files
  */
-function sanitizeExclude(inputExclude: string){
-  if(!inputExclude){
-    return 0
+function sanitizeColumnInput(columnInput: string, defaultValue: number){
+  if(!columnInput){
+    return defaultValue
   }
-  let workingExclude = inputExclude.trim().toLowerCase();
-  if (workingExclude.length < 1){
-    return 0
+  let workingColumnInput = columnInput.trim().toLowerCase();
+  if (workingColumnInput.length < 1){
+    return defaultValue
   }
-  let firstLetter = workingExclude[0];
-  if (firstLetter === 'n' || firstLetter === 'f'){
-    return 0
-  }
-  return 1
-}
-
-/*
- function that handles any input from the required column in the tsv files
- */
-function sanitizeRequired(inputRequired: string){
-  if(!inputRequired){
-    return 1
-  }
-  let workingExclude = inputRequired.trim().toLowerCase();
-  if (workingExclude.length < 1){
-    return 1
-  }
-  let firstLetter = workingExclude[0];
+  let firstLetter = workingColumnInput[0];
   if (firstLetter === 'n' || firstLetter === 'f'){
     return 0
   }
@@ -89,8 +71,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         pos = +id.substring(8, 11); // grab word position
         if (!wordText || wordText.length < 1) return;
         const normalizedText = wordText.toLowerCase();
-        exclude = sanitizeExclude(values[headerMap['exclude']]);
-        required = sanitizeRequired(values[headerMap['required']]);
+        exclude = sanitizeColumnInput(values[headerMap['exclude']], 0);
+        required = sanitizeColumnInput(values[headerMap['required']], 1);
 
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -130,8 +112,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         // Either could be null within the TSV file.
         const gloss = values[headerMap['english']] || values[headerMap['gloss']] || '-';
 
-        exclude = sanitizeExclude(values[headerMap['exclude']]);
-        required = sanitizeRequired(values[headerMap['required']]);
+        exclude = sanitizeColumnInput(values[headerMap['exclude']], 0);
+        required = sanitizeColumnInput(values[headerMap['required']], 1);
 
         word = {
           id: id, // standardize n40001001002 to  40001001002

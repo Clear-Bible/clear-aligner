@@ -17,22 +17,12 @@ def sanitize_bcvwp(bcv_id):
         result = result[1:]
     return result
 
-def sanitize_exclude(input_exclude):
+def sanitize_column_input(column_input, default_value):
     #trim and lower case
-    working_exclude = input_exclude.strip().lower()
-    if len(working_exclude) < 1:
-        return 0
-    first_letter = working_exclude[0]
-    if first_letter == 'n' or first_letter == 'f':
-        return 0
-    return 1
-
-def sanitize_required(input_required):
-    #trim and lower case
-    working_required = input_required.strip().lower()
-    if len(working_required) < 1:
-        return 1
-    first_letter = working_required[0]
+    working_column_input = column_input.strip().lower()
+    if len(working_column_input) < 1:
+        return default_value
+    first_letter = working_column_input[0]
     if first_letter == 'n' or first_letter == 'f':
         return 0
     return 1
@@ -118,8 +108,8 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
             gloss = cleanup_gloss(row[idx_gloss] or row[idx_english]) if idx_gloss >= 0 or idx_english >= 0 else ""
             bcvwp = parse_bcvwp(row[idx_id])
             source_verse = sanitize_bcvwp(row[idx_source_verse]) if idx_source_verse >= 0 else ""
-            exclude = sanitize_exclude(row[idx_exclude]) if idx_exclude >= 0 else "0"
-            required = sanitize_required(row[idx_required]) if idx_required >= 0 else "1"
+            exclude = sanitize_column_input(row[idx_exclude],0) if idx_exclude >= 0 else "0"
+            required = sanitize_column_input(row[idx_required],1) if idx_required >= 0 else "1"
             insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, {
                 'id': f'{metadata.get("side")}:{row_id}',
                 'corpus_id': corpus_id,
