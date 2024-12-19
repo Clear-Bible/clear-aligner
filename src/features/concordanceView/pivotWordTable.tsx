@@ -30,7 +30,7 @@ interface PivotWordTextCellProps {
 const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
   return (
     <span
-      key={pivotWord.normalizedText}
+      key={pivotWord.word}
       style={{
         ...(pivotWord.languageInfo?.textDirection === TextDirection.RTL
           ? { direction: pivotWord.languageInfo.textDirection! }
@@ -40,7 +40,7 @@ const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
       }}
     >
       <LocalizedTextDisplay languageInfo={pivotWord.languageInfo}>
-        {pivotWord.normalizedText}
+        {pivotWord.word}
       </LocalizedTextDisplay>
     </span>);
 };
@@ -55,7 +55,7 @@ const columns: GridColDef[] = [
       row.row.frequency
   },
   {
-    field: 'normalizedText',
+    field: 'word',
     headerName: 'Pivot Word',
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
@@ -132,11 +132,11 @@ export const PivotWordTable = ({
         }}
         rowSelection={true}
         rowSelectionModel={
-          chosenWord?.normalizedText ? [chosenWord.normalizedText] : undefined
+          chosenWord?.word ? [chosenWord.word] : undefined
         }
         rows={pivotWords}
         columns={columns}
-        getRowId={(row) => row.normalizedText}
+        getRowId={(row) => row.word}
         sortModel={sort ? [sort] : []}
         onSortModelChange={(newSort) => {
           if (!newSort || newSort.length < 1) {
