@@ -67,7 +67,7 @@ def insert_corpus(project_conn, project_cursor, corpus):
 
 def insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, word):
     project_cursor.execute(
-        f'INSERT INTO words_or_parts (id, corpus_id, side, text, after, gloss, position_book, position_chapter, position_verse, position_word, position_part, normalized_text, source_verse_bcvid, language_id, exclude, required) VALUES ({val(word.get("id"))}, {val(corpus_id)}, {val(word.get("side"))}, {val(word.get("text"))}, {val(word.get("after"))}, {val(word.get("gloss"))}, {val(word.get("position_book"))}, {val(word.get("position_chapter"))}, {val(word.get("position_verse"))}, {val(word.get("position_word"))}, {val(word.get("position_part"))}, {val(word.get("normalized_text"))}, {val(word.get("source_verse_bcvid"))}, {val(language_id)}, {val(word.get("exclude"))}, {val(word.get("required"))} )')
+        f'INSERT INTO words_or_parts (id, corpus_id, side, text, after, gloss, position_book, position_chapter, position_verse, position_word, position_part, normalized_text, source_verse_bcvid, language_id, exclude, required, lemma) VALUES ({val(word.get("id"))}, {val(corpus_id)}, {val(word.get("side"))}, {val(word.get("text"))}, {val(word.get("after"))}, {val(word.get("gloss"))}, {val(word.get("position_book"))}, {val(word.get("position_chapter"))}, {val(word.get("position_verse"))}, {val(word.get("position_word"))}, {val(word.get("position_part"))}, {val(word.get("normalized_text"))}, {val(word.get("source_verse_bcvid"))}, {val(language_id)}, {val(word.get("exclude"))}, , {val(word.get("lemma"))} )')
 
 
 def cleanup_gloss(gloss):
