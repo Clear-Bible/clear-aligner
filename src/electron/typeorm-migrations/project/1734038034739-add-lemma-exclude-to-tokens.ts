@@ -25,6 +25,7 @@ export class AddLemmaToWordsOrParts1734038034739 implements MigrationInterface {
         name: EXCLUDE_COLUMN_NAME,
         isNullable: true,
         type: 'INTEGER',
+        default: '0'
       }));
     }
   }

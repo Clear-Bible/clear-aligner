@@ -46,9 +46,6 @@ import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/proje
 import {
   AddRequiredToWordsOrParts1734371090123
 } from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
-import {
-  AddExcludeToWordsOrParts1734561207123
-} from '../typeorm-migrations/project/1734371090123-add-exclude-to-words-or-parts';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -358,7 +355,6 @@ export class ProjectRepository extends BaseRepository {
       JournalEntriesDiffToBody1720419515419,
       AddNotesToLinks1728604421335,
       AddLemmaToWordsOrParts1734038034739,
-      AddExcludeToWordsOrParts1734561207123,
       AddRequiredToWordsOrParts1734371090123,
     ];
   };
