@@ -9,7 +9,7 @@ import { AlignmentSide } from '../../common/data/project/corpus';
  * represents rows displayed in the pivot word table in the concordance view
  */
 export interface PivotWord {
-  normalizedText: string; // normalized text of the pivot word being representeda
+  word: string; // normalized text of the pivot word being represented
   side: AlignmentSide;
   frequency: number;
   languageInfo: LanguageInfo;

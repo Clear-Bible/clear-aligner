@@ -25,7 +25,8 @@ const mockVerse: Verse = {
       side: AlignmentSide.TARGET,
       text: 'And',
       position: 1,
-      normalizedText: 'and'
+      normalizedText: 'and',
+      lemma: "and",
     },
     {
       id: '45005003002',
@@ -33,7 +34,8 @@ const mockVerse: Verse = {
       side: AlignmentSide.TARGET,
       text: 'not',
       position: 2,
-      normalizedText: 'not'
+      normalizedText: 'not',
+      lemma: "not",
     },
     {
       id: '45005003003',
@@ -41,7 +43,8 @@ const mockVerse: Verse = {
       side: AlignmentSide.TARGET,
       text: 'only',
       position: 3,
-      normalizedText: 'only'
+      normalizedText: 'only',
+      lemma: "only",
     },
     {
       id: '45005003004',
@@ -49,7 +52,8 @@ const mockVerse: Verse = {
       side: AlignmentSide.TARGET,
       text: 'so',
       position: 4,
-      normalizedText: 'so'
+      normalizedText: 'so',
+      lemma: "so",
     },
   ],
 };

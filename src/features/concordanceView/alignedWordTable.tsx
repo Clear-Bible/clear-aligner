@@ -88,6 +88,7 @@ export interface AlignedWordTableProps {
   chosenAlignedWord?: AlignedWord | null;
   onChooseAlignedWord: (alignedWord: AlignedWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
+  lemmaToggled: boolean;
 }
 
 /**
@@ -103,9 +104,10 @@ export const AlignedWordTable = ({
                                    pivotWord,
                                    chosenAlignedWord,
                                    onChooseAlignedWord,
-                                   onChangeSort
+                                   onChangeSort,
+                                   lemmaToggled
                                  }: AlignedWordTableProps) => {
-  const alignedWords = useAlignedWordsFromPivotWord(pivotWord, sort);
+  const alignedWords = useAlignedWordsFromPivotWord(pivotWord, sort, lemmaToggled);
 
   const loading: boolean = useMemo(
     () => !!pivotWord && !alignedWords,

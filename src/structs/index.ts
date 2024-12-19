@@ -87,8 +87,10 @@ export interface Word {
   position: number;
   gloss?: string;
   normalizedText: string;
+  lemma: string;
   sourceVerse?: string;
   exclude?: number;
+  required?: number;
 }
 
 export interface CorpusViewport {

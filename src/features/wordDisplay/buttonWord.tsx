@@ -159,6 +159,7 @@ export const ButtonToken = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isTokenExcluded = token.exclude === 1;
+  const isTokenRequired = token.required === 1;
 
   const alphaTransparencyValueForButtonTokens = useMemo( () => theme.palette.mode === 'light' ? '.12' : '.25', [theme.palette.mode])
 
@@ -559,14 +560,14 @@ export const ButtonToken = ({
    * This is the computed border color for the sx object for the Button.
    */
   const computedBorderColor = useMemo(() => {
-    // If this token is excluded, make sure it has no border
-    if(isTokenExcluded){
+    // If this token is excluded or not required, make sure it has no border
+    if(isTokenExcluded || !isTokenRequired){
       return `transparent !important`
     }
     else{
       return ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`
     }
-  },[buttonPrimaryColor, isMostRelevantSuggestion, isSelectedInEditedLink, isSpecialMachineLearningCase, isTokenExcluded])
+  },[buttonPrimaryColor, isMostRelevantSuggestion, isSelectedInEditedLink, isSpecialMachineLearningCase, isTokenExcluded, isTokenRequired])
 
   /**
    * This is the computed color for the text of the Gloss, when gloss is used.

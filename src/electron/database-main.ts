@@ -39,9 +39,11 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:findWordsByBCV`, async (event, ...args) => await ProjectRepositoryInstance.findWordsByBCV(...args));
     ipcMain.handle(`${ChannelPrefix}:getAllWordsByCorpus`, async (event, ...args) => await ProjectRepositoryInstance.getAllWordsByCorpus(...args));
     ipcMain.handle(`${ChannelPrefix}:getAllCorpora`, async (event, ...args) => await ProjectRepositoryInstance.getAllCorpora(...args));
-    ipcMain.handle(`${ChannelPrefix}:corporaGetPivotWords`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetPivotWords(...args));
+    ipcMain.handle(`${ChannelPrefix}:corporaGetSourceWords`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetSourceWords(...args));
     ipcMain.handle(`${ChannelPrefix}:languageFindByIds`, async (event, ...args) => await ProjectRepositoryInstance.languageFindByIds(...args));
-    ipcMain.handle(`${ChannelPrefix}:corporaGetAlignedWordsByPivotWord`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetAlignedWordsByPivotWord(...args));
+    ipcMain.handle(`${ChannelPrefix}:corporaGetAlignedWordsBySourceWord`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetAlignedWordsBySourceWord(...args));
+    ipcMain.handle(`${ChannelPrefix}:corporaGetLemmas`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetLemmas(...args));
+    ipcMain.handle(`${ChannelPrefix}:corporaGetAlignedWordsByLemma`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetAlignedWordsByLemma(...args));
     ipcMain.handle(`${ChannelPrefix}:languageGetAll`, async (event, ...args) => await ProjectRepositoryInstance.languageGetAll(...args));
     ipcMain.handle(`${ChannelPrefix}:corporaGetLinksByAlignedWord`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetLinksByAlignedWord(...args));
     ipcMain.handle(`${ChannelPrefix}:findLinkStatusesByAlignedWord`, async (event, ...args) => await ProjectRepositoryInstance.findLinkStatusesByAlignedWord(...args));
@@ -50,6 +52,7 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:createBulkInsertJournalEntry`, async (event, ...args) => await ProjectRepositoryInstance.createBulkInsertJournalEntry(...args));
     ipcMain.handle(`${ChannelPrefix}:getFirstJournalEntryUploadChunk`, async (event, ...args) => await ProjectRepositoryInstance.getFirstJournalEntryUploadChunk(...args));
     ipcMain.handle(`${ChannelPrefix}:getCount`, async (event, ...args) => await ProjectRepositoryInstance.getCount(...args));
+    ipcMain.handle(`${ChannelPrefix}:getDataSourceLemmaCount`, async (event, ...args) => await ProjectRepositoryInstance.getDataSourceLemmaCount(...args));
     ipcMain.handle(`${ChannelPrefix}:toggleCorporaUpdatedFlagOff`, async (event, projectId: string) => await ProjectRepositoryInstance.toggleCorporaUpdatedFlagOff(projectId));
     //@ts-ignore
     ipcMain.handle(`${ChannelPrefix}:getDataSources`, async (event, ...args) => {return await ProjectRepositoryInstance.getDataSources(...args);});
