@@ -8,7 +8,7 @@ fi
 
 templateDbPath="../clear-aligner-template.sqlite"
 
-if [[ -f "${templateDbPath}" && "$*" == *'--no-remove'* ]]; then
+if [[ -f "${templateDbPath}" && "$*" == *'--keep-template'* ]]; then
   echo "Template database already exists: '${templateDbPath}' (not recreating)."
 
 else
