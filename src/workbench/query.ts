@@ -22,8 +22,10 @@ const dbApi = window.databaseApi as DatabaseApi;
 
 export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 
-/*
- function that handles any input from the a column in the tsv files
+/**
+ * Helper function used to handle any input from the exclude or required columns in the tsv files
+ * @param columnInput The column value of the specified field.
+ * @param defaultValue The default value to use when the TSV column isn't populated.
  */
 function sanitizeColumnInput(columnInput: string, defaultValue: number){
   if(!columnInput){

@@ -1358,6 +1358,12 @@ export class ProjectRepository extends BaseRepository {
                            group by t ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
   };
 
+  /**
+   * Method used to retrieve unique lemma values from a specified source.
+   * @param sourceName The source to retrieve lemma data from.
+   * @param filter The filters to apply to the query.
+   * @param sort The sort to apply to the retrieved source data.
+   */
   corporaGetLemmas = async (sourceName: string, filter: PivotWordFilter, sort: GridSortItem) => {
     const em = (await this.getDataSource(sourceName))!.manager;
     const joins = filter === 'aligned'
@@ -1443,6 +1449,12 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
+  /**
+   * Method used to retrieve tokens using a specified lemma and data source.
+   * @param sourceName The source to retrieve lemma data from.
+   * @param lemma The lemma value used to filter tokens from the data source.
+   * @param sort The sort to apply to the retrieved source data.
+   */
   corporaGetAlignedWordsByLemma = async (sourceName: string, lemma: string, sort: GridSortItem) => {
     const em = (await this.getDataSource(sourceName))!.manager;
     const sourceQueryTextWLang = `
