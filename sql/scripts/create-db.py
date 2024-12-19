@@ -6,9 +6,10 @@ import os
 import sqlite3
 import regex as re
 
-prefixed_bcvwp = re.compile(r"^[onON]\d")
-gloss_needing_cleanup = re.compile(r'^(.+\..+)+$')
-whitespace_only = re.compile(r'^[\p{P}\s]*$', re.U)
+prefixed_bcvwp = re.compile("^[onON]\\d")
+gloss_needing_cleanup = re.compile('^(.+\\..+)+$')
+whitespace_only = re.compile('^[\\s]*$', re.U)
+
 
 def sanitize_bcvwp(bcv_id):
     result = bcv_id.strip()
@@ -16,12 +17,12 @@ def sanitize_bcvwp(bcv_id):
         result = result[1:]
     return result
 
-def sanitize_exclude(input_exclude):
+def sanitize_column_input(column_input, default_value):
     #trim and lower case
-    working_exclude = input_exclude.strip().lower()
-    if len(working_exclude) < 1:
-        return 0
-    first_letter = working_exclude[0]
+    working_column_input = column_input.strip().lower()
+    if len(working_column_input) < 1:
+        return default_value
+    first_letter = working_column_input[0]
     if first_letter == 'n' or first_letter == 'f':
         return 0
     return 1
@@ -67,6 +68,7 @@ def insert_corpus(project_conn, project_cursor, corpus):
 def insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, word):
     project_cursor.execute(
         f'INSERT INTO words_or_parts (id, corpus_id, side, text, after, gloss, position_book, position_chapter, position_verse, position_word, position_part, normalized_text, lemma, source_verse_bcvid, language_id, exclude) VALUES ({val(word.get("id"))}, {val(corpus_id)}, {val(word.get("side"))}, {val(word.get("text"))}, {val(word.get("after"))}, {val(word.get("gloss"))}, {val(word.get("position_book"))}, {val(word.get("position_chapter"))}, {val(word.get("position_verse"))}, {val(word.get("position_word"))}, {val(word.get("position_part"))}, {val(word.get("normalized_text"))}, {val(word.get("lemma"))}, {val(word.get("source_verse_bcvid"))}, {val(language_id)}, {val(word.get("exclude"))})')
+        f'INSERT INTO words_or_parts (id, corpus_id, side, text, after, gloss, position_book, position_chapter, position_verse, position_word, position_part, normalized_text, source_verse_bcvid, language_id, exclude, required) VALUES ({val(word.get("id"))}, {val(corpus_id)}, {val(word.get("side"))}, {val(word.get("text"))}, {val(word.get("after"))}, {val(word.get("gloss"))}, {val(word.get("position_book"))}, {val(word.get("position_chapter"))}, {val(word.get("position_verse"))}, {val(word.get("position_word"))}, {val(word.get("position_part"))}, {val(word.get("normalized_text"))}, {val(word.get("source_verse_bcvid"))}, {val(language_id)}, {val(word.get("exclude"))}, {val(word.get("required"))} )')
 
 
 def cleanup_gloss(gloss):
@@ -95,6 +97,7 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
         idx_english = header.index('english') if 'english' in header else -1
         idx_source_verse = header.index('source_verse') if 'source_verse' in header else -1
         idx_exclude = header.index('exclude') if 'exclude' in header else -1
+        idx_required = header.index('required') if 'required' in header else -1
         idx = 0
         last_percentage = -1
         for row in corpus:
@@ -107,7 +110,8 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
             bcvwp = parse_bcvwp(row[idx_id])
             source_verse = sanitize_bcvwp(row[idx_source_verse]) if idx_source_verse >= 0 else ""
             lemma = row[idx_lemma] if idx_lemma >= 0 else ""
-            exclude = sanitize_exclude(row[idx_exclude]) if idx_exclude >= 0 else "0"
+            exclude = sanitize_column_input(row[idx_exclude],0) if idx_exclude >= 0 else "0"
+            required = sanitize_column_input(row[idx_required],1) if idx_required >= 0 else "1"
             insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, {
                 'id': f'{metadata.get("side")}:{row_id}',
                 'corpus_id': corpus_id,
@@ -124,6 +128,7 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
                 'lemma': lemma.lower(),
                 'source_verse_bcvid': source_verse,
                 'exclude': exclude,
+                'required': required
             })
             current_percentage = math.floor((idx / total_rows) * 100)
             if idx % 1000 == 0:

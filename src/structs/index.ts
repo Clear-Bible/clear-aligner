@@ -90,6 +90,7 @@ export interface Word {
   lemma: string;
   sourceVerse?: string;
   exclude?: number;
+  required?: number;
 }
 
 export interface CorpusViewport {

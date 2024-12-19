@@ -43,6 +43,12 @@ import { LinkNote } from '../../common/data/project/linkNote';
 import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728604421335-add-notes-to-links';
 import { LinkEntity } from '../../common/data/project/linkEntity';
 import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
+import {
+  AddRequiredToWordsOrParts1734371090123
+} from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
+import {
+  AddExcludeToWordsOrParts1734561207123
+} from '../typeorm-migrations/project/1734371090123-add-exclude-to-words-or-parts';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -132,6 +138,7 @@ class WordsOrParts {
   source_verse_bcvid?: string;
   language_id?: string;
   exclude?: number;
+  required?: number;
 
   constructor() {
     this.id = undefined;
@@ -150,6 +157,7 @@ class WordsOrParts {
     this.source_verse_bcvid = undefined;
     this.language_id = undefined;
     this.exclude = undefined;
+    this.required = undefined;
   }
 }
 
@@ -280,8 +288,9 @@ const wordsOrPartsSchema = new EntitySchema({
       type: 'text'
     }, exclude: {
       type: 'integer'
+    }, required: {
+      type: 'integer'
     }
-
   }
 });
 
@@ -348,7 +357,9 @@ export class ProjectRepository extends BaseRepository {
       CorporaTimestamps1720241454613,
       JournalEntriesDiffToBody1720419515419,
       AddNotesToLinks1728604421335,
-      AddLemmaToWordsOrParts1734038034739
+      AddLemmaToWordsOrParts1734038034739,
+      AddExcludeToWordsOrParts1734561207123,
+      AddRequiredToWordsOrParts1734371090123,
     ];
   };
 
@@ -977,7 +988,9 @@ export class ProjectRepository extends BaseRepository {
                                                          w.source_verse_bcvid              as sourceVerse,
                                                          w.normalized_text                 as normalizedText,
                                                          w.lemma                           as lemma,
-                                                         CASE WHEN w.exclude = 1 THEN 1 ELSE 0 END AS exclude
+                                                         CASE WHEN w.exclude = 1 THEN 1 ELSE 0 END AS exclude,
+                                                         CASE WHEN w.required = 1 THEN 1 ELSE 0 END AS required
+
                                                   from words_or_parts w
                                                   where w.side = ?
                                                     and w.corpus_id = ?

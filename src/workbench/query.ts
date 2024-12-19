@@ -23,17 +23,17 @@ const dbApi = window.databaseApi as DatabaseApi;
 export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 
 /*
- function that handles any input from the exclude column in the tsv files
+ function that handles any input from the a column in the tsv files
  */
-function sanitizeExclude(inputExclude: string){
-  if(!inputExclude){
-    return 0
+function sanitizeColumnInput(columnInput: string, defaultValue: number){
+  if(!columnInput){
+    return defaultValue
   }
-  let workingExclude = inputExclude.trim().toLowerCase();
-  if (workingExclude.length < 1){
-    return 0
+  let workingColumnInput = columnInput.trim().toLowerCase();
+  if (workingColumnInput.length < 1){
+    return defaultValue
   }
-  let firstLetter = workingExclude[0];
+  let firstLetter = workingColumnInput[0];
   if (firstLetter === 'n' || firstLetter === 'f'){
     return 0
   }
@@ -56,7 +56,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
   rows.forEach((row) => {
     const values = row.split('\t');
 
-    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse, exclude: number;
+    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse, exclude: number, required: number;
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
@@ -71,7 +71,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         pos = +id.substring(8, 11); // grab word position
         if (!wordText || wordText.length < 1) return;
         const normalizedText = wordText.toLowerCase();
-        exclude = sanitizeExclude(values[headerMap['exclude']]);
+        exclude = sanitizeColumnInput(values[headerMap['exclude']], 0);
+        required = sanitizeColumnInput(values[headerMap['required']], 1);
 
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -82,6 +83,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           sourceVerse: values[headerMap['source_verse']] || '',
           normalizedText,
           exclude: exclude,
+          required: required,
           lemma: (values[headerMap['lemma']] || '').toLowerCase()
         };
 
@@ -111,7 +113,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         // Either could be null within the TSV file.
         const gloss = values[headerMap['english']] || values[headerMap['gloss']] || '-';
 
-        exclude = sanitizeExclude(values[headerMap['exclude']]);
+        exclude = sanitizeColumnInput(values[headerMap['exclude']], 0);
+        required = sanitizeColumnInput(values[headerMap['required']], 1);
 
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -124,6 +127,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
             ? gloss.replaceAll('.', ' ')
             : gloss,
           exclude: exclude,
+          required: required,
         } as Word;
 
         wordRef = BCVWP.parseFromString(id);
