@@ -39,9 +39,14 @@ export const BusyDialogContext = createContext({} as BusyDialogContextProps);
  * hook for creating the busy dialog context
  */
 export const useBusyDialogContext = (): BusyDialogContextProps => {
-  const [ isForceShowBusyDialog, setForceShowBusyDialog ] = useState<boolean>(false);
-  const [ customStatus, setCustomStatus ] = useState<string|undefined>(undefined);
-  const [ onCancel, setOnCancel ] = useState<CallableFunction|undefined>(undefined);
+  const [isForceShowBusyDialog, setForceShowBusyDialog] =
+    useState<boolean>(false);
+  const [customStatus, setCustomStatus] = useState<string | undefined>(
+    undefined
+  );
+  const [onCancel, setOnCancel] = useState<CallableFunction | undefined>(
+    undefined
+  );
 
   return {
     isForceShowBusyDialog,
@@ -49,6 +54,6 @@ export const useBusyDialogContext = (): BusyDialogContextProps => {
     customStatus,
     setCustomStatus,
     onCancel,
-    setOnCancel
+    setOnCancel,
   };
-}
+};

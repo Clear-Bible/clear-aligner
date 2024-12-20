@@ -33,8 +33,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
 
   const dispatch = useAppDispatch();
   const [linkRemoveState, setLinkRemoveState] = useState<{
-    linkId?: string,
-    removeKey?: string,
+    linkId?: string;
+    removeKey?: string;
   }>();
   const [formats, setFormats] = useState([] as string[]);
 
@@ -50,12 +50,19 @@ export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
   const linkHasBothSides = useMemo(
     () => {
       return (
-        (Number(inProgressLink?.sources.length) > 0 || Number(inProgressLink?.suggestedSources.length) > 0) &&
-        (Number(inProgressLink?.targets.length) > 0 || Number(inProgressLink?.suggestedTargets.length) > 0)
+        (Number(inProgressLink?.sources.length) > 0 ||
+          Number(inProgressLink?.suggestedSources.length) > 0) &&
+        (Number(inProgressLink?.targets.length) > 0 ||
+          Number(inProgressLink?.suggestedTargets.length) > 0)
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inProgressLink?.sources.length, inProgressLink?.targets.length, inProgressLink?.suggestedSources.length, inProgressLink?.suggestedTargets.length]
+    [
+      inProgressLink?.sources.length,
+      inProgressLink?.targets.length,
+      inProgressLink?.suggestedSources.length,
+      inProgressLink?.suggestedTargets.length,
+    ]
   );
 
   if (scrollLock && !formats.includes('scroll-lock')) {
@@ -66,7 +73,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
     if (inProgressLink?.id) {
       setLinkRemoveState({
         linkId: inProgressLink.id,
-        removeKey: uuid()
+        removeKey: uuid(),
       });
       dispatch(resetTextSegments());
     }
@@ -75,10 +82,16 @@ export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
   const createLink = () => {
     if (inProgressLink) {
       const newLink = EditedLink.toLink(inProgressLink)!;
-      if (Number(inProgressLink.suggestedSources.length) > 0 && inProgressLink.sources.length < 1) {
-        newLink.sources.push(inProgressLink.suggestedSources?.at(0)!.tokenRef)
-      } else if (Number(inProgressLink.suggestedTargets.length) > 0 && inProgressLink.targets.length < 1) {
-        newLink.targets.push(inProgressLink.suggestedTargets?.at(0)!.tokenRef)
+      if (
+        Number(inProgressLink.suggestedSources.length) > 0 &&
+        inProgressLink.sources.length < 1
+      ) {
+        newLink.sources.push(inProgressLink.suggestedSources?.at(0)!.tokenRef);
+      } else if (
+        Number(inProgressLink.suggestedTargets.length) > 0 &&
+        inProgressLink.targets.length < 1
+      ) {
+        newLink.targets.push(inProgressLink.suggestedTargets?.at(0)!.tokenRef);
       }
       saveLink(newLink);
     }
@@ -86,31 +99,36 @@ export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
   };
 
   // keyboard shortcuts
-  useHotkeys('space', () => createLink(), {enabled: linkHasBothSides });
-  useHotkeys('backspace', () => deleteLink(), {enabled: !!inProgressLink?.id});
-  useHotkeys('shift+esc', () => dispatch(resetTextSegments()), {enabled: anySegmentsSelected});
+  useHotkeys('space', () => createLink(), { enabled: linkHasBothSides });
+  useHotkeys('backspace', () => deleteLink(), {
+    enabled: !!inProgressLink?.id,
+  });
+  useHotkeys('shift+esc', () => dispatch(resetTextSegments()), {
+    enabled: anySegmentsSelected,
+  });
 
   return (
     <>
       <Stack
         direction="row"
-        spacing={.5}
+        spacing={0.5}
         justifyContent="center"
         alignItems="baseline"
         style={{
           marginTop: '6px',
           marginBottom: '6px',
           flexGrow: 0,
-          flexShrink: 0
-        }}>
+          flexShrink: 0,
+        }}
+      >
         <span>
           <Button
             variant="contained"
             disabled={!linkHasBothSides}
             onClick={() => createLink()}
-            sx={theme => ({
+            sx={(theme) => ({
               ...ControlPanelButtonSx,
-              backgroundColor: theme.palette.primary.main
+              backgroundColor: theme.palette.primary.main,
             })}
           >
             Save
@@ -123,13 +141,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
             onClick={() => {
               dispatch(resetTextSegments());
             }}
-            sx={theme => ({
+            sx={(theme) => ({
               ...ControlPanelButtonSx,
               backgroundColor: theme.palette.controlPanel.cancel.main,
               color: '#000000',
               '&:hover': {
-                backgroundColor: theme.palette.controlPanel.cancel.main
-              }
+                backgroundColor: theme.palette.controlPanel.cancel.main,
+              },
             })}
           >
             Cancel
@@ -140,12 +158,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
             variant="contained"
             disabled={!inProgressLink?.id}
             onClick={() => deleteLink()}
-            sx={theme => ({
+            sx={(theme) => ({
               ...ControlPanelButtonSx,
               backgroundColor: theme.palette.error.light,
               '&:hover': {
-                backgroundColor: theme.palette.error.light
-              }
+                backgroundColor: theme.palette.error.light,
+              },
             })}
           >
             Delete

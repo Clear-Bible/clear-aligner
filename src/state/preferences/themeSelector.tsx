@@ -1,4 +1,11 @@
-import { FormControl, InputLabel, MenuItem, Select, SxProps, Theme } from '@mui/material';
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SxProps,
+  Theme,
+} from '@mui/material';
 import { THEME_PREFERENCE } from '../../App';
 import React, { useMemo } from 'react';
 import { Box } from '@mui/system';
@@ -22,17 +29,18 @@ export interface ThemeSelectorProps {
 export const ThemeSelector = ({
   sx,
   preferredTheme,
-  setPreferredTheme
-                              }: ThemeSelectorProps) => {
-
-  const boxSx = useMemo(() => ({
-    ...defaultPreferenceItemStyle,
-    ...sx
-  }), [ sx ]);
+  setPreferredTheme,
+}: ThemeSelectorProps) => {
+  const boxSx = useMemo(
+    () => ({
+      ...defaultPreferenceItemStyle,
+      ...sx,
+    }),
+    [sx]
+  );
 
   return (
-    <Box
-      sx={boxSx}>
+    <Box sx={boxSx}>
       <FormControl sx={{ width: '100%' }}>
         <InputLabel id={'theme-label'}>Theme</InputLabel>
         <Select
@@ -44,13 +52,11 @@ export const ThemeSelector = ({
             setPreferredTheme(value as THEME_PREFERENCE)
           }
         >
-          <MenuItem value={'auto' as THEME_PREFERENCE}>
-            Follow System
-          </MenuItem>
+          <MenuItem value={'auto' as THEME_PREFERENCE}>Follow System</MenuItem>
           <MenuItem value={'night' as THEME_PREFERENCE}>Dark</MenuItem>
           <MenuItem value={'day' as THEME_PREFERENCE}>Light</MenuItem>
         </Select>
       </FormControl>
     </Box>
   );
-}
+};

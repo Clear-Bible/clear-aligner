@@ -17,29 +17,41 @@ interface WorkbenchDialogProps {
   updateAlignments: (resetState: boolean) => void;
 }
 
-const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({ alignment, setAlignment, updateAlignments }) => {
+const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({
+  alignment,
+  setAlignment,
+  updateAlignments,
+}) => {
   const { projectState, setPreferences } = React.useContext(AppContext);
-  const initialUpdateTime = React.useMemo(() => (
-    LinksTable.getLatestLastUpdateTime()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [alignment]);
+  const initialUpdateTime = React.useMemo(
+    () =>
+      LinksTable.getLatestLastUpdateTime(),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    [alignment]
+  );
 
   const handleClose = React.useCallback(() => {
-    updateAlignments(initialUpdateTime !== LinksTable.getLatestLastUpdateTime());
+    updateAlignments(
+      initialUpdateTime !== LinksTable.getLatestLastUpdateTime()
+    );
     setAlignment(null);
   }, [initialUpdateTime, updateAlignments, setAlignment]);
 
   React.useEffect(() => {
     if (alignment) {
-      setPreferences((p: UserPreference | undefined) => ({ ...(p ?? {}) as UserPreference, bcv: alignment }));
+      setPreferences((p: UserPreference | undefined) => ({
+        ...((p ?? {}) as UserPreference),
+        bcv: alignment,
+      }));
     }
   }, [projectState.userPreferenceTable, alignment, setPreferences]);
 
   return (
-    <Dialog maxWidth="lg"
-            open={!!alignment}
-            fullWidth
-            disableEscapeKeyDown={true}
+    <Dialog
+      maxWidth="lg"
+      open={!!alignment}
+      fullWidth
+      disableEscapeKeyDown={true}
     >
       <DialogContent
         sx={{

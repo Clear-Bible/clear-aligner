@@ -17,7 +17,10 @@ import { CorpusContainer, NamedContainers, Verse } from 'structs';
 import '../../styles/theme.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import { SuggestionsContext, useSuggestionsContextInitializer } from '../../hooks/useSuggestions';
+import {
+  SuggestionsContext,
+  useSuggestionsContextInitializer,
+} from '../../hooks/useSuggestions';
 import { useAppSelector } from '../../app/index';
 
 export type CustomEditorStyles = Partial<{
@@ -46,28 +49,39 @@ const Editor = ({
   // callback used to capture what's visible in the upper half
   // of the editor display, in order to keep the interlinear
   // and anything like it in sync.
-  const setNewVisibleVerses = useCallback((inputVerses: Verse[], corpus: CorpusContainer) => {
-    if (corpus.id === AlignmentSide.SOURCE
-      && !_.isEqual(visibleSourceVerses, inputVerses)) {
-      setVisibleSourceVerses(inputVerses);
-    }
-  }, [visibleSourceVerses]);
+  const setNewVisibleVerses = useCallback(
+    (inputVerses: Verse[], corpus: CorpusContainer) => {
+      if (
+        corpus.id === AlignmentSide.SOURCE &&
+        !_.isEqual(visibleSourceVerses, inputVerses)
+      ) {
+        setVisibleSourceVerses(inputVerses);
+      }
+    },
+    [visibleSourceVerses]
+  );
 
-  const inProgressLink = useAppSelector(state => state.alignment.present.inProgressLink);
+  const inProgressLink = useAppSelector(
+    (state) => state.alignment.present.inProgressLink
+  );
 
-  const suggestionsContextValues = useSuggestionsContextInitializer(inProgressLink);
+  const suggestionsContextValues =
+    useSuggestionsContextInitializer(inProgressLink);
 
   return (
-    <SuggestionsContext.Provider
-      value={suggestionsContextValues}>
-      <Container maxWidth={false} disableGutters sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-        flexShrink: 1,
-        marginBottom: '1rem',
-        px: usePaddingForEditorContainer ? '12px' : '0px'
-      }}>
+    <SuggestionsContext.Provider value={suggestionsContextValues}>
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          flexShrink: 1,
+          marginBottom: '1rem',
+          px: usePaddingForEditorContainer ? '12px' : '0px',
+        }}
+      >
         <Polyglot
           containers={containers}
           position={position}

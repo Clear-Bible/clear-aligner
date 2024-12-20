@@ -29,12 +29,12 @@ export interface UseDeleteProjectFromServerWithDialogState {
  * @param project project the hook would be used to delete
  */
 export const useDeleteProjectFromServerWithDialog = ({
-                                                       project
+  project,
 }: UseDeleteProjectFromServerWithDialogProps): UseDeleteProjectFromServerWithDialogState => {
-  const { setSnackBarObject, setIsSnackBarOpen } =  useContext(AppContext);
+  const { setSnackBarObject, setIsSnackBarOpen } = useContext(AppContext);
   const { deleteProject } = useDeleteRemoteProject();
   const { publishProject, dialog: publishDialog } = usePublishProject();
-  const [ isDialogOpen, setIsDialogOpen ] = useState<boolean>(false);
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
   const dialog = useMemo<JSX.Element>(() => {
     return (
@@ -46,41 +46,52 @@ export const useDeleteProjectFromServerWithDialog = ({
         >
           <DialogContent sx={{ width: 650 }}>
             <Grid container justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
+              <Typography variant="subtitle1">
+                Are you sure you want to delete this project?
+              </Typography>
               <Grid item>
                 <Grid container>
                   <Button variant="text" onClick={() => setIsDialogOpen(false)}>
                     Go Back
                   </Button>
-                  <Button variant="contained" onClick={() => {
-                    getUserGroups(true)
-                      .then((groups) => {
-                        const isAdmin = (groups ?? [] as string[])?.includes(ADMIN_GROUP);
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      getUserGroups(true).then((groups) => {
+                        const isAdmin = (groups ?? ([] as string[]))?.includes(
+                          ADMIN_GROUP
+                        );
                         const displayPermissionsErrorMsg = () => {
-                          setSnackBarObject({ message: 'You do not have permission to complete this operation.', variant: 'error'});
+                          setSnackBarObject({
+                            message:
+                              'You do not have permission to complete this operation.',
+                            variant: 'error',
+                          });
                           setIsSnackBarOpen(true);
-                        }
+                        };
                         if (!isAdmin) {
                           displayPermissionsErrorMsg();
                           setIsDialogOpen(false);
                           return;
                         }
                         setIsDialogOpen(false);
-                        const initialProjectState = project.state ?? ProjectState.PUBLISHED;
-                        publishProject(project, ProjectState.DRAFT)
-                          .then(() => {
-                            return deleteProject(project.id)
-                              .then((response) => {
-                                if (!response || response?.success)
-                                  return;
-                                if (response?.response.statusCode === 403) {
-                                  void publishProject(project, initialProjectState);
-                                  displayPermissionsErrorMsg();
-                                }
-                              });
+                        const initialProjectState =
+                          project.state ?? ProjectState.PUBLISHED;
+                        publishProject(project, ProjectState.DRAFT).then(() => {
+                          return deleteProject(project.id).then((response) => {
+                            if (!response || response?.success) return;
+                            if (response?.response.statusCode === 403) {
+                              void publishProject(project, initialProjectState);
+                              displayPermissionsErrorMsg();
+                            }
                           });
+                        });
                       });
-                  }} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
+                    }}
+                    sx={{ ml: 2, borderRadius: 10 }}
+                  >
+                    Delete
+                  </Button>
                 </Grid>
               </Grid>
             </Grid>
@@ -88,12 +99,20 @@ export const useDeleteProjectFromServerWithDialog = ({
         </Dialog>
         {publishDialog}
       </>
-      );
-  }, [isDialogOpen, setSnackBarObject, setIsSnackBarOpen, publishProject, project, deleteProject, publishDialog]);
+    );
+  }, [
+    isDialogOpen,
+    setSnackBarObject,
+    setIsSnackBarOpen,
+    publishProject,
+    project,
+    deleteProject,
+    publishDialog,
+  ]);
 
   return {
     isOpen: isDialogOpen,
     showDeleteProjectDialog: () => setIsDialogOpen(true),
-    dialog
+    dialog,
   };
 };

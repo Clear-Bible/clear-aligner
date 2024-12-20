@@ -6,7 +6,7 @@ export const CORPORA_TABLE_NAME: string = 'corpora';
 
 export enum AlignmentSide {
   SOURCE = 'sources',
-  TARGET = 'targets'
+  TARGET = 'targets',
 }
 
 export interface CorpusDTO {

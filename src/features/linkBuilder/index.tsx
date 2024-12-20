@@ -122,7 +122,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
           const selectedPartsForText = selectedWords[textId];
           const sortedSelectedPartsForText = selectedPartsForText.sort(
             (a: Word, b: Word) =>
-              BCVWP.compare(BCVWP.parseFromString(a.id), BCVWP.parseFromString(b.id)));
+              BCVWP.compare(
+                BCVWP.parseFromString(a.id),
+                BCVWP.parseFromString(b.id)
+              )
+          );
           const partsAsWords: Word[][] = [];
           sortedSelectedPartsForText.forEach((part) => {
             const lastIndex = partsAsWords.length - 1;
@@ -171,20 +175,41 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
               <div style={{ marginBottom: '8px' }}>
                 <Divider />
               </div>
-              <div style={{ direction: corpus.language.textDirection ?? TextDirection.LTR }}>
+              <div
+                style={{
+                  direction: corpus.language.textDirection ?? TextDirection.LTR,
+                }}
+              >
                 <span>&nbsp;</span>
-                {(partsAsWords)
-                  .map((selectedWord, index: number): ReactElement => {
-                    const lastWord = index > 0 ? partsAsWords.at(index-1) : undefined;
-                    const lastWordId = lastWord ? BCVWP.parseFromString(lastWord.at(0)!.id!) : undefined;
+                {partsAsWords.map(
+                  (selectedWord, index: number): ReactElement => {
+                    const lastWord =
+                      index > 0 ? partsAsWords.at(index - 1) : undefined;
+                    const lastWordId = lastWord
+                      ? BCVWP.parseFromString(lastWord.at(0)!.id!)
+                      : undefined;
                     const wordId = BCVWP.parseFromString(
                       selectedWord.at(0)!.id
                     ).toTruncatedReferenceString(BCVWPField.Word);
                     return (
-                      <span id={`selected_${wordId}`} key={`selected_${wordId}`}>
-                        {lastWordId && container.findNext(lastWordId, BCVWPField.Word)?.toTruncatedReferenceString(BCVWPField.Word) !== wordId
-                          ? <span id={`selected_${lastWordId}_ellipsis`}
-                                  key={`selected_${lastWordId}_ellipsis`}>... </span> : ''}
+                      <span
+                        id={`selected_${wordId}`}
+                        key={`selected_${wordId}`}
+                      >
+                        {lastWordId &&
+                        container
+                          .findNext(lastWordId, BCVWPField.Word)
+                          ?.toTruncatedReferenceString(BCVWPField.Word) !==
+                          wordId ? (
+                          <span
+                            id={`selected_${lastWordId}_ellipsis`}
+                            key={`selected_${lastWordId}_ellipsis`}
+                          >
+                            ...{' '}
+                          </span>
+                        ) : (
+                          ''
+                        )}
                         <WordDisplay
                           suppressAfter={true}
                           readonly={true}
@@ -195,7 +220,8 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                         />
                       </span>
                     );
-                  })}
+                  }
+                )}
               </div>
               <div style={{ marginTop: '8px' }}>
                 <Divider />

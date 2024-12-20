@@ -32,22 +32,22 @@ export const DataGridSetMinRowHeightToDefault = {
  * overlapped on the right side by the column divider.
  */
 export const DataGridTripleIconMarginFix = {
-  '.MuiDataGrid-menuIcon' : { mr: 0}
-}
+  '.MuiDataGrid-menuIcon': { mr: 0 },
+};
 
 /**
  * CA-102 add sx on DataGrid to remove the cell outline when a user puts the
  * focus on one of the cells.
  */
 export const DataGridOutlineFix = {
-  '&.MuiDataGrid-root .MuiDataGrid-cell:focus-within' : {
-    outline: "none !important"
-  }
-}
+  '&.MuiDataGrid-root .MuiDataGrid-cell:focus-within': {
+    outline: 'none !important',
+  },
+};
 
 /**
  * add to sx on DataGrid to resize the Svg Icons
  */
 export const DataGridSvgFix = {
-  '& .MuiSvgIcon-root': { fontSize: 20 }
+  '& .MuiSvgIcon-root': { fontSize: 20 },
 };

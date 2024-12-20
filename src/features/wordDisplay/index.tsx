@@ -18,7 +18,7 @@ import { ButtonWord } from './buttonWord';
  */
 export enum WordDisplayVariant {
   TEXT = 'TEXT',
-  BUTTON = 'BUTTON'
+  BUTTON = 'BUTTON',
 }
 
 /**
@@ -44,21 +44,25 @@ export interface WordDisplayProps extends LimitedToLinks {
  * @param languageInfo language info for display
  */
 export const WordDisplay = ({
-                              variant = WordDisplayVariant.BUTTON,
-                              onlyLinkIds,
-                              parts,
-                              corpus,
-                              links,
-                              readonly = false,
-                              suppressAfter = false,
-                              suppressGloss = false,
-                              disableHighlighting = false,
-                              fillWidth = false
-                            }: WordDisplayProps) => {
-  const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? {
-    language: undefined,
-    hasGloss: false
-  }, [corpus]);
+  variant = WordDisplayVariant.BUTTON,
+  onlyLinkIds,
+  parts,
+  corpus,
+  links,
+  readonly = false,
+  suppressAfter = false,
+  suppressGloss = false,
+  disableHighlighting = false,
+  fillWidth = false,
+}: WordDisplayProps) => {
+  const { language: languageInfo, hasGloss } = useMemo(
+    () =>
+      corpus ?? {
+        language: undefined,
+        hasGloss: false,
+      },
+    [corpus]
+  );
   const { preferences } = React.useContext(AppContext);
   const ref = parts?.find((part) => part.id)?.id;
   const computedVariant = useMemo(() => {
@@ -73,52 +77,50 @@ export const WordDisplay = ({
         key={`${
           ref
             ? BCVWP.parseFromString(ref).toTruncatedReferenceString(
-              BCVWPField.Word
-            )
+                BCVWPField.Word
+              )
             : uuid()
         }-${languageInfo?.code}`}
         style={{
           padding: '1px',
-          ...(fillWidth ? { width: '100%' } : {})
+          ...(fillWidth ? { width: '100%' } : {}),
         }}
       >
-        {
-          (computedVariant === WordDisplayVariant.BUTTON ?
-              (
-                <>
-                  <ButtonWord
-                    disableHighlighting={disableHighlighting}
-                    disabled={readonly}
-                    suppressAfter={suppressAfter}
-                    onlyLinkIds={onlyLinkIds}
-                    links={links}
-                    tokens={parts}
-                    corpus={corpus}
-                    enableGlossDisplay={preferences?.showGloss && hasGloss && !suppressGloss}
-                    fillWidth={fillWidth}
-                  />
-                </>
-              ) : (
-                <>
-                  {parts?.map((part) => (
-                    <React.Fragment key={part?.id}>
-                      <TextSegment
-                        key={part.id}
-                        readonly={readonly}
-                        disableHighlighting={disableHighlighting}
-                        onlyLinkIds={onlyLinkIds}
-                        word={part}
-                        links={links}
-                        languageInfo={languageInfo}
-                        showAfter={!suppressAfter}
-                      />
-                    </React.Fragment>
-                  ))}
-                  <span> </span>
-                </>
-              )
-          )
-        }
+        {computedVariant === WordDisplayVariant.BUTTON ? (
+          <>
+            <ButtonWord
+              disableHighlighting={disableHighlighting}
+              disabled={readonly}
+              suppressAfter={suppressAfter}
+              onlyLinkIds={onlyLinkIds}
+              links={links}
+              tokens={parts}
+              corpus={corpus}
+              enableGlossDisplay={
+                preferences?.showGloss && hasGloss && !suppressGloss
+              }
+              fillWidth={fillWidth}
+            />
+          </>
+        ) : (
+          <>
+            {parts?.map((part) => (
+              <React.Fragment key={part?.id}>
+                <TextSegment
+                  key={part.id}
+                  readonly={readonly}
+                  disableHighlighting={disableHighlighting}
+                  onlyLinkIds={onlyLinkIds}
+                  word={part}
+                  links={links}
+                  languageInfo={languageInfo}
+                  showAfter={!suppressAfter}
+                />
+              </React.Fragment>
+            ))}
+            <span> </span>
+          </>
+        )}
       </Typography>
     </>
   );

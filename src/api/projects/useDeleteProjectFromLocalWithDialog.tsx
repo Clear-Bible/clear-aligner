@@ -25,21 +25,26 @@ export interface UseDeleteProjectFromLocalWithDialogState {
   dialog: JSX.Element;
 }
 
-export const deleteLocalProject = async (projectId: string, {
-  projectState,
-  preferences,
-  setPreferences,
-  setProjects
-}: Partial<AppContextProps>) => {
+export const deleteLocalProject = async (
+  projectId: string,
+  {
+    projectState,
+    preferences,
+    setPreferences,
+    setProjects,
+  }: Partial<AppContextProps>
+) => {
   await projectState!.projectTable?.remove?.(projectId);
-  setProjects!((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
+  setProjects!((ps: Project[]) =>
+    (ps || []).filter((p) => (p.id || '').trim() !== (projectId || '').trim())
+  );
   if (preferences?.currentProject === projectId) {
     projectState!.linksTable.reset().catch(console.error);
     projectState!.linksTable.setSourceName(DefaultProjectId);
     setPreferences!((p: UserPreference | undefined) => ({
-      ...(p ?? {}) as UserPreference,
+      ...((p ?? {}) as UserPreference),
       currentProject: DefaultProjectId,
-      initialized: InitializationStates.UNINITIALIZED
+      initialized: InitializationStates.UNINITIALIZED,
     }));
   }
 };
@@ -48,8 +53,11 @@ export const deleteLocalProject = async (projectId: string, {
  * hook to delete a local project with a confirmation dialog
  * @param project project the hook would be used to delete
  */
-export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjectFromLocalWithDialogProps): UseDeleteProjectFromLocalWithDialogState => {
-  const { projectState, projects, setProjects, preferences, setPreferences } = useContext(AppContext);
+export const useDeleteProjectFromLocalWithDialog = ({
+  project,
+}: UseDeleteProjectFromLocalWithDialogProps): UseDeleteProjectFromLocalWithDialogState => {
+  const { projectState, projects, setProjects, preferences, setPreferences } =
+    useContext(AppContext);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const dbApi = useDatabase();
 
@@ -66,68 +74,95 @@ export const useDeleteProjectFromLocalWithDialog = ({ project }: UseDeleteProjec
             ...project,
             lastSyncTime: null,
             lastSyncServerTime: null,
-            location: ProjectLocation.REMOTE
+            location: ProjectLocation.REMOTE,
           });
           break;
       }
       const cleanupDbFile = () => {
         console.debug('Remove db file', project.id);
-        dbApi.removeSource(project.id)
-          .then(() => {
-          })
-          .then(() => {
-          });
+        dbApi
+          .removeSource(project.id)
+          .then(() => {})
+          .then(() => {});
       };
       setProjects((ps: Project[]) => {
-        const newProjectsList = (ps ?? []).filter(p => p.id !== project.id);
+        const newProjectsList = (ps ?? []).filter((p) => p.id !== project.id);
         if (project.location === ProjectLocation.SYNCED) {
-          return [...newProjectsList, {
-            ...project,
-            lastSyncTime: null,
-            lastSyncServerTime: null,
-            location: ProjectLocation.REMOTE
-          }];
+          return [
+            ...newProjectsList,
+            {
+              ...project,
+              lastSyncTime: null,
+              lastSyncServerTime: null,
+              location: ProjectLocation.REMOTE,
+            },
+          ];
         }
         return newProjectsList;
       });
-      const currentProjectId = pickDeFactoCurrentProject((projects ?? []).filter(p => p.id !== project.id), preferences?.currentProject === project.id ? DefaultProjectId : preferences?.currentProject);
+      const currentProjectId = pickDeFactoCurrentProject(
+        (projects ?? []).filter((p) => p.id !== project.id),
+        preferences?.currentProject === project.id
+          ? DefaultProjectId
+          : preferences?.currentProject
+      );
       projectState.linksTable.reset().catch(console.error);
       projectState.linksTable.setSourceName(currentProjectId);
       setPreferences((p: UserPreference | undefined) => ({
-        ...(p ?? {}) as UserPreference,
+        ...((p ?? {}) as UserPreference),
         currentProject: currentProjectId,
         initialized: InitializationStates.UNINITIALIZED,
-        onInitialized: [...(p?.onInitialized ?? []), cleanupDbFile]
+        onInitialized: [...(p?.onInitialized ?? []), cleanupDbFile],
       }));
       setIsDialogOpen(false);
     }
-  }, [project, projectState.projectTable, projects, setProjects, preferences?.currentProject, projectState.linksTable, setPreferences, dbApi]);
+  }, [
+    project,
+    projectState.projectTable,
+    projects,
+    setProjects,
+    preferences?.currentProject,
+    projectState.linksTable,
+    setPreferences,
+    dbApi,
+  ]);
 
-  const dialog = useMemo(() => (
-    <Dialog
-      maxWidth="xl"
-      open={isDialogOpen}
-      onClose={() => setIsDialogOpen(false)}
-    >
-      <DialogContent sx={{ width: 650 }}>
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
-          <Grid item>
-            <Grid container>
-              <Button variant="text" onClick={() => setIsDialogOpen(false)}>
-                Go Back
-              </Button>
-              <Button variant="contained" onClick={handleDelete} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
+  const dialog = useMemo(
+    () => (
+      <Dialog
+        maxWidth="xl"
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+      >
+        <DialogContent sx={{ width: 650 }}>
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Typography variant="subtitle1">
+              Are you sure you want to delete this project?
+            </Typography>
+            <Grid item>
+              <Grid container>
+                <Button variant="text" onClick={() => setIsDialogOpen(false)}>
+                  Go Back
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleDelete}
+                  sx={{ ml: 2, borderRadius: 10 }}
+                >
+                  Delete
+                </Button>
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
-      </DialogContent>
-    </Dialog>
-  ), [isDialogOpen, handleDelete]);
+        </DialogContent>
+      </Dialog>
+    ),
+    [isDialogOpen, handleDelete]
+  );
 
   return {
     isOpen: isDialogOpen,
     showDeleteProjectDialog: () => setIsDialogOpen(true),
-    dialog
+    dialog,
   };
 };

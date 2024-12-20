@@ -18,7 +18,10 @@ import { CorpusContainer, Word } from '../../structs';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { AppContext } from '../../App';
-import { ControlPanelFormat, UserPreference } from 'state/preferences/tableManager';
+import {
+  ControlPanelFormat,
+  UserPreference,
+} from 'state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import _ from 'lodash';
 import { useAppDispatch } from '../../app/index';
@@ -57,7 +60,10 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({
   );
   const appCtx = useContext(AppContext);
   const dispatch = useAppDispatch();
-  const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1, 1, 1), [appCtx.preferences?.bcv]);
+  const currentPosition = useMemo<BCVWP>(
+    () => appCtx.preferences?.bcv ?? new BCVWP(1, 1, 1),
+    [appCtx.preferences?.bcv]
+  );
 
   useEffect(() => {
     if (sourceContainer && targetContainer)
@@ -93,14 +99,17 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({
     dispatch(resetTextSegments());
   }, [appCtx.preferences?.bcv, dispatch]);
 
-  const saveControlPanelFormat = useCallback(async (alignmentDirection: 'VERTICAL' | 'HORIZONTAL') => {
-    const updatedPreferences = {
-      ...appCtx.preferences,
-      alignmentDirection
-    } as UserPreference;
-    appCtx.projectState.userPreferenceTable?.saveOrUpdate(updatedPreferences);
-    appCtx.setPreferences(updatedPreferences);
-  }, [appCtx]);
+  const saveControlPanelFormat = useCallback(
+    async (alignmentDirection: 'VERTICAL' | 'HORIZONTAL') => {
+      const updatedPreferences = {
+        ...appCtx.preferences,
+        alignmentDirection,
+      } as UserPreference;
+      appCtx.projectState.userPreferenceTable?.saveOrUpdate(updatedPreferences);
+      appCtx.setPreferences(updatedPreferences);
+    },
+    [appCtx]
+  );
 
   return (
     <Stack direction={'column'} minWidth={'100%'} height={'100%'}>
@@ -108,95 +117,119 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({
       <Box>
         <AppBar
           position="static"
-          sx={ (theme) => ({
+          sx={(theme) => ({
             backgroundColor: theme.palette.transparent,
-            backgroundImage: 'none'
+            backgroundImage: 'none',
           })}
         >
-          <Toolbar sx={{
-            paddingLeft: useZeroYPaddingForToolbar ? '0px !important' : null,
-            paddingRight: useZeroYPaddingForToolbar ? '0px !important' : null,
-          }}>
-            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center'}}>
-              <ButtonGroup sx={{ marginRight: '6px'}}>
+          <Toolbar
+            sx={{
+              paddingLeft: useZeroYPaddingForToolbar ? '0px !important' : null,
+              paddingRight: useZeroYPaddingForToolbar ? '0px !important' : null,
+            }}
+          >
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+              <ButtonGroup sx={{ marginRight: '6px' }}>
                 <Tooltip
                   title={`Swap to horizontal view mode`}
-                  arrow describeChild>
+                  arrow
+                  describeChild
+                >
                   <span>
                     <Button
-                      variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.HORIZONTAL] ? 'contained' : 'outlined' }
+                      variant={
+                        appCtx.preferences?.alignmentDirection ===
+                        ControlPanelFormat[ControlPanelFormat.HORIZONTAL]
+                          ? 'contained'
+                          : 'outlined'
+                      }
                       onClick={() => void saveControlPanelFormat('HORIZONTAL')}
-                      sx={{maxWidth: '40px'}}
+                      sx={{ maxWidth: '40px' }}
                     >
-                          <SwapHoriz />
+                      <SwapHoriz />
                     </Button>
                   </span>
                 </Tooltip>
                 <Tooltip
                   title={`Swap to vertical view mode`}
-                  arrow describeChild>
+                  arrow
+                  describeChild
+                >
                   <span>
                     <Button
-                      variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'contained' : 'outlined'}
+                      variant={
+                        appCtx.preferences?.alignmentDirection ===
+                        ControlPanelFormat[ControlPanelFormat.VERTICAL]
+                          ? 'contained'
+                          : 'outlined'
+                      }
                       onClick={() => void saveControlPanelFormat('VERTICAL')}
-                      sx={{maxWidth: '40px'}}
+                      sx={{ maxWidth: '40px' }}
                     >
-                          <SwapVert />
+                      <SwapVert />
                     </Button>
                   </span>
                 </Tooltip>
               </ButtonGroup>
               <ButtonGroup>
-                <Tooltip title="Toggle Glosses"
-                         arrow
-                         describeChild
-                >
-                  <span >
+                <Tooltip title="Toggle Glosses" arrow describeChild>
+                  <span>
                     <Button
-                      variant={appCtx.preferences?.showGloss ? 'contained' : 'outlined'}
-                      disabled={!selectedCorporaContainers.some(container => container.corpusAtReferenceString(currentPosition?.toReferenceString?.() ?? '')?.hasGloss)}
+                      variant={
+                        appCtx.preferences?.showGloss ? 'contained' : 'outlined'
+                      }
+                      disabled={
+                        !selectedCorporaContainers.some(
+                          (container) =>
+                            container.corpusAtReferenceString(
+                              currentPosition?.toReferenceString?.() ?? ''
+                            )?.hasGloss
+                        )
+                      }
                       onClick={() => {
                         const updatedPreferences = {
                           ...((appCtx.preferences ?? {}) as UserPreference),
-                          showGloss: !appCtx.preferences?.showGloss
+                          showGloss: !appCtx.preferences?.showGloss,
                         };
                         appCtx.setPreferences(updatedPreferences);
                       }}
-                      sx={{maxWidth: '40px'}}
+                      sx={{ maxWidth: '40px' }}
                     >
-                      <Translate/>
+                      <Translate />
                     </Button>
                   </span>
                 </Tooltip>
               </ButtonGroup>
-              {
-                showNavigation && (
-                  <div style={{
+              {showNavigation && (
+                <div
+                  style={{
                     display: 'inline-flex',
                     justifyContent: 'center',
                     marginLeft: 'auto',
                     marginRight: 'auto',
-                    paddingRight: '66px'
-                  }}>
-                    <BCVNavigation
-                      horizontal
-                      disabled={!availableWords || availableWords.length < 1}
-                      words={availableWords}
-                      currentPosition={currentPosition}
-                      onNavigate={bcv => {
-                        if (!_.isEqual(bcv, currentPosition)) {
-                          appCtx.setPreferences((previousState): UserPreference => {
+                    paddingRight: '66px',
+                  }}
+                >
+                  <BCVNavigation
+                    horizontal
+                    disabled={!availableWords || availableWords.length < 1}
+                    words={availableWords}
+                    currentPosition={currentPosition}
+                    onNavigate={(bcv) => {
+                      if (!_.isEqual(bcv, currentPosition)) {
+                        appCtx.setPreferences(
+                          (previousState): UserPreference => {
                             return {
-                              ...previousState as UserPreference,
-                              bcv
+                              ...(previousState as UserPreference),
+                              bcv,
                             };
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                )
-              }
+                          }
+                        );
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </Box>
             {showProfileAvatar && <ProfileAvatar />}
             {Object.values(actions || {})}

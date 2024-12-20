@@ -12,13 +12,13 @@ import {
   GridRenderCellParams,
   GridRowParams,
   GridSortItem,
-  GridValueGetterParams
+  GridValueGetterParams,
 } from '@mui/x-data-grid';
 import {
   DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
-  DataGridTripleIconMarginFix
+  DataGridTripleIconMarginFix,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { TextDirection } from '../../structs';
@@ -36,13 +36,14 @@ const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
           ? { direction: pivotWord.languageInfo.textDirection! }
           : {}),
         overflow: 'hidden',
-        textOverflow: 'ellipsis'
+        textOverflow: 'ellipsis',
       }}
     >
       <LocalizedTextDisplay languageInfo={pivotWord.languageInfo}>
         {pivotWord.word}
       </LocalizedTextDisplay>
-    </span>);
+    </span>
+  );
 };
 
 const columns: GridColDef[] = [
@@ -51,8 +52,7 @@ const columns: GridColDef[] = [
     headerName: 'Freq.',
     flex: 1,
     maxWidth: 90,
-    valueGetter: (row: GridValueGetterParams<PivotWord>) =>
-      row.row.frequency
+    valueGetter: (row: GridValueGetterParams<PivotWord>) => row.row.frequency,
   },
   {
     field: 'word',
@@ -60,8 +60,8 @@ const columns: GridColDef[] = [
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
       <PivotWordTextCell pivotWord={row} />
-    )
-  }
+    ),
+  },
 ];
 
 /**
@@ -86,13 +86,13 @@ export interface PivotWordTableProps {
  * @param onChooseWord callback for when the user clicks a pivot word
  */
 export const PivotWordTable = ({
-                                 loading,
-                                 sort,
-                                 onChangeSort,
-                                 pivotWords,
-                                 chosenWord,
-                                 onChooseWord
-                               }: PivotWordTableProps) => {
+  loading,
+  sort,
+  onChangeSort,
+  pivotWords,
+  chosenWord,
+  onChooseWord,
+}: PivotWordTableProps) => {
   const initialPage = useMemo(() => {
     if (chosenWord && pivotWords) {
       return Math.floor(pivotWords.indexOf(chosenWord) / 20);
@@ -103,12 +103,14 @@ export const PivotWordTable = ({
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
-        <CircularProgress sx={{
-          margin: 'auto',
-          '.MuiLinearProgress-bar': {
-            transition: 'none'
-          }
-        }} />
+        <CircularProgress
+          sx={{
+            margin: 'auto',
+            '.MuiLinearProgress-bar': {
+              transition: 'none',
+            },
+          }}
+        />
       </Box>
     );
   }
@@ -118,8 +120,8 @@ export const PivotWordTable = ({
         width: '100%',
         height: '100%',
         '.MuiTableContainer-root::-webkit-scrollbar': {
-          width: 0
-        }
+          width: 0,
+        },
       }}
     >
       <DataGrid
@@ -128,12 +130,10 @@ export const PivotWordTable = ({
           ...DataGridScrollbarDisplayFix,
           ...DataGridResizeAnimationFixes,
           ...DataGridTripleIconMarginFix,
-          ...DataGridOutlineFix
+          ...DataGridOutlineFix,
         }}
         rowSelection={true}
-        rowSelectionModel={
-          chosenWord?.word ? [chosenWord.word] : undefined
-        }
+        rowSelectionModel={chosenWord?.word ? [chosenWord.word] : undefined}
         rows={pivotWords}
         columns={columns}
         getRowId={(row) => row.word}
@@ -146,8 +146,8 @@ export const PivotWordTable = ({
         }}
         initialState={{
           pagination: {
-            paginationModel: { page: initialPage, pageSize: 20 }
-          }
+            paginationModel: { page: initialPage, pageSize: 20 },
+          },
         }}
         pagination={true}
         pageSizeOptions={[20]}

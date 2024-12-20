@@ -3,5 +3,5 @@ export enum Progress {
   IN_PROGRESS,
   SUCCESS,
   FAILED,
-  CANCELED
+  CANCELED,
 }

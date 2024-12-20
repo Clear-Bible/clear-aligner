@@ -1,19 +1,35 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
-import { mapWordOrPartDtoToWordOrPart, WordOrPartDTO } from '../../common/data/project/wordsOrParts';
+import {
+  mapWordOrPartDtoToWordOrPart,
+  WordOrPartDTO,
+} from '../../common/data/project/wordsOrParts';
 import { Project } from '../../state/projects/tableManager';
-import { mapProjectDtoToProject, ProjectDTO, ProjectLocation } from '../../common/data/project/project';
+import {
+  mapProjectDtoToProject,
+  ProjectDTO,
+  ProjectLocation,
+} from '../../common/data/project/project';
 import { AppContext } from '../../App';
 import { DateTime } from 'luxon';
 import { InitializationStates } from '../../workbench/query';
-import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  Grid,
+  Typography,
+} from '@mui/material';
 import { useDeleteRemoteProject } from './useDeleteRemoteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import {
   mapServerAlignmentLinkToLinkEntity,
   ServerAlignmentLinkDTO,
-  ServerLinksDTO
+  ServerLinksDTO,
 } from '../../common/data/serverAlignmentLinkDTO';
-import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
+import {
+  AlignmentSide,
+  CORPORA_TABLE_NAME,
+} from '../../common/data/project/corpus';
 import { ApiUtils } from '../utils';
 import { useDatabase } from '../../hooks/useDatabase';
 import _ from 'lodash';
@@ -28,7 +44,7 @@ enum ProjectDownloadProgress {
   REFRESHING_CONTAINERS,
   SUCCESS,
   FAILED,
-  CANCELED
+  CANCELED,
 }
 
 export interface SyncState {
@@ -41,10 +57,13 @@ export interface SyncState {
  * hook to download a specified project from the server.
  */
 export const useDownloadProject = (): SyncState => {
-  const { projectState, setProjects, isBusyDialogOpen, ...appCtx } = useContext(AppContext);
+  const { projectState, setProjects, isBusyDialogOpen, ...appCtx } =
+    useContext(AppContext);
   const { deleteProject } = useDeleteRemoteProject();
   const { cancel, reset, cancelToken } = useCancelTask();
-  const [progress, setProgress] = useState<ProjectDownloadProgress>(ProjectDownloadProgress.IDLE);
+  const [progress, setProgress] = useState<ProjectDownloadProgress>(
+    ProjectDownloadProgress.IDLE
+  );
   const [projectId, setProjectId] = useState<string>();
   const abortController = useRef<AbortController | undefined>();
 
@@ -55,7 +74,9 @@ export const useDownloadProject = (): SyncState => {
     reset();
     if (projectId) {
       const projectMap = await projectState.projectTable?.getProjects(true);
-      const savedProject = Array.from(projectMap?.values?.() ?? []).find(p => p.id === projectId);
+      const savedProject = Array.from(projectMap?.values?.() ?? []).find(
+        (p) => p.id === projectId
+      );
       if (savedProject) {
         await deleteProject(projectId);
         savedProject.lastSyncTime = 0;
@@ -67,7 +88,10 @@ export const useDownloadProject = (): SyncState => {
     }
   }, [projectState, deleteProject, projectId, reset]);
 
-  const downloadProject = async (projectId: string, cancelToken: CancelToken) => {
+  const downloadProject = async (
+    projectId: string,
+    cancelToken: CancelToken
+  ) => {
     setProjectId(projectId);
     try {
       if (cancelToken.canceled) return;
@@ -76,48 +100,73 @@ export const useDownloadProject = (): SyncState => {
       const projectsResponse = await ApiUtils.generateRequest<ProjectDTO>({
         requestPath: `/api/projects/${projectId}`,
         requestType: ApiUtils.RequestType.GET,
-        signal: abortController.current?.signal
+        signal: abortController.current?.signal,
       });
 
-      if (!projectsResponse.success) { // failure, perform cleanup
-        appCtx.setSnackBarObject({message: 'Project is not available for download as the current user.', variant: 'error'});
+      if (!projectsResponse.success) {
+        // failure, perform cleanup
+        appCtx.setSnackBarObject({
+          message: 'Project is not available for download as the current user.',
+          variant: 'error',
+        });
         appCtx.setIsSnackBarOpen(true);
         setProgress(ProjectDownloadProgress.FAILED);
         // perform cleanup
         await projectState.projectTable?.remove(projectId);
-        const refreshedProjectList = Array.from((await projectState.projectTable?.getProjects(true))?.values() ?? []);
+        const refreshedProjectList = Array.from(
+          (await projectState.projectTable?.getProjects(true))?.values() ?? []
+        );
         setProjects(refreshedProjectList);
         return;
       }
 
       const projectData = projectsResponse.body;
-      const tmpProject = mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!;
+      const tmpProject = mapProjectDtoToProject(
+        projectData,
+        ProjectLocation.SYNCED
+      )!;
       tmpProject.lastSyncServerTime = tmpProject.serverUpdatedAt;
-      Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
-        .map(p => p.id).includes(projectData.id!)
-        ? await projectState.projectTable?.update?.(tmpProject, true, false, true)
-        : await projectState.projectTable?.save?.(tmpProject, true, false, true);
+      Array.from(
+        (await projectState.projectTable?.getProjects(true))?.values?.() ?? []
+      )
+        .map((p) => p.id)
+        .includes(projectData.id!)
+        ? await projectState.projectTable?.update?.(
+            tmpProject,
+            true,
+            false,
+            true
+          )
+        : await projectState.projectTable?.save?.(
+            tmpProject,
+            true,
+            false,
+            true
+          );
 
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      const tokensResponse = ((await ApiUtils.generateRequest<any>({
-        requestPath: `/api/projects/${projectId}/tokens?side=targets`,
-        requestType: ApiUtils.RequestType.GET,
-        signal: abortController.current?.signal
-      })).body?.tokens ?? []) as WordOrPartDTO[];
+      const tokensResponse = ((
+        await ApiUtils.generateRequest<any>({
+          requestPath: `/api/projects/${projectId}/tokens?side=targets`,
+          requestType: ApiUtils.RequestType.GET,
+          signal: abortController.current?.signal,
+        })
+      ).body?.tokens ?? []) as WordOrPartDTO[];
 
       if (projectsResponse.success) {
         if (cancelToken.canceled) return;
-        const targetCorpora = projectData.corpora
-          .filter((c) => c.side === AlignmentSide.TARGET);
+        const targetCorpora = projectData.corpora.filter(
+          (c) => c.side === AlignmentSide.TARGET
+        );
         await dbApi.insert({
           projectId,
           table: CORPORA_TABLE_NAME,
-          itemOrItems: targetCorpora
+          itemOrItems: targetCorpora,
         });
-        targetCorpora.forEach((c) => c.words = []);
-        const targetCorporaMap = new Map(targetCorpora.map(c => [c.id, c]));
+        targetCorpora.forEach((c) => (c.words = []));
+        const targetCorporaMap = new Map(targetCorpora.map((c) => [c.id, c]));
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
         for (const chunk of _.chunk(tokensResponse, 2_000)) {
           chunk
@@ -128,7 +177,9 @@ export const useDownloadProject = (): SyncState => {
         projectData.updatedAt = currentTime;
         projectData.lastSyncTime = currentTime;
         if (cancelToken.canceled) return;
-        const project: Project | undefined = projectData ? mapProjectDtoToProject(projectData, ProjectLocation.SYNCED) : undefined;
+        const project: Project | undefined = projectData
+          ? mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)
+          : undefined;
         if (!project) {
           setProgress(ProjectDownloadProgress.FAILED);
           return;
@@ -136,40 +187,51 @@ export const useDownloadProject = (): SyncState => {
         project.lastSyncServerTime = project.serverUpdatedAt;
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.UPDATING);
-        Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
-          .map(p => p.id).includes(project.id)
+        Array.from(
+          (await projectState.projectTable?.getProjects(true))?.values?.() ?? []
+        )
+          .map((p) => p.id)
+          .includes(project.id)
           ? await projectState.projectTable?.update?.(project, true)
           : await projectState.projectTable?.save?.(project, true);
 
-        const alignmentsResponse = await ApiUtils.generateRequest<ServerLinksDTO>({
-          requestPath: `/api/projects/${project.id}/alignment_links`,
-          requestType: ApiUtils.RequestType.GET,
-          signal: abortController.current?.signal
-        });
+        const alignmentsResponse =
+          await ApiUtils.generateRequest<ServerLinksDTO>({
+            requestPath: `/api/projects/${project.id}/alignment_links`,
+            requestType: ApiUtils.RequestType.GET,
+            signal: abortController.current?.signal,
+          });
 
-        const linksBody: {
-          links: ServerAlignmentLinkDTO[]
-        } | undefined = alignmentsResponse.body;
+        const linksBody:
+          | {
+              links: ServerAlignmentLinkDTO[];
+            }
+          | undefined = alignmentsResponse.body;
         const prevSourceName = projectState.linksTable.getSourceName();
         if (prevSourceName !== project.id) {
           projectState.linksTable.setSourceName(project.id);
         }
         await projectState.linksTable.saveAll(
           (linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity),
-          false, true,
-          true, true);
+          false,
+          true,
+          true,
+          true
+        );
 
         project.lastSyncTime = DateTime.now().toMillis();
         await projectState.projectTable?.update(project, false);
         appCtx.setPreferences((p?: UserPreference) => ({
-          ...(p ?? {}) as UserPreference,
+          ...((p ?? {}) as UserPreference),
           currentProject: project.id,
-          initialized: InitializationStates.INITIALIZED
+          initialized: InitializationStates.INITIALIZED,
         }));
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);
-        const localProjects = await projectState.projectTable?.getProjects?.(true);
-        setProjects(p => Array.from(localProjects?.values?.() ?? p));
+        const localProjects = await projectState.projectTable?.getProjects?.(
+          true
+        );
+        setProjects((p) => Array.from(localProjects?.values?.() ?? p));
       }
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.SUCCESS);
@@ -214,20 +276,30 @@ export const useDownloadProject = (): SyncState => {
     return (
       <Dialog
         scroll="paper"
-        open={![
-          ProjectDownloadProgress.IDLE,
-          ProjectDownloadProgress.SUCCESS,
-          ProjectDownloadProgress.FAILED,
-          ProjectDownloadProgress.CANCELED
-        ].includes(progress) && !isBusyDialogOpen}
+        open={
+          ![
+            ProjectDownloadProgress.IDLE,
+            ProjectDownloadProgress.SUCCESS,
+            ProjectDownloadProgress.FAILED,
+            ProjectDownloadProgress.CANCELED,
+          ].includes(progress) && !isBusyDialogOpen
+        }
       >
-        <Grid container alignItems="center" justifyContent="space-between"
-              sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>
+        <Grid
+          container
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ minWidth: 500, height: 'fit-content', p: 2 }}
+        >
           <CircularProgress sx={{ mr: 2, height: 10, width: 'auto' }} />
-          <Typography variant="subtitle1">
-            {dialogMessage}
-          </Typography>
-          <Button variant="text" sx={{ textTransform: 'none', ml: 2 }} onClick={onCancel}>Cancel</Button>
+          <Typography variant="subtitle1">{dialogMessage}</Typography>
+          <Button
+            variant="text"
+            sx={{ textTransform: 'none', ml: 2 }}
+            onClick={onCancel}
+          >
+            Cancel
+          </Button>
         </Grid>
       </Dialog>
     );
@@ -236,6 +308,6 @@ export const useDownloadProject = (): SyncState => {
   return {
     downloadProject: (projectId) => downloadProject(projectId, cancelToken),
     progress,
-    dialog
+    dialog,
   };
 };

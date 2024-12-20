@@ -12,7 +12,9 @@ import { userState } from '../features/profileAvatar/profileAvatar';
  * mock the application context
  * @param ctx override parameters as desired here
  */
-export const mockContext = (ctx?: Partial<AppContextProps>): AppContextProps => {
+export const mockContext = (
+  ctx?: Partial<AppContextProps>
+): AppContextProps => {
   return {
     projectState: mockProjectState(ctx?.projectState),
     setProjectState: mockSetStateAction<ProjectState>(),
@@ -27,7 +29,7 @@ export const mockContext = (ctx?: Partial<AppContextProps>): AppContextProps => 
       effectiveType: null,
       rtt: null,
       saveData: null,
-      type: null
+      type: null,
     },
     userStatus: userState.LoggedIn,
     setUserStatus: mockSetStateAction(),
@@ -40,9 +42,9 @@ export const mockContext = (ctx?: Partial<AppContextProps>): AppContextProps => 
     setIsProjectDialogOpen: mockSetStateAction(),
     isBusyDialogOpen: false,
     setIsBusyDialogOpen: mockSetStateAction(),
-    ...ctx
+    ...ctx,
   } as AppContextProps;
-}
+};
 
 /**
  * returns a component with a context provider produced by {@link mockContext}
@@ -55,4 +57,4 @@ export const mockContextWithWrapper = (ctx?: Partial<AppContextProps>) => {
       {children}
     </AppContext.Provider>
   );
-}
+};

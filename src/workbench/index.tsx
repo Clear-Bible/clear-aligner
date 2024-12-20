@@ -26,25 +26,26 @@ const Workbench: React.FC<WorkbenchProps> = ({
 
   return (
     <>
-      {namedContainers?.isComplete()
-        && (<div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              margin: 'auto',
-              marginTop: '0',
-              marginBottom: '0',
-              minWidth: '100%',
-              height: 'calc(100% - 64px)',
-            }}
-          >
-            <Editor
-              containers={namedContainers}
-              position={currentPosition as BCVWP}
-              usePaddingForEditorContainer={usePaddingForEditorContainer}
-              styles={styles}
-            />
-          </div>)}
+      {namedContainers?.isComplete() && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            margin: 'auto',
+            marginTop: '0',
+            marginBottom: '0',
+            minWidth: '100%',
+            height: 'calc(100% - 64px)',
+          }}
+        >
+          <Editor
+            containers={namedContainers}
+            position={currentPosition as BCVWP}
+            usePaddingForEditorContainer={usePaddingForEditorContainer}
+            styles={styles}
+          />
+        </div>
+      )}
     </>
   );
 };

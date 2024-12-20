@@ -1,5 +1,11 @@
 import { NamedContainers, Verse } from '../../structs';
-import React, { Fragment, ReactElement, useEffect, useRef, useState } from 'react';
+import React, {
+  Fragment,
+  ReactElement,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import useDebug from '../../hooks/useDebug';
 import { Grid, Typography } from '@mui/material';
 import { InterlinearVerseDisplay } from './interlinearVerseDisplay';
@@ -22,28 +28,43 @@ const determineInterlinearView = (
   position: BCVWP,
   verses: Verse[]
 ) => {
-  if (verses.length < 1
-    || !containers.isComplete()) {
+  if (verses.length < 1 || !containers.isComplete()) {
     return [];
   }
   return verses.map((verse, verseIndex) => {
-    const languageInfo = containers.sources?.languageAtReferenceString(verse.bcvId.toReferenceString());
+    const languageInfo = containers.sources?.languageAtReferenceString(
+      verse.bcvId.toReferenceString()
+    );
     return (
       <Grid
         container
-        key={`${containers?.sources?.id}/${verseIndex}/${verse.bcvId.toReferenceString()}`}
+        key={`${
+          containers?.sources?.id
+        }/${verseIndex}/${verse.bcvId.toReferenceString()}`}
         sx={{ marginRight: '.7em' }}
-        flexDirection={languageInfo?.textDirection === 'ltr' ? 'row' : 'row-reverse'}  //direction set by languageInfo
+        flexDirection={
+          languageInfo?.textDirection === 'ltr' ? 'row' : 'row-reverse'
+        } //direction set by languageInfo
       >
         <Grid
-          item xs={1}
-          sx={{ p: '1px', width: '53px', height: '16px', justifyContent: 'center', marginTop: '20px' }}
-          display={'flex'}>
-          <Typography sx={
-            position?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
-              ? { fontStyle: 'italic' }
-              : {}
-          }>
+          item
+          xs={1}
+          sx={{
+            p: '1px',
+            width: '53px',
+            height: '16px',
+            justifyContent: 'center',
+            marginTop: '20px',
+          }}
+          display={'flex'}
+        >
+          <Typography
+            sx={
+              position?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
+                ? { fontStyle: 'italic' }
+                : {}
+            }
+          >
             {verse.citation}
           </Typography>
         </Grid>
@@ -57,19 +78,17 @@ const determineInterlinearView = (
               overflowY: 'auto',
               ...(languageInfo?.textDirection
                 ? { direction: languageInfo?.textDirection }
-                : {})
+                : {}),
             }}
           >
             <Typography
               component={'span'}
               lang={languageInfo?.code}
               style={{
-                paddingBottom: '0.5rem'
+                paddingBottom: '0.5rem',
               }}
             >
-              <InterlinearVerseDisplay containers={containers}
-                                       verse={verse}
-              />
+              <InterlinearVerseDisplay containers={containers} verse={verse} />
             </Typography>
           </Grid>
         </Grid>
@@ -86,21 +105,20 @@ const determineInterlinearView = (
  * @constructor
  */
 export const InterlinearComponent: React.FC<InterlinearProps> = ({
-                                                                   containers,
-                                                                   position,
-                                                                   verses
-                                                                 }: InterlinearProps): ReactElement => {
+  containers,
+  position,
+  verses,
+}: InterlinearProps): ReactElement => {
   useDebug('InterlinearComponent');
 
   const textContainerRef = useRef<HTMLDivElement | null>(null);
-  const [interlinearElements, setInterlinearElements] = useState<JSX.Element[]>();
+  const [interlinearElements, setInterlinearElements] =
+    useState<JSX.Element[]>();
 
   useEffect(() => {
     setInterlinearElements(
-      determineInterlinearView(
-        containers,
-        position,
-        verses));
+      determineInterlinearView(containers, position, verses)
+    );
   }, [containers, position, verses]);
 
   return (
@@ -110,9 +128,11 @@ export const InterlinearComponent: React.FC<InterlinearProps> = ({
         container
         sx={{ pl: 0, flex: 8, overflow: 'auto' }}
       >
-        {(interlinearElements?.length ?? 0) > 0
-          ? interlinearElements
-          : <Typography>No verse data for this reference.</Typography>}
+        {(interlinearElements?.length ?? 0) > 0 ? (
+          interlinearElements
+        ) : (
+          <Typography>No verse data for this reference.</Typography>
+        )}
       </Grid>
     </Fragment>
   );

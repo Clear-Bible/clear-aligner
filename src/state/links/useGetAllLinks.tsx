@@ -30,18 +30,18 @@ export const useGetAllLinks = (projectId?: string, getKey?: string) => {
   }, [projectId, projectState.linksTable]);
 
   useEffect(() => {
-    if (!getKey
-      || prevGetKey.current === getKey) {
+    if (!getKey || prevGetKey.current === getKey) {
       return;
     }
     prevGetKey.current = getKey;
     setForceShowBusyDialog(true);
     databaseHookDebug('useGetAllLinks(): status', status);
-    linksTable.getAll()
-      .then(result => {
+    linksTable
+      .getAll()
+      .then((result) => {
         const endStatus = {
           ...status,
-          result
+          result,
         };
         setStatus(endStatus);
         databaseHookDebug('useGetAllLinks(): endStatus', endStatus);

@@ -13,36 +13,73 @@ import { AppContext } from '../../App';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { ConcordancePivotWord } from '../../common/repositories/projectRepository';
 
-export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null, useLemma = false): {
+export const usePivotWords = (
+  side: AlignmentSide,
+  filter: PivotWordFilter,
+  sort: GridSortItem | null,
+  useLemma = false
+): {
   pivotWords: PivotWord[] | undefined;
 } => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const databaseApi = useDatabase();
   const lastUpdate = useDataLastUpdated();
   const languages = useLanguages();
-  const [pivotWords, setPivotWords] = useState<PivotWord[] | undefined>(undefined);
+  const [pivotWords, setPivotWords] = useState<PivotWord[] | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (!languages) return;
     const load = async () => {
-      console.time(`usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(sort)})`);
+      console.time(
+        `usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(
+          sort
+        )})`
+      );
       let pivotWordList: ConcordancePivotWord[] = [];
-      if(preferences?.currentProject) {
+      if (preferences?.currentProject) {
         pivotWordList = useLemma
-          ? await databaseApi.corporaGetLemmas(preferences?.currentProject, filter, sort)
-          : await databaseApi.corporaGetSourceWords(preferences?.currentProject, side, filter, sort)
+          ? await databaseApi.corporaGetLemmas(
+              preferences?.currentProject,
+              filter,
+              sort
+            )
+          : await databaseApi.corporaGetSourceWords(
+              preferences?.currentProject,
+              side,
+              filter,
+              sort
+            );
       }
-      console.timeEnd(`usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(sort)})`);
-      setPivotWords(pivotWordList
-        .map(({ t, c, l }): PivotWord => ({
-          side,
-          word: t,
-          frequency: c,
-          languageInfo: languages?.get?.(l)!
-        })));
+      console.timeEnd(
+        `usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(
+          sort
+        )})`
+      );
+      setPivotWords(
+        pivotWordList.map(
+          ({ t, c, l }): PivotWord => ({
+            side,
+            word: t,
+            frequency: c,
+            languageInfo: languages?.get?.(l)!,
+          })
+        )
+      );
     };
     void load();
-  }, [side, filter, sort, setPivotWords, databaseApi, languages, lastUpdate, preferences?.currentProject, useLemma]);
+  }, [
+    side,
+    filter,
+    sort,
+    setPivotWords,
+    databaseApi,
+    languages,
+    lastUpdate,
+    preferences?.currentProject,
+    useLemma,
+  ]);
 
   return { pivotWords };
 };
