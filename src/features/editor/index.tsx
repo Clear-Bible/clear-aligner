@@ -20,17 +20,25 @@ import { AlignmentSide } from '../../common/data/project/corpus';
 import { SuggestionsContext, useSuggestionsContextInitializer } from '../../hooks/useSuggestions';
 import { useAppSelector } from '../../app/index';
 
+export type CustomEditorStyles = Partial<{
+  polyglot: Record<string, unknown>;
+  controlPanel: Record<string, unknown>;
+  contextPanel: Record<string, unknown>;
+}>;
+
 interface EditorProps {
   containers: NamedContainers;
   position: BCVWP;
-  usePaddingForEditorContainer?: boolean,
+  usePaddingForEditorContainer?: boolean;
+  styles?: CustomEditorStyles;
 }
 
 const Editor = ({
-                  containers,
-                  position,
-                  usePaddingForEditorContainer
-                }: EditorProps): ReactElement => {
+  containers,
+  position,
+  usePaddingForEditorContainer,
+  styles,
+}: EditorProps): ReactElement => {
   useDebug('Editor');
 
   const [visibleSourceVerses, setVisibleSourceVerses] = useState<Verse[]>([]);
@@ -63,12 +71,16 @@ const Editor = ({
         <Polyglot
           containers={containers}
           position={position}
-          setNewVisibleVerses={setNewVisibleVerses} />
-        <ControlPanel />
+          setNewVisibleVerses={setNewVisibleVerses}
+          sx={styles?.polyglot ?? {}}
+        />
+        <ControlPanel sx={styles?.controlPanel ?? {}} />
         <ContextPanel
           containers={containers}
           position={position}
-          visibleSourceVerses={visibleSourceVerses} />
+          visibleSourceVerses={visibleSourceVerses}
+          sx={styles?.contextPanel ?? {}}
+        />
       </Container>
     </SuggestionsContext.Provider>
   );

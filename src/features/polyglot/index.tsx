@@ -20,6 +20,7 @@ interface PolyglotProps {
   containers: NamedContainers;
   position: BCVWP | null;
   setNewVisibleVerses?: (verses: Verse[], corpus: CorpusContainer) => void;
+  sx?: Record<string, unknown>;
 }
 
 export const Polyglot: React.FC<PolyglotProps> = ({

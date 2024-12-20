@@ -4,7 +4,14 @@
  * Workbench components
  */
 
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { CorpusContainer, Word } from '../../structs';
@@ -22,8 +29,7 @@ import AppBar from '@mui/material/AppBar';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 import { SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
 import { DEFAULT_DOCUMENT_TITLE } from '../../common/constants';
-
-
+import { CustomEditorStyles } from '../editor';
 
 interface AlignmentEditorProps {
   useDialogStyling?: boolean;
@@ -31,13 +37,18 @@ interface AlignmentEditorProps {
   showProfileAvatar?: boolean;
   usePaddingForEditorContainer?: boolean;
   useZeroYPaddingForToolbar?: boolean;
+  actions?: Record<string, ReactNode>;
+  styles?: CustomEditorStyles;
 }
 
-export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true,
-                                                                  showProfileAvatar = true,
-                                                                  usePaddingForEditorContainer= true,
-                                                                  useZeroYPaddingForToolbar = false,
-                                                                }) => {
+export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({
+  showNavigation = true,
+  showProfileAvatar = true,
+  usePaddingForEditorContainer = true,
+  useZeroYPaddingForToolbar = false,
+  actions,
+  styles,
+}) => {
   const layoutCtx = useContext(LayoutContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
   const [availableWords, setAvailableWords] = useState([] as Word[]);
@@ -187,9 +198,8 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                 )
               }
             </Box>
-            {showProfileAvatar &&
-              (<ProfileAvatar />)
-            }
+            {showProfileAvatar && <ProfileAvatar />}
+            {Object.values(actions || {})}
           </Toolbar>
         </AppBar>
       </Box>
@@ -197,6 +207,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
         corpora={selectedCorporaContainers}
         currentPosition={currentPosition}
         usePaddingForEditorContainer={usePaddingForEditorContainer}
+        styles={styles}
       />
     </Stack>
   );

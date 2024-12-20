@@ -14,13 +14,15 @@ interface ContextPanelProps {
   containers: NamedContainers;
   position?: BCVWP;
   visibleSourceVerses: Verse[];
+  sx?: Record<string, unknown>;
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({
-                                                            containers,
-                                                            position,
-                                                            visibleSourceVerses
-                                                          }): ReactElement => {
+  containers,
+  position,
+  visibleSourceVerses,
+  sx,
+}): ReactElement => {
   useDebug('ContextPanel');
 
   if (!position
@@ -32,13 +34,9 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
     <Stack
       direction='row'
       spacing={2}
-      style={{
-        height: '18.7rem',
-        flexGrow: 0,
-        flexShrink: 0
-      }}
-      justifyContent='stretch'
-      alignItems='stretch'
+      style={{ height: '18.7rem', ...(sx ?? {}) }}
+      justifyContent="stretch"
+      alignItems="stretch"
     >
       <Card
         elevation={6}

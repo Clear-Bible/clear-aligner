@@ -24,7 +24,11 @@ const ControlPanelButtonSx: Partial<SxProps<Theme>> = {
   fontWeight: 500,
 };
 
-export const ControlPanel = (): ReactElement => {
+interface ControlPanelProps {
+  sx?: Record<string, unknown>;
+}
+
+export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
   useDebug('ControlPanel');
 
   const dispatch = useAppDispatch();
