@@ -12,7 +12,10 @@ const removeFromArray = (originArray: string[], id: string): string[] => {
   return _array;
 };
 
-const removeSegmentFromLink = (wordToRemove: Word, link: RepositoryLink): RepositoryLink => {
+const removeSegmentFromLink = (
+  wordToRemove: Word,
+  link: RepositoryLink
+): RepositoryLink => {
   switch (wordToRemove.side) {
     case AlignmentSide.SOURCE:
       link.sources = removeFromArray(link.sources, wordToRemove.id);

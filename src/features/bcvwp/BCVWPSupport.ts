@@ -29,7 +29,6 @@ export interface BCVWPOverrides {
 export const ZERO_BCVWP = '000000000000';
 
 export default class BCVWP {
-
   /**
    * 0-based index, from book list here: https://ubsicap.github.io/usfm/identification/books.html
    */
@@ -83,7 +82,7 @@ export default class BCVWP {
     if (this.referenceString) return this.referenceString;
     const bookFormet = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
     const chapterFormat = Intl.NumberFormat('en-US', {
-      minimumIntegerDigits: 3
+      minimumIntegerDigits: 3,
     });
     const verseFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
     const wordFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
@@ -116,11 +115,13 @@ export default class BCVWP {
   }
 
   clone({ book, chapter, verse, word, part }: BCVWPOverrides): BCVWP {
-    return new BCVWP(book ?? this.book,
+    return new BCVWP(
+      book ?? this.book,
       chapter ?? this.chapter,
       verse ?? this.verse,
       word ?? this.word,
-      part ?? this.part);
+      part ?? this.part
+    );
   }
 
   hasFields(...fields: BCVWPField[]) {
@@ -173,8 +174,7 @@ export default class BCVWP {
 
   static sanitize(wordId: string): string {
     const wordId1 = wordId.trim();
-    return !!wordId1.match(/^[onON]\d/)
-      ? wordId1.substring(1) : wordId1;
+    return !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
   }
 
   static truncateTo(reference: string, field: BCVWPField): string {
@@ -225,6 +225,9 @@ export default class BCVWP {
   }
 
   static compareString(a?: string, b?: string): number {
-    return BCVWP.compare(BCVWP.parseFromString(a ?? ''), BCVWP.parseFromString(b ?? ''));
+    return BCVWP.compare(
+      BCVWP.parseFromString(a ?? ''),
+      BCVWP.parseFromString(b ?? '')
+    );
   }
 }

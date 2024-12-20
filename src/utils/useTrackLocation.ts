@@ -13,7 +13,6 @@ const useTrackLocation = () => {
   const { preferences, setPreferences } = React.useContext(AppContext);
   const [redirected, setRedirected] = React.useState(false);
 
-
   React.useEffect(() => {
     if (preferences?.id && preferences?.page && !redirected) {
       setRedirected(true);
@@ -22,7 +21,10 @@ const useTrackLocation = () => {
   }, [navigate, preferences?.page, preferences?.id, redirected]);
 
   React.useEffect(() => {
-    setPreferences((p: UserPreference | undefined) => ({ ...((p ?? {}) as UserPreference), page: location.pathname }));
+    setPreferences((p: UserPreference | undefined) => ({
+      ...((p ?? {}) as UserPreference),
+      page: location.pathname,
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 };

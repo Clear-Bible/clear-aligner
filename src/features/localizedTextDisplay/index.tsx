@@ -19,20 +19,20 @@ export interface LocalizedTextDisplayProps
  * @param typographyProps set of parameters from `<Typography>` to be applied to this localized text display
  */
 export const LocalizedTextDisplay = ({
-                                       children,
-                                       languageInfo,
-                                       ...typographyProps
-                                     }: PropsWithChildren<LocalizedTextDisplayProps>) => {
+  children,
+  languageInfo,
+  ...typographyProps
+}: PropsWithChildren<LocalizedTextDisplayProps>) => {
   return (
     <Typography
       component={'span'}
       noWrap={true}
       {...typographyProps}
-      sx={theme => ({
+      sx={(theme) => ({
         ...(languageInfo?.fontFamily
           ? { fontFamily: languageInfo?.fontFamily }
           : {}),
-        ...((typographyProps as any).sx ?? {})
+        ...((typographyProps as any).sx ?? {}),
       })}
     >
       {children}

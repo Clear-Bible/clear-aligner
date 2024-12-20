@@ -14,10 +14,10 @@ const outsideCornerRadius = '4px';
 const dividerBorderRadius = 0;
 const outsideEdgeStyle = 'solid';
 const dividingEdgeStyle = 'dashed';
-const baseGroupedButtonSx: SxProps<Theme> = ({
+const baseGroupedButtonSx: SxProps<Theme> = {
   borderTopStyle: outsideEdgeStyle,
-  borderBottomStyle: outsideEdgeStyle
-});
+  borderBottomStyle: outsideEdgeStyle,
+};
 
 /**
  * component to display buttons with localization awareness (things like LTR, RTL display, font choices, etc.)
@@ -27,12 +27,11 @@ const baseGroupedButtonSx: SxProps<Theme> = ({
  * @param others any other parameters normally applied to a material UI {@link ButtonGroup}
  */
 export const LocalizedButtonGroup = ({
-                                       languageInfo,
-                                       sx,
-                                       children,
-                                       ...others
-                                     }: LocalizedButtonGroupProps) => {
-
+  languageInfo,
+  sx,
+  children,
+  ...others
+}: LocalizedButtonGroupProps) => {
   const firstButtonSx = useMemo<SxProps<Theme>>(() => {
     if (languageInfo?.textDirection === TextDirection.RTL) {
       return {
@@ -42,9 +41,10 @@ export const LocalizedButtonGroup = ({
         borderRightStyle: outsideEdgeStyle,
         borderTopLeftRadius: dividerBorderRadius,
         borderBottomLeftRadius: dividerBorderRadius,
-        borderLeftStyle: dividingEdgeStyle
+        borderLeftStyle: dividingEdgeStyle,
       };
-    } else { // LTR
+    } else {
+      // LTR
       return {
         ...baseGroupedButtonSx,
         borderTopLeftRadius: outsideCornerRadius,
@@ -52,16 +52,19 @@ export const LocalizedButtonGroup = ({
         borderLeftStyle: outsideEdgeStyle,
         borderRightStyle: dividingEdgeStyle,
         borderTopRightRadius: dividerBorderRadius,
-        borderBottomRightRadius: dividerBorderRadius
+        borderBottomRightRadius: dividerBorderRadius,
       };
     }
   }, [languageInfo?.textDirection]);
 
-  const middleButtonSx = useMemo<SxProps<Theme>>(() => ({
-    ...baseGroupedButtonSx,
-    borderLeftStyle: dividingEdgeStyle,
-    borderRightStyle: dividingEdgeStyle
-  }), []);
+  const middleButtonSx = useMemo<SxProps<Theme>>(
+    () => ({
+      ...baseGroupedButtonSx,
+      borderLeftStyle: dividingEdgeStyle,
+      borderRightStyle: dividingEdgeStyle,
+    }),
+    []
+  );
 
   const lastButtonSx = useMemo<SxProps<Theme>>(() => {
     if (languageInfo?.textDirection === TextDirection.RTL) {
@@ -72,7 +75,7 @@ export const LocalizedButtonGroup = ({
         borderBottomRightRadius: dividerBorderRadius,
         borderTopLeftRadius: outsideCornerRadius,
         borderBottomLeftRadius: outsideCornerRadius,
-        borderLeftStyle: outsideEdgeStyle
+        borderLeftStyle: outsideEdgeStyle,
       };
     } else {
       return {
@@ -82,7 +85,7 @@ export const LocalizedButtonGroup = ({
         borderBottomLeftRadius: dividerBorderRadius,
         borderTopRightRadius: outsideCornerRadius,
         borderBottomRightRadius: outsideCornerRadius,
-        borderRightStyle: outsideEdgeStyle
+        borderRightStyle: outsideEdgeStyle,
       };
     }
   }, [languageInfo?.textDirection]);
@@ -91,26 +94,36 @@ export const LocalizedButtonGroup = ({
     return {
       ...(sx ?? {}),
       direction: languageInfo?.textDirection ?? TextDirection.LTR,
-      ...(!!languageInfo?.fontFamily ? {
-        fontFamily: languageInfo?.fontFamily
-      } : {}),
+      ...(!!languageInfo?.fontFamily
+        ? {
+            fontFamily: languageInfo?.fontFamily,
+          }
+        : {}),
       margin: '1px',
       '.MuiButtonGroup-grouped': {
         paddingX: '4px !important',
         minWidth: '12px !important',
-        ...((sx as any | undefined)?.['.MuiButtonGroup-grouped'] ?? {})
+        ...((sx as any | undefined)?.['.MuiButtonGroup-grouped'] ?? {}),
       },
       '.MuiButtonGroup-firstButton': firstButtonSx,
       '.MuiButtonGroup-middleButton': middleButtonSx,
-      '.MuiButtonGroup-lastButton': lastButtonSx
+      '.MuiButtonGroup-lastButton': lastButtonSx,
     };
-  }, [sx, languageInfo?.textDirection, languageInfo?.fontFamily, firstButtonSx, middleButtonSx, lastButtonSx]);
+  }, [
+    sx,
+    languageInfo?.textDirection,
+    languageInfo?.fontFamily,
+    firstButtonSx,
+    middleButtonSx,
+    lastButtonSx,
+  ]);
 
   return (
     <ButtonGroup
       sx={sxProp}
       dir={languageInfo?.textDirection ?? TextDirection.LTR}
-      {...others}>
+      {...others}
+    >
       {children}
     </ButtonGroup>
   );

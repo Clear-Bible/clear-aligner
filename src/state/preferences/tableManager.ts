@@ -13,7 +13,7 @@ const dbApi = (window as any).databaseApi as DatabaseApi;
 
 export enum ControlPanelFormat {
   VERTICAL,
-  HORIZONTAL
+  HORIZONTAL,
 }
 
 export interface UserPreferenceDto {
@@ -43,7 +43,7 @@ const initialPreferences = {
   alignmentDirection: ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
   page: '',
   showGloss: false,
-  currentProject: undefined
+  currentProject: undefined,
 };
 
 export class UserPreferenceTable extends VirtualTable {
@@ -54,12 +54,19 @@ export class UserPreferenceTable extends VirtualTable {
     this.preferences = initialPreferences;
   }
 
-  saveOrUpdate = async (nextPreference: UserPreference, suppressOnUpdate = true): Promise<UserPreference | undefined> => {
+  saveOrUpdate = async (
+    nextPreference: UserPreference,
+    suppressOnUpdate = true
+  ): Promise<UserPreference | undefined> => {
     try {
       const prevPreferences = await this.getPreferences(true);
       // @ts-ignore
       await window.databaseApi.createOrUpdatePreferences(
-        UserPreferenceTable.convertToDto({ ...prevPreferences, ...nextPreference }));
+        UserPreferenceTable.convertToDto({
+          ...prevPreferences,
+          ...nextPreference,
+        })
+      );
       await this.getPreferences(true);
     } catch (e) {
       return undefined;
@@ -68,7 +75,9 @@ export class UserPreferenceTable extends VirtualTable {
     }
   };
 
-  getPreferences = async (requery: boolean = false): Promise<UserPreference> => {
+  getPreferences = async (
+    requery: boolean = false
+  ): Promise<UserPreference> => {
     if (requery) {
       const preferences = await dbApi.getPreferences();
       if (preferences) {
@@ -78,9 +87,12 @@ export class UserPreferenceTable extends VirtualTable {
           showGloss: preferences?.show_gloss,
           alignmentDirection: preferences?.alignment_view,
           currentProject: preferences?.current_project ?? DefaultProjectId,
-          bcv: preferences?.bcv ? BCVWP.parseFromString(preferences.bcv.trim()) : null
+          bcv: preferences?.bcv
+            ? BCVWP.parseFromString(preferences.bcv.trim())
+            : null,
         };
-      } else { // if first launch, create the default project
+      } else {
+        // if first launch, create the default project
         this.incrDatabaseBusyCtr();
         this.setDatabaseBusyText('Initializing default project...');
         try {
@@ -91,8 +103,8 @@ export class UserPreferenceTable extends VirtualTable {
             initialized: InitializationStates.UNINITIALIZED,
             currentProject: DefaultProjectId,
             page: '/',
-            isFirstLaunch: true
-          }
+            isFirstLaunch: true,
+          };
           this.decrDatabaseBusyCtr();
         }
       }
@@ -101,7 +113,10 @@ export class UserPreferenceTable extends VirtualTable {
     return this.preferences;
   };
 
-  getFirstBcvFromSource = async (sourceName: string, suppressOnUpdate?: boolean): Promise<{ id?: string }> => {
+  getFirstBcvFromSource = async (
+    sourceName: string,
+    suppressOnUpdate?: boolean
+  ): Promise<{ id?: string }> => {
     try {
       // @ts-ignore
       return await window.databaseApi.getFirstBcvFromSource(sourceName);
@@ -114,14 +129,18 @@ export class UserPreferenceTable extends VirtualTable {
 
   getPreferencesSync = () => this.preferences;
 
-  private static convertToDto = (userPreference: UserPreference): UserPreferenceDto => {
+  private static convertToDto = (
+    userPreference: UserPreference
+  ): UserPreferenceDto => {
     return {
       id: userPreference.id ?? uuid(),
       bcv: (userPreference.bcv?.toReferenceString() ?? '').trim(),
-      alignment_view: userPreference.alignmentDirection ?? ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
+      alignment_view:
+        userPreference.alignmentDirection ??
+        ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
       current_project: userPreference.currentProject ?? DefaultProjectId,
       page: userPreference.page,
-      show_gloss: !!userPreference.showGloss
+      show_gloss: !!userPreference.showGloss,
     };
   };
 }

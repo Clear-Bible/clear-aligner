@@ -1,11 +1,28 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { mapProjectEntityToProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  mapProjectEntityToProjectDTO,
+  ProjectLocation,
+  ProjectState,
+} from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
 import { AppContext } from '../../App';
 import { ProjectTokenReport, useSyncWordsOrParts } from './useSyncWordsOrParts';
 import { InitializationStates } from '../../workbench/query';
-import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  Grid,
+  Typography,
+} from '@mui/material';
 import { useDeleteRemoteProject } from './useDeleteRemoteProject';
 import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
@@ -37,7 +54,7 @@ export enum SyncProgress {
   UPDATING_PROJECT,
   SUCCESS,
   FAILED,
-  CANCELED
+  CANCELED,
 }
 
 /**
@@ -64,13 +81,21 @@ export interface SyncState {
  * @param project project being operated on
  * @param projectState {@link ProjectStateType}
  */
-export const stepSwitchToProject = async (progress: SyncProgress,
-                                          setProgress: (s: SyncProgress) => void,
-                                          preferences: UserPreference | undefined,
-                                          setPreferences: React.Dispatch<React.SetStateAction<UserPreference | undefined>>,
-                                          project: Project,
-                                          projectState: ProjectStateType) => {
-  if (preferences?.currentProject && preferences?.currentProject === project?.id && preferences?.initialized === InitializationStates.INITIALIZED) {
+export const stepSwitchToProject = async (
+  progress: SyncProgress,
+  setProgress: (s: SyncProgress) => void,
+  preferences: UserPreference | undefined,
+  setPreferences: React.Dispatch<
+    React.SetStateAction<UserPreference | undefined>
+  >,
+  project: Project,
+  projectState: ProjectStateType
+) => {
+  if (
+    preferences?.currentProject &&
+    preferences?.currentProject === project?.id &&
+    preferences?.initialized === InitializationStates.INITIALIZED
+  ) {
     setProgress(SyncProgress.SYNCING_PROJECT);
   } else {
     try {
@@ -80,10 +105,13 @@ export const stepSwitchToProject = async (progress: SyncProgress,
     }
     projectState.linksTable.setSourceName(project.id);
     setPreferences((p: UserPreference | undefined) => ({
-      ...(p ?? {}) as UserPreference,
+      ...((p ?? {}) as UserPreference),
       currentProject: project.id,
       initialized: InitializationStates.UNINITIALIZED,
-      onInitialized: [...(p?.onInitialized ?? []), () => setProgress(SyncProgress.SYNCING_PROJECT)]
+      onInitialized: [
+        ...(p?.onInitialized ?? []),
+        () => setProgress(SyncProgress.SYNCING_PROJECT),
+      ],
     }));
   }
 };
@@ -106,27 +134,45 @@ export const stepSyncingProject = async (
   project: Project,
   abortController: React.MutableRefObject<AbortController | undefined>,
   setUniqueNameError: (s: boolean) => void,
-  setSnackBarObject:  React.Dispatch<React.SetStateAction<SnackBarObjectInterface>>,
+  setSnackBarObject: React.Dispatch<
+    React.SetStateAction<SnackBarObjectInterface>
+  >,
   setIsSnackBarOpen: Function
 ) => {
-  if (project.location === ProjectLocation.SYNCED
-    || project.location === ProjectLocation.LOCAL) {
+  if (
+    project.location === ProjectLocation.SYNCED ||
+    project.location === ProjectLocation.LOCAL
+  ) {
     const projectsResponse = await ApiUtils.generateRequest<any>({
       requestPath: '/api/projects',
-      requestType: project.location === ProjectLocation.SYNCED ? ApiUtils.RequestType.PATCH : ApiUtils.RequestType.POST,
+      requestType:
+        project.location === ProjectLocation.SYNCED
+          ? ApiUtils.RequestType.PATCH
+          : ApiUtils.RequestType.POST,
       signal: abortController.current?.signal,
-      payload: mapProjectEntityToProjectDTO(project)
+      payload: mapProjectEntityToProjectDTO(project),
     });
     if (projectsResponse.success) {
       setProgress(SyncProgress.SYNCING_CORPORA);
     } else {
       if (projectsResponse.response.statusCode === 403) {
-        setSnackBarObject({message: 'You do not have permission to complete this operation.', variant: 'error'});
-      } else if ((projectsResponse.body?.message ?? '').includes('duplicate key')) {
+        setSnackBarObject({
+          message: 'You do not have permission to complete this operation.',
+          variant: 'error',
+        });
+      } else if (
+        (projectsResponse.body?.message ?? '').includes('duplicate key')
+      ) {
         setUniqueNameError(true);
-        setSnackBarObject({message: 'Failed to sync project. Project name already exists.', variant: 'error'});
+        setSnackBarObject({
+          message: 'Failed to sync project. Project name already exists.',
+          variant: 'error',
+        });
       } else {
-        setSnackBarObject({message: 'Failed to sync project.', variant: 'error'});
+        setSnackBarObject({
+          message: 'Failed to sync project.',
+          variant: 'error',
+        });
       }
       console.error('Response failed: ', projectsResponse.body);
       setIsSnackBarOpen(true);
@@ -154,12 +200,30 @@ export const stepSyncingCorpora = async (
   setProgress: (s: SyncProgress) => void,
   project: Project,
   containers: Containers,
-  setSnackBarObject: React.Dispatch<React.SetStateAction<SnackBarObjectInterface>>,
+  setSnackBarObject: React.Dispatch<
+    React.SetStateAction<SnackBarObjectInterface>
+  >,
   setIsSnackBarOpen: Function,
-  syncWordsOrParts: (project: Project, side?: AlignmentSide) => Promise<ResponseObject<ProjectTokenReport> | undefined>
+  syncWordsOrParts: (
+    project: Project,
+    side?: AlignmentSide
+  ) => Promise<ResponseObject<ProjectTokenReport> | undefined>
 ) => {
-  if (project.sourceCorpora?.corpora.some(c => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some(c => !c.words || c.words.length < 1)) {
-    if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some(c => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some(c => !c.words || c.words.length < 1)) {
+  if (
+    project.sourceCorpora?.corpora.some(
+      (c) => !c.words || c.words.length < 1
+    ) ||
+    !project.targetCorpora?.corpora.some((c) => !c.words || c.words.length < 1)
+  ) {
+    if (
+      project.id !== containers.projectId ||
+      containers.sourceContainer?.corpora.some(
+        (c) => !c.words || c.words.length < 1
+      ) ||
+      containers.targetContainer?.corpora.some(
+        (c) => !c.words || c.words.length < 1
+      )
+    ) {
       setProgress(SyncProgress.FAILED);
       return;
     }
@@ -169,9 +233,17 @@ export const stepSyncingCorpora = async (
   const res = await syncWordsOrParts(project);
   if (!res?.success) {
     if (res?.response.statusCode === 403) {
-      setSnackBarObject({message: 'You do not have permission to sync corpora. Skipping corpora.', variant: 'error'});
+      setSnackBarObject({
+        message:
+          'You do not have permission to sync corpora. Skipping corpora.',
+        variant: 'error',
+      });
     } else {
-      setSnackBarObject({message: 'An unknown error occurred while attempting to sync corpora. Skipping corpora.', variant: 'error'});
+      setSnackBarObject({
+        message:
+          'An unknown error occurred while attempting to sync corpora. Skipping corpora.',
+        variant: 'error',
+      });
     }
     setIsSnackBarOpen(true);
   }
@@ -196,18 +268,34 @@ export const stepSyncingAlignments = async (
   dbApi: DatabaseApi,
   setProgress: (s: SyncProgress) => void,
   project: Project,
-  setSnackBarObject: React.Dispatch<React.SetStateAction<SnackBarObjectInterface>>,
+  setSnackBarObject: React.Dispatch<
+    React.SetStateAction<SnackBarObjectInterface>
+  >,
   setIsSnackBarOpen: Function,
-  uploadAlignments: (projectId?: string, controller?: AbortController) => Promise<ResponseObject<{}> | undefined>,
-  syncAlignments: (projectId?: string, controller?: AbortController) => Promise<boolean>
+  uploadAlignments: (
+    projectId?: string,
+    controller?: AbortController
+  ) => Promise<ResponseObject<{}> | undefined>,
+  syncAlignments: (
+    projectId?: string,
+    controller?: AbortController
+  ) => Promise<boolean>
 ) => {
   if (project.location === ProjectLocation.LOCAL) {
     const uploadResponse = await uploadAlignments(project.id);
     if (!uploadResponse?.success) {
       if (uploadResponse?.response.statusCode === 403) {
-        setSnackBarObject({message: 'You do not have permission to upload alignment links. Skipping links.', variant: 'error'});
+        setSnackBarObject({
+          message:
+            'You do not have permission to upload alignment links. Skipping links.',
+          variant: 'error',
+        });
       } else {
-        setSnackBarObject({message: 'An unknown error occurred while attempting to upload alignment links. Skipping links.', variant: 'error'});
+        setSnackBarObject({
+          message:
+            'An unknown error occurred while attempting to upload alignment links. Skipping links.',
+          variant: 'error',
+        });
       }
       setIsSnackBarOpen(true);
     } else {
@@ -215,13 +303,17 @@ export const stepSyncingAlignments = async (
       await dbApi.deleteByIds({
         projectId: project.id!,
         table: JournalEntryTableName,
-        itemIdOrIds: allJournalEntries.map(journalEntry => journalEntry.id!)
+        itemIdOrIds: allJournalEntries.map((journalEntry) => journalEntry.id!),
       });
     }
   } else {
     const syncResponse = await syncAlignments(project.id);
     if (!syncResponse) {
-      setSnackBarObject({message: 'An error occurred while attempting to synchronize alignment links. Skipping links.', variant: 'error'});
+      setSnackBarObject({
+        message:
+          'An error occurred while attempting to synchronize alignment links. Skipping links.',
+        variant: 'error',
+      });
       setIsSnackBarOpen(true);
     }
   }
@@ -245,7 +337,10 @@ export const stepUpdatingProject = async (
   setProgress: (s: SyncProgress) => void,
   inputProject: Project,
   dbApi: DatabaseApi,
-  publishProject: (project: Project, state: ProjectState) => Promise<Project | undefined>,
+  publishProject: (
+    project: Project,
+    state: ProjectState
+  ) => Promise<Project | undefined>,
   projectState: ProjectStateType,
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>
 ) => {
@@ -255,19 +350,23 @@ export const stepUpdatingProject = async (
   inputProject.location = ProjectLocation.SYNCED;
   await dbApi.toggleCorporaUpdatedFlagOff(inputProject.id);
   // Update project state to Published.
-  const publishedProject = await publishProject(inputProject, ProjectState.PUBLISHED);
+  const publishedProject = await publishProject(
+    inputProject,
+    ProjectState.PUBLISHED
+  );
   inputProject.lastSyncServerTime = publishedProject?.serverUpdatedAt;
   inputProject.serverUpdatedAt = publishedProject?.serverUpdatedAt;
   await projectState.projectTable?.sync?.(inputProject).catch(console.error);
-  setProjects(projects =>
-    projects.map(foundProject => {
+  setProjects((projects) =>
+    projects.map((foundProject) => {
       if (foundProject.id !== inputProject.id) return foundProject;
       foundProject.updatedAt = inputProject.updatedAt;
       foundProject.lastSyncTime = inputProject.lastSyncTime;
       foundProject.serverUpdatedAt = inputProject.serverUpdatedAt;
       foundProject.lastSyncServerTime = inputProject.lastSyncServerTime;
       return foundProject;
-    }));
+    })
+  );
   setProgress(SyncProgress.IDLE);
 };
 
@@ -279,7 +378,11 @@ export const useSyncProject = (): SyncState => {
   const { publishProject } = usePublishProject();
   const { refetch: getProjects } = useProjectsFromServer({ enabled: false });
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
-  const { sync: syncAlignments, upload: uploadAlignments, syncedAlignments} = useSyncAlignments();
+  const {
+    sync: syncAlignments,
+    upload: uploadAlignments,
+    syncedAlignments,
+  } = useSyncAlignments();
   const { deleteProject } = useDeleteRemoteProject();
   const {
     projectState,
@@ -290,7 +393,7 @@ export const useSyncProject = (): SyncState => {
     setSnackBarObject,
     preferences,
     setPreferences,
-    setProjects
+    setProjects,
   } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
@@ -306,7 +409,7 @@ export const useSyncProject = (): SyncState => {
         project.lastSyncTime = 0;
         // Remove the remote project if it exists on the server.
         const remoteProjects = await getProjects();
-        if ((remoteProjects ?? []).some(p => p.id === project.id)) {
+        if ((remoteProjects ?? []).some((p) => p.id === project.id)) {
           await deleteProject(project.id);
         }
       }
@@ -317,7 +420,12 @@ export const useSyncProject = (): SyncState => {
     setInitialProjectState(undefined);
     setSyncTime(0);
     abortController.current = undefined;
-  }, [initialProjectState, deleteProject, projectState.projectTable, getProjects]);
+  }, [
+    initialProjectState,
+    deleteProject,
+    projectState.projectTable,
+    getProjects,
+  ]);
 
   const onCancel = useCallback(() => {
     setProgress(SyncProgress.CANCELED);
@@ -342,12 +450,14 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SWITCH_TO_PROJECT: {
-          await stepSwitchToProject(progress,
+          await stepSwitchToProject(
+            progress,
             setProgress,
             preferences,
             setPreferences,
             project,
-            projectState);
+            projectState
+          );
           break;
         }
         case SyncProgress.SYNCING_PROJECT: {
@@ -358,7 +468,8 @@ export const useSyncProject = (): SyncState => {
             abortController,
             setUniqueNameError,
             setSnackBarObject,
-            setIsSnackBarOpen);
+            setIsSnackBarOpen
+          );
           break;
         }
         case SyncProgress.SYNCING_CORPORA: {
@@ -369,7 +480,8 @@ export const useSyncProject = (): SyncState => {
             containers,
             setSnackBarObject,
             setIsSnackBarOpen,
-            syncWordsOrParts);
+            syncWordsOrParts
+          );
           break;
         }
         case SyncProgress.SYNCING_ALIGNMENTS: {
@@ -381,7 +493,8 @@ export const useSyncProject = (): SyncState => {
             setSnackBarObject,
             setIsSnackBarOpen,
             uploadAlignments,
-            syncAlignments);
+            syncAlignments
+          );
           break;
         }
         case SyncProgress.UPDATING_PROJECT: {
@@ -392,7 +505,8 @@ export const useSyncProject = (): SyncState => {
             dbApi,
             publishProject,
             projectState,
-            setProjects);
+            setProjects
+          );
           break;
         }
       }
@@ -401,16 +515,23 @@ export const useSyncProject = (): SyncState => {
       console.error('Failed to sync this project: ', x);
       await publishProject(project, ProjectState.PUBLISHED);
     }
-  }, [progress, projectState, cleanupRequest, publishProject,
+  }, [
+    progress,
+    projectState,
+    cleanupRequest,
+    publishProject,
     setIsSnackBarOpen,
-    setSnackBarObject, syncAlignments, syncWordsOrParts,
+    setSnackBarObject,
+    syncAlignments,
+    syncWordsOrParts,
     dbApi,
     setProjects,
     preferences,
     containers,
     setPreferences,
     uploadAlignments,
-    initialProjectState]);
+    initialProjectState,
+  ]);
 
   useEffect(() => {
     if (syncTime && initialProjectState && !canceled) {
@@ -426,11 +547,11 @@ export const useSyncProject = (): SyncState => {
   useEffect(() => {
     // Prevent the Database busyDialog from showing concurrently
     // with this project dialog
-    setIsProjectDialogOpen(![
-      SyncProgress.IDLE,
-      SyncProgress.SUCCESS,
-      SyncProgress.FAILED
-    ].includes(progress));
+    setIsProjectDialogOpen(
+      ![SyncProgress.IDLE, SyncProgress.SUCCESS, SyncProgress.FAILED].includes(
+        progress
+      )
+    );
   }, [progress, setIsProjectDialogOpen]);
 
   const dialog = useMemo(() => {
@@ -451,31 +572,45 @@ export const useSyncProject = (): SyncState => {
         dialogMessage = 'Resetting project changes...';
     }
 
-    return <Dialog
-      scroll="paper"
-      open={![
-        SyncProgress.IDLE,
-        SyncProgress.SUCCESS,
-        SyncProgress.FAILED
-      ].includes(progress) && !isBusyDialogOpen}
-    >
-      <Grid container alignItems="center" justifyContent="space-between"
-            sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>
-        <CircularProgress sx={{ mr: 2, height: 10, width: 'auto' }} />
-        <Typography variant="subtitle1">
-          {canceled ? 'Resetting project changes...' : dialogMessage}
-        </Typography>
-        {
-          progress !== SyncProgress.CANCELED && !canceled
-            ? <Button variant="text" sx={{ textTransform: 'none', ml: 2 }} onClick={onCancel}>Cancel</Button>
-            : <Grid />
+    return (
+      <Dialog
+        scroll="paper"
+        open={
+          ![
+            SyncProgress.IDLE,
+            SyncProgress.SUCCESS,
+            SyncProgress.FAILED,
+          ].includes(progress) && !isBusyDialogOpen
         }
-      </Grid>
-    </Dialog>;
+      >
+        <Grid
+          container
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ minWidth: 500, height: 'fit-content', p: 2 }}
+        >
+          <CircularProgress sx={{ mr: 2, height: 10, width: 'auto' }} />
+          <Typography variant="subtitle1">
+            {canceled ? 'Resetting project changes...' : dialogMessage}
+          </Typography>
+          {progress !== SyncProgress.CANCELED && !canceled ? (
+            <Button
+              variant="text"
+              sx={{ textTransform: 'none', ml: 2 }}
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          ) : (
+            <Grid />
+          )}
+        </Grid>
+      </Dialog>
+    );
   }, [progress, onCancel, canceled, isBusyDialogOpen]);
 
   return {
-    sync: project => {
+    sync: (project) => {
       setCanceled(false);
       setInitialProjectState(project);
       setSyncTime(DateTime.now().toMillis());
@@ -485,6 +620,6 @@ export const useSyncProject = (): SyncState => {
     dialog: dialog,
     syncedAlignments,
     uniqueNameError,
-    setUniqueNameError
+    setUniqueNameError,
   };
 };

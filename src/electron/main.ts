@@ -5,11 +5,12 @@
 import path from 'path';
 import { app, screen, BrowserWindow, nativeTheme } from 'electron';
 import isDev from 'electron-is-dev';
-import { setUpIpcMain } from './database-main'
+import { setUpIpcMain } from './database-main';
 
 function createWindow() {
   const systemScaleFactor = screen.getPrimaryDisplay().scaleFactor;
-  const customScale = systemScaleFactor > 1 ? .75/systemScaleFactor : systemScaleFactor;
+  const customScale =
+    systemScaleFactor > 1 ? 0.75 / systemScaleFactor : systemScaleFactor;
 
   // Create the browser window.
   const win = new BrowserWindow({
@@ -18,12 +19,15 @@ function createWindow() {
     width: 1280,
     height: 720,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, '../../src/electron/assets/icons/transparent_icon.png'),
+    icon: path.join(
+      __dirname,
+      '../../src/electron/assets/icons/transparent_icon.png'
+    ),
     webPreferences: {
       preload: path.join(__dirname, '/database-renderer.js'),
       nodeIntegration: true,
-      zoomFactor: customScale
-    }
+      zoomFactor: customScale,
+    },
   });
 
   // allow links to external sites to be opened outside the Electron
@@ -35,8 +39,9 @@ function createWindow() {
         width: 550,
         height: 700,
         autoHideMenuBar: true,
-    }
-  }});
+      },
+    };
+  });
 
   // and load the index.html of the app.
   if (isDev) {
@@ -68,12 +73,14 @@ function createWindow() {
 app.whenReady().then(() => {
   setUpIpcMain();
   if (isDev) {
-    const { default: install, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer');
+    const {
+      default: install,
+      REACT_DEVELOPER_TOOLS,
+      REDUX_DEVTOOLS,
+    } = require('electron-devtools-installer');
     install(REACT_DEVELOPER_TOOLS)
       .then(() => {
-        install(REDUX_DEVTOOLS)
-          .then(console.log)
-          .catch(console.error);
+        install(REDUX_DEVTOOLS).then(console.log).catch(console.error);
       })
       .catch(console.error);
   }

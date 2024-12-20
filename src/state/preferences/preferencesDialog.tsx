@@ -1,4 +1,10 @@
-import { Button, Dialog, DialogContent, DialogTitle, Stack } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Stack,
+} from '@mui/material';
 import { ThemeSelector } from './themeSelector';
 import { TokenSuggestionPreference } from './tokenSuggestionPreference';
 import React, { useContext, useState } from 'react';
@@ -26,14 +32,12 @@ export const PreferencesDialog = ({
   isOpen,
   onClose,
   preferredTheme,
-  setPreferredTheme
-                                  }: PreferencesDialogProps) => {
+  setPreferredTheme,
+}: PreferencesDialogProps) => {
   const { features, setFeatures } = useContext(AppContext);
 
   return (
-    <Dialog open={!!isOpen}
-            onClose={onClose}
-    >
+    <Dialog open={!!isOpen} onClose={onClose}>
       <DialogTitle>Preferences</DialogTitle>
       <DialogContent
         sx={{
@@ -44,14 +48,15 @@ export const PreferencesDialog = ({
           <ThemeSelector
             sx={{ width: '400px' }}
             preferredTheme={preferredTheme}
-            setPreferredTheme={setPreferredTheme}/>
+            setPreferredTheme={setPreferredTheme}
+          />
           <TokenSuggestionPreference
             sx={{ width: '400px' }}
             tokenSuggestionEnabled={features.enableTokenSuggestions}
             setTokenSuggestionsEnabled={(suggestionsEnabled: boolean) => {
               setFeatures((featurePrefs) => ({
                 ...featurePrefs,
-                enableTokenSuggestions: suggestionsEnabled
+                enableTokenSuggestions: suggestionsEnabled,
               }));
             }}
           />
@@ -59,7 +64,7 @@ export const PreferencesDialog = ({
       </DialogContent>
     </Dialog>
   );
-}
+};
 
 /**
  * Temporary component for displaying the Preferences Dialog before the menu item is added
@@ -67,18 +72,19 @@ export const PreferencesDialog = ({
  * @param setPreferredTheme from {@link App}
  */
 export const PreferencesButton = ({
-                                    preferredTheme,
-                                    setPreferredTheme
-                                  }: {
+  preferredTheme,
+  setPreferredTheme,
+}: {
   preferredTheme: THEME_PREFERENCE;
   setPreferredTheme: React.Dispatch<React.SetStateAction<THEME_PREFERENCE>>;
-                                  }
-) => {
-  const [ isOpen, setIsOpen ] = useState(false);
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)}><Settings/></Button>
+      <Button onClick={() => setIsOpen(true)}>
+        <Settings />
+      </Button>
       <PreferencesDialog
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
@@ -87,4 +93,4 @@ export const PreferencesButton = ({
       />
     </>
   );
-}
+};

@@ -40,19 +40,22 @@ export const SingleSelectButtonGroup = ({
 }: SingleSelectButtonGroupProps) => {
   return (
     <ButtonGroup fullWidth={true} sx={sx} disabled={disabled}>
-      {items.map((item) =>
-          <Tooltip key={item.value} title={item.tooltip === null ? "" : item.tooltip}>
-              <Button
-                key={item.value}
-                onClick={() => onSelect(item.value)}
-                variant={value && value === item.value ? 'contained' : undefined}
-                disabled={value && value === item.value ? false : customDisabled}
-                sx={{width: '40px', height: 37,}}
-              >
-                {item.label}
-              </Button>
+      {items.map((item) => (
+        <Tooltip
+          key={item.value}
+          title={item.tooltip === null ? '' : item.tooltip}
+        >
+          <Button
+            key={item.value}
+            onClick={() => onSelect(item.value)}
+            variant={value && value === item.value ? 'contained' : undefined}
+            disabled={value && value === item.value ? false : customDisabled}
+            sx={{ width: '40px', height: 37 }}
+          >
+            {item.label}
+          </Button>
         </Tooltip>
-      )}
+      ))}
     </ButtonGroup>
   );
 };

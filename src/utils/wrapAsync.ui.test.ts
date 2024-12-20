@@ -4,11 +4,12 @@ test('wrapAsync:happy path', async () => {
   let preCalled = false;
   let postCalled = false;
   const wrapped: GenericAsyncHandler<number, number> = wrapAsync(
-    async () => preCalled = true,
+    async () => (preCalled = true),
     async (t: number): Promise<number> => {
       return t + t;
     },
-    async () => postCalled = true);
+    async () => (postCalled = true)
+  );
 
   const result = await wrapped(4);
 
@@ -28,7 +29,8 @@ test('wrapAsync:failing pre', async () => {
     async (t: number): Promise<number> => {
       return t + t;
     },
-    async () => postCalled = true);
+    async () => (postCalled = true)
+  );
 
   const result = await wrapped(4);
 
@@ -41,14 +43,16 @@ test('wrapAsync:failing function', async () => {
   let preCalled = false;
   let postCalled = false;
   const wrapped: GenericAsyncHandler<number, number> = wrapAsync(
-    async () => preCalled = true,
+    async () => (preCalled = true),
     async (t: number): Promise<number> => {
-      throw new Error('this error should not cause a failure to call the post function');
+      throw new Error(
+        'this error should not cause a failure to call the post function'
+      );
     },
-    async () => postCalled = true);
+    async () => (postCalled = true)
+  );
 
-  await expect(wrapped(4))
-    .rejects.toThrowError();
+  await expect(wrapped(4)).rejects.toThrowError();
 
   expect(preCalled).toBeTruthy();
   expect(postCalled).toBeTruthy();
@@ -58,14 +62,15 @@ test('wrapAsync:failing post', async () => {
   let preCalled = false;
   let postCalled = false;
   const wrapped: GenericAsyncHandler<number, number> = wrapAsync(
-    async () => preCalled = true,
+    async () => (preCalled = true),
     async (t: number): Promise<number> => {
       return t + t;
     },
     async () => {
       postCalled = true;
       throw new Error('this error should not cause a failure');
-    });
+    }
+  );
 
   const result = await wrapped(4);
 

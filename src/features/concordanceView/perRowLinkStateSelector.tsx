@@ -10,7 +10,7 @@ import { RepositoryLink, LinkStatus } from '../../structs';
 /**
  * props for the ToggleIcon
  */
-export interface ToggleIconProps{
+export interface ToggleIconProps {
   sx?: SxProps<Theme>;
   item: {
     value: string;
@@ -25,49 +25,53 @@ export interface ToggleIconProps{
 /**
  * Display a single icon inside the perRowLinkStateSelector component
  */
-const ToggleIcon = ({item, currentValue, setCurrentValue, currentLink}: ToggleIconProps) => {
+const ToggleIcon = ({
+  item,
+  currentValue,
+  setCurrentValue,
+  currentLink,
+}: ToggleIconProps) => {
   const theme = useTheme();
-  const {saveLink} = useSaveLink();
+  const { saveLink } = useSaveLink();
 
   const [iconColor, setIconColor] = useState('');
 
   // if another icon is selected, then make sure to take away this icon's color
   useEffect(() => {
-    if(currentValue !== item.value){
-      setIconColor("")
+    if (currentValue !== item.value) {
+      setIconColor('');
     }
-  },[currentValue, item.value])
+  }, [currentValue, item.value]);
 
   const handleClick = (value: string) => {
     setCurrentValue(value);
-    setIconColor(`${item.color}.main`)
+    setIconColor(`${item.color}.main`);
 
     const updatedLink = {
       ...currentLink,
       metadata: {
         ...currentLink.metadata,
-        status: value as LinkStatus
-      }
-    }
+        status: value as LinkStatus,
+      },
+    };
     saveLink(updatedLink);
-
-  }
+  };
   const handleMouseEnter = () => {
     // if icon is already in a selected state, don't give it the hover color
-    if(iconColor.includes('main')){
+    if (iconColor.includes('main')) {
       return;
     }
-    setIconColor(`${item.color}.light`)
-  }
-  const handleMouseLeave= () => {
+    setIconColor(`${item.color}.light`);
+  };
+  const handleMouseLeave = () => {
     //don't reset color if it's a selected color
-    if(iconColor.includes('main')){
+    if (iconColor.includes('main')) {
       return;
     }
-    setIconColor('')
-  }
+    setIconColor('');
+  };
 
-  return(
+  return (
     <IconButton
       key={item.value}
       onClick={() => handleClick(item.value)}
@@ -76,16 +80,16 @@ const ToggleIcon = ({item, currentValue, setCurrentValue, currentLink}: ToggleIc
       sx={{
         width: '13.33px',
         height: '13.33px',
-        "&.MuiButtonBase-root:hover": {
-          bgcolor: theme.palette.transparent
+        '&.MuiButtonBase-root:hover': {
+          bgcolor: theme.palette.transparent,
         },
         color: iconColor,
       }}
     >
       {item.label}
     </IconButton>
-  )
-}
+  );
+};
 
 /**
  * props for the PerRowLinkStateSelector
@@ -108,12 +112,14 @@ export interface PerRowLinkStateSelectorProps {
  */
 export const PerRowLinkStateSelector = ({
   items,
-  currentLink
+  currentLink,
 }: PerRowLinkStateSelectorProps) => {
   const theme = useTheme();
-  const [currentValue, setCurrentValue] = useState("");
+  const [currentValue, setCurrentValue] = useState('');
   // remove the current state from the list of state icons to display
-  const filteredItems = items.filter((item) => item.value !== currentLink.metadata.status)
+  const filteredItems = items.filter(
+    (item) => item.value !== currentLink.metadata.status
+  );
 
   return (
     <Stack
@@ -127,12 +133,11 @@ export const PerRowLinkStateSelector = ({
         gap: '12px',
         marginLeft: '-10px',
         backgroundColor: theme.palette.linkStateSelector.backgroundColor,
-        alignItems: 'center'
+        alignItems: 'center',
       }}
       direction={'row'}
     >
-
-      {filteredItems.map((item, index) =>
+      {filteredItems.map((item, index) => (
         <ToggleIcon
           key={index}
           item={item}
@@ -140,8 +145,7 @@ export const PerRowLinkStateSelector = ({
           setCurrentValue={setCurrentValue}
           currentLink={currentLink}
         />
-
-      )}
+      ))}
     </Stack>
   );
 };

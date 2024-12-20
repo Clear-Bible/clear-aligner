@@ -22,19 +22,23 @@ export interface UseLinkNotesState {
   hasNote: boolean;
 }
 
-export const useLinkNotes = ({ memberOfLink }: UseLinkNotesProps): UseLinkNotesState => {
-
-  const editedLinkNote = useMemo<LinkNote|undefined>(() => memberOfLink?.metadata?.note?.at(0), [ memberOfLink?.metadata?.note ]);
+export const useLinkNotes = ({
+  memberOfLink,
+}: UseLinkNotesProps): UseLinkNotesState => {
+  const editedLinkNote = useMemo<LinkNote | undefined>(
+    () => memberOfLink?.metadata?.note?.at(0),
+    [memberOfLink?.metadata?.note]
+  );
 
   const email = useUserEmail({});
 
-  const [ isEditorOpen, setIsEditorOpen ] = useState<boolean>(false);
+  const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
 
   const { saveLink } = useSaveLink();
 
   const onOpenEditor = useCallback(() => {
     setIsEditorOpen(true);
-  }, [ setIsEditorOpen ]);
+  }, [setIsEditorOpen]);
 
   const removeNote = useCallback(() => {
     if (!memberOfLink || !saveLink) return;
@@ -42,33 +46,37 @@ export const useLinkNotes = ({ memberOfLink }: UseLinkNotesProps): UseLinkNotesS
       ...memberOfLink,
       metadata: {
         ...memberOfLink.metadata,
-        note: []
-      }
+        note: [],
+      },
     });
-  }, [ memberOfLink, saveLink ]);
+  }, [memberOfLink, saveLink]);
 
-  const createOrModifyNote = useCallback((note: LinkNote) => {
-    if (!memberOfLink || !saveLink) return;
-    if (!note) {
-      removeNote();
-      return;
-    }
-    saveLink({
-      ...memberOfLink,
-      metadata: {
-        ...memberOfLink.metadata,
-        note: [{
-          ...note,
-          authorEmail: email ?? note.authorEmail
-        }]
+  const createOrModifyNote = useCallback(
+    (note: LinkNote) => {
+      if (!memberOfLink || !saveLink) return;
+      if (!note) {
+        removeNote();
+        return;
       }
-    });
-  }, [ saveLink, email, memberOfLink, removeNote ]);
+      saveLink({
+        ...memberOfLink,
+        metadata: {
+          ...memberOfLink.metadata,
+          note: [
+            {
+              ...note,
+              authorEmail: email ?? note.authorEmail,
+            },
+          ],
+        },
+      });
+    },
+    [saveLink, email, memberOfLink, removeNote]
+  );
 
   const editorDialog = useMemo<JSX.Element>(() => {
     if (!memberOfLink || !isEditorOpen) {
-      return (<>
-      </>);
+      return <></>;
     }
     return (
       <LinkNoteEditorDialog
@@ -89,12 +97,19 @@ export const useLinkNotes = ({ memberOfLink }: UseLinkNotesProps): UseLinkNotesS
         }}
       />
     );
-  }, [ memberOfLink, editedLinkNote, isEditorOpen, setIsEditorOpen, createOrModifyNote, removeNote ]);
+  }, [
+    memberOfLink,
+    editedLinkNote,
+    isEditorOpen,
+    setIsEditorOpen,
+    createOrModifyNote,
+    removeNote,
+  ]);
 
   return {
     editorDialog,
     onOpenEditor,
     hasNote: !!editedLinkNote,
-    isEditorOpen
+    isEditorOpen,
   };
-}
+};

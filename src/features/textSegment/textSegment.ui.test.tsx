@@ -15,12 +15,12 @@ const testState: RootState = {
       inProgressLink: {
         metadata: {
           origin: LinkOriginManual,
-          status: LinkStatus.CREATED
+          status: LinkStatus.CREATED,
         },
         sources: ['sbl_0'],
         targets: [],
         suggestedSources: [],
-        suggestedTargets: []
+        suggestedTargets: [],
       },
     },
   },
@@ -35,7 +35,7 @@ describe('TextSegment', () => {
           side: AlignmentSide.TARGET,
           text: 'mikey',
           position: 0,
-          normalizedText: 'mikey'
+          normalizedText: 'mikey',
         }}
       />,
       null
@@ -51,7 +51,7 @@ describe('TextSegment', () => {
           side: AlignmentSide.SOURCE,
           text: 'mikey',
           position: 0,
-          normalizedText: 'mikey'
+          normalizedText: 'mikey',
         }}
       />,
       testState

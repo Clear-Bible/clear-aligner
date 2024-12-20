@@ -17,12 +17,10 @@ const PreferenceToggle = ({
   labelText,
   tooltipText,
   value,
-  onUpdateValue
-                          }: PreferenceToggleProps) => {
+  onUpdateValue,
+}: PreferenceToggleProps) => {
   return (
-    <RemovableTooltip title={tooltipText}
-                      removed={disabled || !tooltipText}
-    >
+    <RemovableTooltip title={tooltipText} removed={disabled || !tooltipText}>
       <FormControlLabel
         sx={{
           width: '100%',
@@ -30,17 +28,18 @@ const PreferenceToggle = ({
           justifyContent: 'space-between',
         }}
         control={
-        <Switch
-          disabled={disabled}
-          checked={value}
-          onChange={() => onUpdateValue?.(!value)}
-        />}
+          <Switch
+            disabled={disabled}
+            checked={value}
+            onChange={() => onUpdateValue?.(!value)}
+          />
+        }
         label={labelText}
         labelPlacement={'start'}
       />
     </RemovableTooltip>
   );
-}
+};
 
 /**
  * token suggestion preference component props
@@ -62,20 +61,23 @@ export interface TokenSuggestionPreferenceProps {
 export const TokenSuggestionPreference = ({
   sx,
   tokenSuggestionEnabled,
-  setTokenSuggestionsEnabled
-                                          }: TokenSuggestionPreferenceProps) => {
-
-  const boxSx = useMemo(() => ({
-    ...defaultPreferenceItemStyle,
-    ...sx
-  }), [ sx ]);
+  setTokenSuggestionsEnabled,
+}: TokenSuggestionPreferenceProps) => {
+  const boxSx = useMemo(
+    () => ({
+      ...defaultPreferenceItemStyle,
+      ...sx,
+    }),
+    [sx]
+  );
 
   return (
-    <Box
-      sx={boxSx}>
-      <PreferenceToggle labelText={'Alignment Suggestions'}
-                        value={tokenSuggestionEnabled}
-                        onUpdateValue={setTokenSuggestionsEnabled} />
+    <Box sx={boxSx}>
+      <PreferenceToggle
+        labelText={'Alignment Suggestions'}
+        value={tokenSuggestionEnabled}
+        onUpdateValue={setTokenSuggestionsEnabled}
+      />
     </Box>
   );
-}
+};

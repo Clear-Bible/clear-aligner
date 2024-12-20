@@ -11,7 +11,7 @@ export const findFirstRefFromLink = (
   wordSource?: AlignmentSide
 ): string | undefined => {
   let rowByWordSource: string[];
-  switch(wordSource) {
+  switch (wordSource) {
     case AlignmentSide.SOURCE:
       rowByWordSource = row.sources;
       break;
@@ -26,4 +26,4 @@ export const findFirstRefFromLink = (
   return _.uniqWith(rowByWordSource, _.isEqual)
     .sort()
     .find((value) => value);
-}
+};

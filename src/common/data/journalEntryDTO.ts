@@ -5,7 +5,7 @@ export enum JournalEntryType {
   CREATE = 'CREATE',
   BULK_INSERT = 'BULK_INSERT',
   UPDATE = 'UPDATE',
-  DELETE = 'DELETE'
+  DELETE = 'DELETE',
 }
 
 /**
@@ -20,20 +20,24 @@ export interface JournalEntryDTO {
 }
 
 export interface JournalEntry {
-  id: string,
-  linkId: string,
-  type: JournalEntryType,
-  date: Date,
-  body: string
+  id: string;
+  linkId: string;
+  type: JournalEntryType;
+  date: Date;
+  body: string;
 }
 /**
  * convert a journal entry entity into a dto
  * @param je entity object
  */
-export const mapJournalEntryEntityToJournalEntryDTO = (je: JournalEntry): JournalEntryDTO => {
+export const mapJournalEntryEntityToJournalEntryDTO = (
+  je: JournalEntry
+): JournalEntryDTO => {
   const parsed = JSON.parse(je.body);
   return {
     ...je,
-    body: Array.isArray(parsed) ? parsed as Operation[] : parsed as ServerAlignmentLinkDTO
+    body: Array.isArray(parsed)
+      ? (parsed as Operation[])
+      : (parsed as ServerAlignmentLinkDTO),
   };
 };

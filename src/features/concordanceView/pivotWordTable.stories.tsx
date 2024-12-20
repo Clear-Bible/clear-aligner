@@ -24,63 +24,63 @@ const pivotWords: PivotWord[] = [
     word: 'the',
     languageInfo: {
       code: 'eng',
-      textDirection: TextDirection.LTR
+      textDirection: TextDirection.LTR,
     },
-    frequency: 1
+    frequency: 1,
   },
   {
     side: AlignmentSide.TARGET,
     word: 'and',
     languageInfo: {
       code: 'eng',
-      textDirection: TextDirection.LTR
+      textDirection: TextDirection.LTR,
     },
-    frequency: 1
+    frequency: 1,
   },
   {
     side: AlignmentSide.TARGET,
     word: 'of',
     languageInfo: {
       code: 'eng',
-      textDirection: TextDirection.LTR
+      textDirection: TextDirection.LTR,
     },
-    frequency: 1
+    frequency: 1,
   },
   {
     side: AlignmentSide.TARGET,
     word: 'to',
     languageInfo: {
       code: 'eng',
-      textDirection: TextDirection.LTR
+      textDirection: TextDirection.LTR,
     },
-    frequency: 1
+    frequency: 1,
   },
   {
     side: AlignmentSide.TARGET,
     word: 'thus',
     languageInfo: {
       code: 'eng',
-      textDirection: TextDirection.LTR
+      textDirection: TextDirection.LTR,
     },
-    frequency: 1
+    frequency: 1,
   },
   {
     side: AlignmentSide.TARGET,
     word: 'so',
     languageInfo: {
       code: 'eng',
-      textDirection: TextDirection.LTR
+      textDirection: TextDirection.LTR,
     },
-    frequency: 1
+    frequency: 1,
   },
   {
     side: AlignmentSide.TARGET,
     word: 'as',
     languageInfo: {
       code: 'eng',
-      textDirection: TextDirection.LTR
+      textDirection: TextDirection.LTR,
     },
-    frequency: 1
+    frequency: 1,
   },
 ];
 

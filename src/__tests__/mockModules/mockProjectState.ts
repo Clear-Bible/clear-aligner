@@ -12,6 +12,6 @@ export const mockProjectState = (ps?: Partial<ProjectState>): ProjectState => {
     linksTable: MockLinksTable,
     projectTable: MockProjectTable,
     userPreferenceTable: MockUserPreferenceTable,
-    ...ps
+    ...ps,
   };
-}
+};

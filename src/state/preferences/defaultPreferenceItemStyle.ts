@@ -7,5 +7,5 @@ export default {
   alignItems: 'flex-start',
   paddingTop: '8px',
   paddingBottom: projectCardMargin,
-  paddingLeft: projectCardMargin
+  paddingLeft: projectCardMargin,
 } as SxProps<Theme>;

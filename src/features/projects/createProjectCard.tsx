@@ -5,7 +5,7 @@ import { LibraryAdd } from '@mui/icons-material';
 import {
   projectCardHeight,
   projectCardMargin,
-  projectCardWidth
+  projectCardWidth,
 } from './styleConstants';
 
 /**
@@ -17,12 +17,18 @@ import {
  * @param isSignedIn whether the user is currently signed in
  */
 export const CreateProjectCard: React.FC<{
-  onClick?: (e: React.MouseEvent) => void,
-  unavailableProjectNames?: string[],
-  open: boolean,
-  closeCallback: () => void,
-  isSignedIn: boolean
-}> = ({ onClick, unavailableProjectNames, open, closeCallback, isSignedIn }) => {
+  onClick?: (e: React.MouseEvent) => void;
+  unavailableProjectNames?: string[];
+  open: boolean;
+  closeCallback: () => void;
+  isSignedIn: boolean;
+}> = ({
+  onClick,
+  unavailableProjectNames,
+  open,
+  closeCallback,
+  isSignedIn,
+}) => {
   const cardContents: JSX.Element = (
     <CardContent
       id={'create-card-content'}
@@ -32,42 +38,57 @@ export const CreateProjectCard: React.FC<{
         justifyItems: 'center',
         alignItems: 'center',
         height: '100%',
-        margin: projectCardMargin
-      }}>
-      {open ?
-        <ProjectSettings closeCallback={closeCallback} isSignedIn={isSignedIn}
-                         unavailableProjectNames={unavailableProjectNames} projectId={null} />
-        :
-        <Grid container justifyContent="center" alignItems="center" sx={{
-          height: '100%',
-          margin: '0 auto'
-        }}>
-          <LibraryAdd color={'primary'} />
-        </Grid>}
-    </CardContent>);
-  return (<>
-    <Card
-      variant={'outlined'}
-      sx={theme => ({
-        width: projectCardWidth,
-        height: projectCardHeight,
-        m: '3px',
-        backgroundColor: theme.palette.primary.contrastText,
-        position: 'relative'
-      })}>
-      {open
-        ? <>
-          {cardContents}
-        </>
-        : <CardActionArea
+        margin: projectCardMargin,
+      }}
+    >
+      {open ? (
+        <ProjectSettings
+          closeCallback={closeCallback}
+          isSignedIn={isSignedIn}
+          unavailableProjectNames={unavailableProjectNames}
+          projectId={null}
+        />
+      ) : (
+        <Grid
+          container
+          justifyContent="center"
+          alignItems="center"
           sx={{
-            width: '100%',
-            height: '100%'
+            height: '100%',
+            margin: '0 auto',
           }}
-          onClick={(e) => onClick?.(e)}>
-          {cardContents}
-        </CardActionArea>
-      }
-    </Card>
-  </>);
+        >
+          <LibraryAdd color={'primary'} />
+        </Grid>
+      )}
+    </CardContent>
+  );
+  return (
+    <>
+      <Card
+        variant={'outlined'}
+        sx={(theme) => ({
+          width: projectCardWidth,
+          height: projectCardHeight,
+          m: '3px',
+          backgroundColor: theme.palette.primary.contrastText,
+          position: 'relative',
+        })}
+      >
+        {open ? (
+          <>{cardContents}</>
+        ) : (
+          <CardActionArea
+            sx={{
+              width: '100%',
+              height: '100%',
+            }}
+            onClick={(e) => onClick?.(e)}
+          >
+            {cardContents}
+          </CardActionArea>
+        )}
+      </Card>
+    </>
+  );
 };

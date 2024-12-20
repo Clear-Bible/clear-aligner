@@ -17,27 +17,25 @@ export interface AlignmentErrorDialogProps {
  * @param checkResults alignment check results, including errors
  */
 export const AlignmentValidationErrorDialog = ({
-                                                 showDialog,
-                                                 onDismissDialog,
-                                                 checkResults
-                                               }: AlignmentErrorDialogProps) => {
-
-  return (<Dialog
-    fullWidth
-    scroll={'paper'}
-    open={!!showDialog}
-    onClose={onDismissDialog}
-    title={'Validation Error'}
-  >
-    <Box padding={'2em'}>
-      Errors validating alignment file:
-      <AlignmentValidationErrorDisplay
-        checkResults={checkResults} />
-      <Box
-        textAlign={'right'}
-      >
-        <Button onClick={onDismissDialog}>Close</Button>
+  showDialog,
+  onDismissDialog,
+  checkResults,
+}: AlignmentErrorDialogProps) => {
+  return (
+    <Dialog
+      fullWidth
+      scroll={'paper'}
+      open={!!showDialog}
+      onClose={onDismissDialog}
+      title={'Validation Error'}
+    >
+      <Box padding={'2em'}>
+        Errors validating alignment file:
+        <AlignmentValidationErrorDisplay checkResults={checkResults} />
+        <Box textAlign={'right'}>
+          <Button onClick={onDismissDialog}>Close</Button>
+        </Box>
       </Box>
-    </Box>
-  </Dialog>);
+    </Dialog>
+  );
 };

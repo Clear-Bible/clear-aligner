@@ -22,11 +22,7 @@
           }
         }
       },
-      "required": [
-        "meta",
-        "source",
-        "target"
-      ],
+      "required": ["meta", "source", "target"],
       "additionalProperties": false
     },
     "RecordMetadataSchema": {
@@ -42,20 +38,12 @@
           "$ref": "#/definitions/LinkStatusSchema"
         }
       },
-      "required": [
-        "origin",
-        "status"
-      ],
+      "required": ["origin", "status"],
       "additionalProperties": false
     },
     "LinkStatusSchema": {
       "type": "string",
-      "enum": [
-        "created",
-        "needsReview",
-        "rejected",
-        "approved"
-      ]
+      "enum": ["created", "needsReview", "rejected", "approved"]
     },
     "LinkOriginSchema": {
       "type": "string",
@@ -83,10 +71,7 @@
           }
         }
       },
-      "required": [
-        "meta",
-        "records"
-      ],
+      "required": ["meta", "records"],
       "additionalProperties": false
     }
   },

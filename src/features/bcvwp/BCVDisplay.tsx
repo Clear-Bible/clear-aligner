@@ -14,12 +14,15 @@ export interface BCVDisplayProps {
  * @param currentPosition the current position, optional, will return empty JSX if not given
  * @constructor
  */
-export const BCVDisplay = ({ currentPosition, useParaText=false }: BCVDisplayProps) => {
+export const BCVDisplay = ({
+  currentPosition,
+  useParaText = false,
+}: BCVDisplayProps) => {
   const bookInfo = currentPosition?.getBookInfo();
   const chapter = currentPosition?.chapter;
   const verse = currentPosition?.verse;
 
-  if (useParaText){
+  if (useParaText) {
     return (
       <>
         <b>
@@ -32,8 +35,7 @@ export const BCVDisplay = ({ currentPosition, useParaText=false }: BCVDisplayPro
         </b>
       </>
     );
-  }
-  else {
+  } else {
     return (
       <>
         {currentPosition &&
@@ -45,6 +47,4 @@ export const BCVDisplay = ({ currentPosition, useParaText=false }: BCVDisplayPro
       </>
     );
   }
-
-
 };

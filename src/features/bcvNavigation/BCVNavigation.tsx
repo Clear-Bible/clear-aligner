@@ -4,11 +4,29 @@
  * using forward and backward buttons and dropdowns to reach a specific book,
  * chapter and verse
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Autocomplete, Button, IconButton, SxProps, TextField, Theme, Tooltip } from '@mui/material';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Autocomplete,
+  Button,
+  IconButton,
+  SxProps,
+  TextField,
+  Theme,
+  Tooltip,
+} from '@mui/material';
 import { Word } from '../../structs';
 import { Box } from '@mui/system';
-import { ArrowBackIosNew, ArrowForward, ArrowForwardIos } from '@mui/icons-material';
+import {
+  ArrowBackIosNew,
+  ArrowForward,
+  ArrowForwardIos,
+} from '@mui/icons-material';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import {
@@ -17,7 +35,7 @@ import {
   findNextNavigableVerse,
   findPreviousNavigableVerse,
   NavigableBook,
-  Verse
+  Verse,
 } from './structs';
 import { useBooksWithNavigationInfo } from './useBooksWithNavigationInfo';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -43,13 +61,13 @@ const AUTOCOMPLETE_VERT_MARGIN = '.15em';
  * @param horizontal optional parameter to specify horizontal layout
  */
 const BCVNavigation = ({
-                         sx,
-                         disabled,
-                         words,
-                         currentPosition,
-                         onNavigate,
-                         horizontal
-                       }: BCVNavigationProps) => {
+  sx,
+  disabled,
+  words,
+  currentPosition,
+  onNavigate,
+  horizontal,
+}: BCVNavigationProps) => {
   const allAvailableBooks = useBooksWithNavigationInfo(words);
   const [selectedBook, setSelectedBook] = useState<NavigableBook | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
@@ -59,46 +77,83 @@ const BCVNavigation = ({
   const [availableVerses, setAvailableVerses] = useState<Verse[]>([]);
   const isPositionReset = useRef<boolean>(true);
 
-  const findAvailableChaptersByBook = (books?: NavigableBook[], bookNum?: number) => {
-    return (books && bookNum
-      ? books.find((book) => book.BookNumber === bookNum)?.chapters : []) ?? [];
+  const findAvailableChaptersByBook = (
+    books?: NavigableBook[],
+    bookNum?: number
+  ) => {
+    return (
+      (books && bookNum
+        ? books.find((book) => book.BookNumber === bookNum)?.chapters
+        : []) ?? []
+    );
   };
-  const findAvailableVersesByChapter = (chapters?: Chapter[], chapterNum?: number) => {
-    return (chapters && chapterNum
-      ? chapters.find((chapter) => chapter.reference === chapterNum)?.verses : []) ?? [];
+  const findAvailableVersesByChapter = (
+    chapters?: Chapter[],
+    chapterNum?: number
+  ) => {
+    return (
+      (chapters && chapterNum
+        ? chapters.find((chapter) => chapter.reference === chapterNum)?.verses
+        : []) ?? []
+    );
   };
 
   useEffect(() => {
-    if (!currentPosition
-      || !allAvailableBooks?.length
-      || !isPositionReset.current) {
+    if (
+      !currentPosition ||
+      !allAvailableBooks?.length ||
+      !isPositionReset.current
+    ) {
       return;
     }
     isPositionReset.current = false;
 
     const nextAvailableBooks = [...allAvailableBooks];
-    const nextSelectedBook = findBookInNavigableBooksByBookNumber(nextAvailableBooks, currentPosition?.book);
+    const nextSelectedBook = findBookInNavigableBooksByBookNumber(
+      nextAvailableBooks,
+      currentPosition?.book
+    );
     setAvailableBooks(nextAvailableBooks);
     setSelectedBook(nextSelectedBook);
 
-    const nextAvailableChapters = findAvailableChaptersByBook(nextAvailableBooks, nextSelectedBook?.BookNumber);
-    const nextSelectedChapter = nextAvailableChapters.find(chapter =>
-      !currentPosition?.chapter || chapter.reference === currentPosition?.chapter) ?? null;
+    const nextAvailableChapters = findAvailableChaptersByBook(
+      nextAvailableBooks,
+      nextSelectedBook?.BookNumber
+    );
+    const nextSelectedChapter =
+      nextAvailableChapters.find(
+        (chapter) =>
+          !currentPosition?.chapter ||
+          chapter.reference === currentPosition?.chapter
+      ) ?? null;
     setAvailableChapters(nextAvailableChapters);
     setSelectedChapter(nextSelectedChapter);
 
-    const nextAvailableVerses = findAvailableVersesByChapter(nextAvailableChapters, nextSelectedChapter?.reference);
-    const nextSelectedVerse = nextAvailableVerses.find(verse =>
-      !currentPosition?.verse || verse.reference === currentPosition?.verse) ?? null;
+    const nextAvailableVerses = findAvailableVersesByChapter(
+      nextAvailableChapters,
+      nextSelectedChapter?.reference
+    );
+    const nextSelectedVerse =
+      nextAvailableVerses.find(
+        (verse) =>
+          !currentPosition?.verse || verse.reference === currentPosition?.verse
+      ) ?? null;
     setAvailableVerses(nextAvailableVerses);
     setSelectedVerse(nextSelectedVerse);
   }, [allAvailableBooks, currentPosition, isPositionReset, words]);
 
   useEffect(() => {
-    setAvailableChapters(findAvailableChaptersByBook(availableBooks, selectedBook?.BookNumber));
+    setAvailableChapters(
+      findAvailableChaptersByBook(availableBooks, selectedBook?.BookNumber)
+    );
   }, [availableBooks, selectedBook]);
   useEffect(() => {
-    setAvailableVerses(findAvailableVersesByChapter(availableChapters, selectedChapter?.reference));
+    setAvailableVerses(
+      findAvailableVersesByChapter(
+        availableChapters,
+        selectedChapter?.reference
+      )
+    );
   }, [availableChapters, selectedChapter]);
 
   const handleSetBook = (book: NavigableBook | null) => {
@@ -156,7 +211,7 @@ const BCVNavigation = ({
           disabled={disabled || !navigateBack}
           onClick={navigateBack ?? undefined}
         >
-          <ArrowBackIosNew/>
+          <ArrowBackIosNew />
         </IconButton>
       </Tooltip>
     ),
@@ -220,7 +275,7 @@ const BCVNavigation = ({
         sx={{
           display: 'inline-flex',
           width: horizontal ? '107px' : '100%',
-          marginTop: AUTOCOMPLETE_VERT_MARGIN
+          marginTop: AUTOCOMPLETE_VERT_MARGIN,
         }}
         getOptionLabel={(option) =>
           option?.reference ? String(option.reference) : ''
@@ -229,9 +284,7 @@ const BCVNavigation = ({
         typeof={'select'}
         value={selectedVerse}
         onChange={(_, value) => setSelectedVerse(value)}
-        renderInput={(params) => (
-          <TextField label={'Verse'} {...params} />
-        )}
+        renderInput={(params) => <TextField label={'Verse'} {...params} />}
       />
     ),
     [disabled, availableVerses, selectedVerse, setSelectedVerse, horizontal]
@@ -254,8 +307,11 @@ const BCVNavigation = ({
   );
 
   // keyboard shortcuts
-  useHotkeys('shift+left', (e) => !e.repeat && navigateBack && navigateBack())
-  useHotkeys('shift+right', (e) => !e.repeat && navigateForward && navigateForward())
+  useHotkeys('shift+left', (e) => !e.repeat && navigateBack && navigateBack());
+  useHotkeys(
+    'shift+right',
+    (e) => !e.repeat && navigateForward && navigateForward()
+  );
 
   return (
     <Box
@@ -266,18 +322,18 @@ const BCVNavigation = ({
           flexFlow: horizontal ? 'row' : 'column',
           ...(horizontal
             ? {
-              flexWrap: 'wrap',
-              gap: '6px'
-            }
+                flexWrap: 'wrap',
+                gap: '6px',
+              }
             : {
-              alignItems: 'center'
-            })
+                alignItems: 'center',
+              }),
         } as unknown as undefined /*cast to avoid material-ui bug*/
       }
       className={BCVNavigation.name}
     >
-      {horizontal && backButton }
-      {horizontal && forwardButton }
+      {horizontal && backButton}
+      {horizontal && forwardButton}
       <Autocomplete
         disabled={disabled}
         disablePortal
@@ -286,7 +342,7 @@ const BCVNavigation = ({
         sx={{
           width: horizontal ? '12em' : '100%',
           display: 'inline-flex',
-          marginTop: AUTOCOMPLETE_VERT_MARGIN
+          marginTop: AUTOCOMPLETE_VERT_MARGIN,
         }}
         options={availableBooks ?? ([] as NavigableBook[])}
         typeof={'select'}
@@ -299,9 +355,7 @@ const BCVNavigation = ({
         getOptionLabel={(option) => option.EnglishBookName}
         value={selectedBook}
         onChange={(_, value) => handleSetBook(value)}
-        renderInput={(params) => (
-          <TextField {...params} label={'Book'} />
-        )}
+        renderInput={(params) => <TextField {...params} label={'Book'} />}
       />
       <Autocomplete
         disabled={disabled}
@@ -310,27 +364,23 @@ const BCVNavigation = ({
         sx={{
           width: horizontal ? '108px' : '100%',
           display: 'inline-flex',
-          marginTop: AUTOCOMPLETE_VERT_MARGIN
+          marginTop: AUTOCOMPLETE_VERT_MARGIN,
         }}
         options={availableChapters}
         typeof={'select'}
         getOptionLabel={(option) => String(option.reference)}
         value={selectedChapter}
         onChange={(_, value) => handleSetChapter(value)}
-        renderInput={(params) => (
-          <TextField label={'Chapter'} {...params} />
-        )}
+        renderInput={(params) => <TextField label={'Chapter'} {...params} />}
       />
       {horizontal ? (
-        <>
-          {verseSelection}
-        </>
+        <>{verseSelection}</>
       ) : (
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'row',
-            width: '100%'
+            width: '100%',
           }}
         >
           {backButton}
@@ -348,7 +398,7 @@ const BCVNavigation = ({
           disabled || !selectedBook || !selectedChapter || !selectedVerse
         }
         onClick={() => handleNavigation()}
-        endIcon={<ArrowForward/>}
+        endIcon={<ArrowForward />}
       >
         GO
       </Button>

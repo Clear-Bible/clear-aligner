@@ -8,35 +8,36 @@ import { ProjectTableName } from '../../../common/data/project/project';
  * These columns are used to defined project information for local, synced, and remote project types.
  */
 export class AddProjectsTable1718861542573 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-      await queryRunner.createTable(new Table({
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.createTable(
+      new Table({
         name: ProjectTableName,
         columns: [
           {
             name: 'id',
             type: 'text',
-            isPrimary: true
+            isPrimary: true,
           },
           {
             name: 'name',
             type: 'text',
-            isNullable: false
+            isNullable: false,
           },
           {
             name: 'location',
             type: 'text',
-            isNullable: false
+            isNullable: false,
           },
           {
             name: 'server_state',
-            type: 'text'
-          }
-        ]
-      }));
-    }
+            type: 'text',
+          },
+        ],
+      })
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-      queryRunner.dropTable(ProjectTableName)
-    }
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    queryRunner.dropTable(ProjectTableName);
+  }
 }
