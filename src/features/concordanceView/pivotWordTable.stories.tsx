@@ -21,7 +21,7 @@ export default meta;
 const pivotWords: PivotWord[] = [
   {
     side: AlignmentSide.TARGET,
-    normalizedText: 'the',
+    word: 'the',
     languageInfo: {
       code: 'eng',
       textDirection: TextDirection.LTR
@@ -30,7 +30,7 @@ const pivotWords: PivotWord[] = [
   },
   {
     side: AlignmentSide.TARGET,
-    normalizedText: 'and',
+    word: 'and',
     languageInfo: {
       code: 'eng',
       textDirection: TextDirection.LTR
@@ -39,7 +39,7 @@ const pivotWords: PivotWord[] = [
   },
   {
     side: AlignmentSide.TARGET,
-    normalizedText: 'of',
+    word: 'of',
     languageInfo: {
       code: 'eng',
       textDirection: TextDirection.LTR
@@ -48,7 +48,7 @@ const pivotWords: PivotWord[] = [
   },
   {
     side: AlignmentSide.TARGET,
-    normalizedText: 'to',
+    word: 'to',
     languageInfo: {
       code: 'eng',
       textDirection: TextDirection.LTR
@@ -57,7 +57,7 @@ const pivotWords: PivotWord[] = [
   },
   {
     side: AlignmentSide.TARGET,
-    normalizedText: 'thus',
+    word: 'thus',
     languageInfo: {
       code: 'eng',
       textDirection: TextDirection.LTR
@@ -66,7 +66,7 @@ const pivotWords: PivotWord[] = [
   },
   {
     side: AlignmentSide.TARGET,
-    normalizedText: 'so',
+    word: 'so',
     languageInfo: {
       code: 'eng',
       textDirection: TextDirection.LTR
@@ -75,7 +75,7 @@ const pivotWords: PivotWord[] = [
   },
   {
     side: AlignmentSide.TARGET,
-    normalizedText: 'as',
+    word: 'as',
     languageInfo: {
       code: 'eng',
       textDirection: TextDirection.LTR

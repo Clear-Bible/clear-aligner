@@ -47,7 +47,7 @@ export const SingleSelectButtonGroup = ({
                 onClick={() => onSelect(item.value)}
                 variant={value && value === item.value ? 'contained' : undefined}
                 disabled={value && value === item.value ? false : customDisabled}
-                sx={{width: '40px'}}
+                sx={{width: '40px', height: 37,}}
               >
                 {item.label}
               </Button>

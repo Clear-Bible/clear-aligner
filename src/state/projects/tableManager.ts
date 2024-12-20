@@ -288,10 +288,12 @@ export class ProjectTable extends VirtualTable {
       position_word: bcv.word,
       position_part: bcv.part,
       normalized_text: word.normalizedText,
+      lemma: word.lemma,
       source_verse_bcvid: word.sourceVerse,
       language_id: corpus.language.code,
       side: word.side,
-      exclude: word.exclude
+      exclude: word.exclude,
+      required: word.required
     });
   };
 

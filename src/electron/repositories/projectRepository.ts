@@ -42,6 +42,10 @@ import {
 import { LinkNote } from '../../common/data/project/linkNote';
 import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728604421335-add-notes-to-links';
 import { LinkEntity } from '../../common/data/project/linkEntity';
+import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
+import {
+  AddRequiredToWordsOrParts1734371090123
+} from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -127,9 +131,11 @@ class WordsOrParts {
   position_word?: number;
   position_part?: number;
   normalized_text?: string;
+  lemma?: string;
   source_verse_bcvid?: string;
   language_id?: string;
   exclude?: number;
+  required?: number;
 
   constructor() {
     this.id = undefined;
@@ -144,9 +150,11 @@ class WordsOrParts {
     this.position_word = undefined;
     this.position_part = undefined;
     this.normalized_text = '';
+    this.lemma = '';
     this.source_verse_bcvid = undefined;
     this.language_id = undefined;
     this.exclude = undefined;
+    this.required = undefined;
   }
 }
 
@@ -271,12 +279,15 @@ const wordsOrPartsSchema = new EntitySchema({
       type: 'integer'
     }, normalized_text: {
       type: 'text'
+    }, lemma: {
+      type: 'text'
     }, source_verse_bcvid: {
       type: 'text'
     }, exclude: {
       type: 'integer'
+    }, required: {
+      type: 'integer'
     }
-
   }
 });
 
@@ -342,7 +353,9 @@ export class ProjectRepository extends BaseRepository {
       AddBulkInserts1720060108764,
       CorporaTimestamps1720241454613,
       JournalEntriesDiffToBody1720419515419,
-      AddNotesToLinks1728604421335
+      AddNotesToLinks1728604421335,
+      AddLemmaToWordsOrParts1734038034739,
+      AddRequiredToWordsOrParts1734371090123,
     ];
   };
 
@@ -970,7 +983,10 @@ export class ProjectRepository extends BaseRepository {
                                                          w.position_part                   as position,
                                                          w.source_verse_bcvid              as sourceVerse,
                                                          w.normalized_text                 as normalizedText,
-                                                         CASE WHEN w.exclude = 1 THEN 1 ELSE 0 END AS exclude
+                                                         w.lemma                           as lemma,
+                                                         CASE WHEN w.exclude = 1 THEN 1 ELSE 0 END AS exclude,
+                                                         CASE WHEN w.required = 1 THEN 1 ELSE 0 END AS required
+
                                                   from words_or_parts w
                                                   where w.side = ?
                                                     and w.corpus_id = ?
@@ -1328,7 +1344,7 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  corporaGetPivotWords = async (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem) => {
+  corporaGetSourceWords = async (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem) => {
     const em = (await this.getDataSource(sourceName))!.manager;
     const joins = filter === 'aligned'
       ? `inner join links__${side === 'sources' ? 'source' : 'target'}_words j on w.id = j.word_id inner join links l on l.id = j.link_id`
@@ -1340,6 +1356,27 @@ export class ProjectRepository extends BaseRepository {
                              ${joins}
                            where w.side = '${side}' ${alignmentFilter}
                            group by t ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
+  };
+
+  /**
+   * Method used to retrieve unique lemma values from a specified source.
+   * @param sourceName The source to retrieve lemma data from.
+   * @param filter The filters to apply to the query.
+   * @param sort The sort to apply to the retrieved source data.
+   */
+  corporaGetLemmas = async (sourceName: string, filter: PivotWordFilter, sort: GridSortItem) => {
+    const em = (await this.getDataSource(sourceName))!.manager;
+    const joins = filter === 'aligned'
+      ? `inner join links__source_words j on w.id = j.word_id inner join links l on l.id = j.link_id`
+      : '';
+    // If we are viewing aligned pivotWords, then don't count rejected links in the total
+    const alignmentFilter = filter === 'aligned' ? `and l.status <> 'rejected'` : '';
+    return await em.query(`select lemma t, language_id l, count(1) c
+                           from words_or_parts w
+                             ${joins}
+                           where w.side = 'sources' ${alignmentFilter}
+                           and w.lemma is not null
+                           group by t ${this._buildOrderBy(sort, { frequency: 'c', lemma: 't' })};`);
   };
 
   languageFindByIds = async (sourceName: string, languageIds: string[]) => {
@@ -1356,7 +1393,7 @@ export class ProjectRepository extends BaseRepository {
                            from language;`);
   };
 
-  corporaGetAlignedWordsByPivotWord = async (sourceName: string, side: AlignmentSide, normalizedText: string, sort: GridSortItem) => {
+  corporaGetAlignedWordsBySourceWord = async (sourceName: string, side: AlignmentSide, normalizedText: string, sort: GridSortItem) => {
     const em = (await this.getDataSource(sourceName))!.manager;
     switch (side) {
       case 'sources':
@@ -1411,6 +1448,42 @@ export class ProjectRepository extends BaseRepository {
         return await em.query(targetQueryText, [{ normalizedText }]);
     }
   };
+
+  /**
+   * Method used to retrieve tokens using a specified lemma and data source.
+   * @param sourceName The source to retrieve lemma data from.
+   * @param lemma The lemma value used to filter tokens from the data source.
+   * @param sort The sort to apply to the retrieved source data.
+   */
+  corporaGetAlignedWordsByLemma = async (sourceName: string, lemma: string, sort: GridSortItem) => {
+    const em = (await this.getDataSource(sourceName))!.manager;
+    const sourceQueryTextWLang = `
+          SELECT sw.lemma   t,
+                 sw.language_id       sl,
+                 l.sources_text       st,
+                 tw.language_id       tl,
+                 l.targets_text       tt,
+                 count(DISTINCT l.id) c
+          FROM words_or_parts sw
+                 INNER JOIN links__source_words lsw
+                            ON sw.id = lsw.word_id
+                 INNER JOIN links l
+                            ON l.id = lsw.link_id
+                 INNER JOIN links__target_words ltw
+                            ON l.id = ltw.link_id
+                 INNER JOIN words_or_parts tw
+                            ON tw.id = ltw.word_id
+          WHERE sw.lemma = :lemma
+            AND sw.side = 'sources'
+            AND l.targets_text <> ''
+            AND l.status <> 'rejected'
+          GROUP BY l.sources_text, l.targets_text
+            ${this._buildOrderBy(sort, {
+      frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text'
+    })};`;
+    return await em.query(sourceQueryTextWLang, [{ lemma }]);
+  };
+
 
   corporaGetLinksByAlignedWord = async (sourceName: string,
                                         sourcesText?: string,
@@ -1566,5 +1639,13 @@ export class ProjectRepository extends BaseRepository {
     const dataSource = (await this.getDataSource(sourceName))!;
     const repo = dataSource.getRepository(tableName);
     return await repo.count();
+  };
+
+  getDataSourceLemmaCount = async (sourceName: string, side = 'sources'): Promise<number> => {
+    const dataSource = await this.getDataSource(sourceName);
+    const entityManager = dataSource!.manager;
+    return (await entityManager.query(
+      `SELECT count(*) as count from words_or_parts wp where wp.side = '${side}' and wp.lemma not null`
+    ))?.[0]?.count ?? 0;
   };
 }

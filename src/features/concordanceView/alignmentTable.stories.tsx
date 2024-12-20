@@ -109,7 +109,7 @@ rejectedLink.metadata.status = LinkStatus.REJECTED;
 FourLinksOneRejected.args = {
   wordSource: AlignmentSide.TARGET,
   pivotWord: {
-    normalizedText: 'god',
+    word: 'god',
     side: AlignmentSide.TARGET,
     frequency: 3,
     languageInfo: {
