@@ -45,9 +45,9 @@ const preferenceEntity = new EntitySchema({
   target: PreferenceEntity,
   columns: {
     id: {
-      //@ts-ignore
       primary: true,
       type: 'varchar',
+      //@ts-ignore
       generated: false,
     },
     alignment_view: {

@@ -37,7 +37,7 @@ window.databaseApi = {};
 // @ts-ignore
 window.databaseApi.corporaGetLinksByAlignedWord = async (
   ...args: any[]
-): RepositoryLink[] | undefined => {
+): Promise<RepositoryLink[] | undefined> => {
   // @ts-ignore
   console.log('args: ', args);
   return linksForDbApi;
