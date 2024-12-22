@@ -25,13 +25,14 @@ interface PolyglotProps {
   containers: NamedContainers;
   position: BCVWP | null;
   setNewVisibleVerses?: (verses: Verse[], corpus: CorpusContainer) => void;
-  sx?: Record<string, unknown>;
+  style?: Partial<React.CSSProperties>;
 }
 
 export const Polyglot: React.FC<PolyglotProps> = ({
   containers,
   position,
   setNewVisibleVerses,
+  style
 }) => {
   useDebug('Polyglot');
 
@@ -71,6 +72,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({
             ControlPanelFormat[ControlPanelFormat.VERTICAL]
               ? undefined
               : '2rem',
+          ...(style ?? {})
         }}
         justifyContent="stretch"
         alignItems="stretch"

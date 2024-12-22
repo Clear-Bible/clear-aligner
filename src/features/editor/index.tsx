@@ -24,9 +24,9 @@ import {
 import { useAppSelector } from '../../app/index';
 
 export type CustomEditorStyles = Partial<{
-  polyglot: Record<string, unknown>;
-  controlPanel: Record<string, unknown>;
-  contextPanel: Record<string, unknown>;
+  polyglot: Partial<React.CSSProperties>;
+  controlPanel: Partial<React.CSSProperties>;
+  contextPanel: Partial<React.CSSProperties>;
 }>;
 
 interface EditorProps {
@@ -86,14 +86,14 @@ const Editor = ({
           containers={containers}
           position={position}
           setNewVisibleVerses={setNewVisibleVerses}
-          sx={styles?.polyglot ?? {}}
+          style={styles?.polyglot ?? {}}
         />
-        <ControlPanel sx={styles?.controlPanel ?? {}} />
+        <ControlPanel style={styles?.controlPanel ?? {}} />
         <ContextPanel
           containers={containers}
           position={position}
           visibleSourceVerses={visibleSourceVerses}
-          sx={styles?.contextPanel ?? {}}
+          style={styles?.contextPanel ?? {}}
         />
       </Container>
     </SuggestionsContext.Provider>

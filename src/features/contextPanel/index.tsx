@@ -14,14 +14,14 @@ interface ContextPanelProps {
   containers: NamedContainers;
   position?: BCVWP;
   visibleSourceVerses: Verse[];
-  sx?: Record<string, unknown>;
+  style?: Partial<React.CSSProperties>;
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({
   containers,
   position,
   visibleSourceVerses,
-  sx,
+  style,
 }): ReactElement => {
   useDebug('ContextPanel');
 
@@ -33,7 +33,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
     <Stack
       direction="row"
       spacing={2}
-      style={{ height: '18.7rem', ...(sx ?? {}) }}
+      style={{ height: '18.7rem', ...(style ?? {}) }}
       justifyContent="stretch"
       alignItems="stretch"
     >

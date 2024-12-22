@@ -2,7 +2,7 @@
  * This file contains the ControlPanel component which contains buttons like
  * create link, delete link, toggle glosses, swap to vertical mode, etc.
  */
-import { ReactElement, useMemo, useState } from 'react';
+import React, { ReactElement, useMemo, useState } from 'react';
 import { Button, Stack, SxProps, Theme } from '@mui/material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
@@ -25,10 +25,10 @@ const ControlPanelButtonSx: Partial<SxProps<Theme>> = {
 };
 
 interface ControlPanelProps {
-  sx?: Record<string, unknown>;
+  style?: Partial<React.CSSProperties>;
 }
 
-export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
+export const ControlPanel: React.FC<ControlPanelProps> = ({style}): ReactElement => {
   useDebug('ControlPanel');
 
   const dispatch = useAppDispatch();
@@ -119,6 +119,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = (): ReactElement => {
           marginBottom: '6px',
           flexGrow: 0,
           flexShrink: 0,
+          ...(style ?? {})
         }}
       >
         <span>
