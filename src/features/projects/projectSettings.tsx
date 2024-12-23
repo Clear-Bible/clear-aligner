@@ -2,7 +2,13 @@
  * This file contains the ProjectDialog component which handles project creation
  * and project editing in the Project Mode of the CA application.
  */
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Autocomplete,
   Box,
@@ -16,24 +22,39 @@ import {
   MenuItem,
   Select,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
-import { DeleteOutline, FileUpload, Unpublished, UploadFile } from '@mui/icons-material';
+import {
+  DeleteOutline,
+  FileUpload,
+  Unpublished,
+  UploadFile,
+} from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectId, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
 import { Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
-import { InitializationStates, parseTsv, putVersesInCorpus } from '../../workbench/query';
+import {
+  InitializationStates,
+  parseTsv,
+  putVersesInCorpus,
+} from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { DateTime } from 'luxon';
-import { ProjectLocation, ProjectState } from '../../common/data/project/project';
+import {
+  ProjectLocation,
+  ProjectState,
+} from '../../common/data/project/project';
 import { usePublishProject } from '../../api/projects/usePublishProject';
-import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
+import {
+  AlignmentSide,
+  CORPORA_TABLE_NAME,
+} from '../../common/data/project/corpus';
 import { useDatabase } from '../../hooks/useDatabase';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
@@ -44,12 +65,12 @@ import { BusyDialogContext } from '../../utils/useBusyDialogContext';
 
 enum ProjectDialogMode {
   CREATE = 'create',
-  EDIT = 'update'
+  EDIT = 'update',
 }
 
 enum TextDirection {
   LTR = 'L to R',
-  RTL = 'R to L'
+  RTL = 'R to L',
 }
 
 /**
@@ -82,7 +103,7 @@ const getInitialProjectState = (): Project => ({
   textDirection: 'ltr',
   fileName: '',
   linksTable: new LinksTable(),
-  location: ProjectLocation.LOCAL
+  location: ProjectLocation.LOCAL,
 });
 
 /**
@@ -93,16 +114,27 @@ const getInitialProjectState = (): Project => ({
  * @param unavailableProjectNames project names that already exist
  */
 const ProjectSettings: React.FC<ProjectSettingsProps> = ({
-                                                       closeCallback,
-                                                       projectId,
-                                                       isSignedIn,
-                                                       unavailableProjectNames = []
-                                                     }: ProjectSettingsProps) => {
+  closeCallback,
+  projectId,
+  isSignedIn,
+  unavailableProjectNames = [],
+}: ProjectSettingsProps) => {
   const dispatch = useAppDispatch();
   const { publishProject, dialog: publishDialog } = usePublishProject();
-  const { projectState, preferences, setProjects, setPreferences, projects, setIsSnackBarOpen, setSnackBarObject } = useContext(AppContext);
+  const {
+    projectState,
+    preferences,
+    setProjects,
+    setPreferences,
+    projects,
+    setIsSnackBarOpen,
+    setSnackBarObject,
+  } = useContext(AppContext);
   const { setForceShowBusyDialog } = useContext(BusyDialogContext);
-  const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
+  const initialProjectState = useMemo<Project>(
+    () => getInitialProjectState(),
+    []
+  );
   const [project, setProject] = useState<Project>(initialProjectState);
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
   const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
@@ -110,17 +142,30 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
   const [fileContent, setFileContent] = useState('');
   const [projectUpdated, setProjectUpdated] = useState(false);
   const { deleteProject } = useDeleteRemoteProject();
-  const languageOptions = useMemo(() =>
-    ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
-      .sort((a, b) => a.localeCompare(b)), []);
+  const languageOptions = useMemo(
+    () =>
+      [
+        '',
+        ...Object.keys(ISO6393).map(
+          (key: string) => ISO6393[key as keyof typeof ISO6393]
+        ),
+      ].sort((a, b) => a.localeCompare(b)),
+    []
+  );
   const dbApi = useDatabase();
-  const allowDelete = useMemo(() => projectId !== DefaultProjectId, [projectId]);
-  const handleUpdate = useCallback((updatedProjectFields: Partial<Project>) => {
-    if (!projectUpdated) {
-      setProjectUpdated(true);
-    }
-    setProject((p: Project) => ({ ...p, ...updatedProjectFields }));
-  }, [projectUpdated, setProject]);
+  const allowDelete = useMemo(
+    () => projectId !== DefaultProjectId,
+    [projectId]
+  );
+  const handleUpdate = useCallback(
+    (updatedProjectFields: Partial<Project>) => {
+      if (!projectUpdated) {
+        setProjectUpdated(true);
+      }
+      setProject((p: Project) => ({ ...p, ...updatedProjectFields }));
+    },
+    [projectUpdated, setProject]
+  );
   const handleClose = useCallback(() => {
     setFileContent('');
     setProjectUpdated(false);
@@ -131,33 +176,47 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
 
   const invalidProjectName = useMemo(() => {
     return (
-      unavailableProjectNames.includes((project.name || '').trim())
-      && !projectState.projectTable.getDatabaseStatus().busyInfo.isBusy
+      unavailableProjectNames.includes((project.name || '').trim()) &&
+      !projectState.projectTable.getDatabaseStatus().busyInfo.isBusy
     );
   }, [unavailableProjectNames, projectState, project]);
 
-  const enableCreate = useMemo(() => (
-    !uploadErrors.length
-    && (project.fileName || '').length
-    && (project.name || '').length
-    && !invalidProjectName
-    && (project.abbreviation || '').length
-    && (project.languageCode || '').length
-    && Object.keys(TextDirection).includes((project.textDirection || '').toUpperCase())
-    && projectUpdated
-  ), [invalidProjectName, uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
+  const enableCreate = useMemo(
+    () =>
+      !uploadErrors.length &&
+      (project.fileName || '').length &&
+      (project.name || '').length &&
+      !invalidProjectName &&
+      (project.abbreviation || '').length &&
+      (project.languageCode || '').length &&
+      Object.keys(TextDirection).includes(
+        (project.textDirection || '').toUpperCase()
+      ) &&
+      projectUpdated,
+    [
+      invalidProjectName,
+      uploadErrors.length,
+      project.fileName,
+      project.name,
+      project.abbreviation,
+      project.languageCode,
+      project.textDirection,
+      projectUpdated,
+    ]
+  );
 
-  const handleSubmit = useCallback(async (type: ProjectDialogMode, e: any) => {
+  const handleSubmit = useCallback(
+    async (type: ProjectDialogMode, e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
       while (!projectState.projectTable?.isDatabaseBusy()) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       return await new Promise((resolve) => {
         setTimeout(async () => {
           e.preventDefault();
           const projectToUpdate = {
             ...project,
-            id: project.id ?? uuidv4()
+            id: project.id ?? uuidv4(),
           };
 
           const targetCorpus = {
@@ -167,77 +226,133 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
             fileName: project.fileName,
             language: {
               code: project.languageCode,
-              textDirection: (project.textDirection || 'ltr')
+              textDirection: project.textDirection || 'ltr',
             },
             words: [],
             wordsByVerse: {},
             wordLocation: new Map<string, Set<BCVWP>>(),
             books: {},
             side: AlignmentSide.TARGET,
-            updatedSinceSync: 1
+            updatedSinceSync: 1,
           } as Corpus;
 
           if (fileContent) {
             dispatch(resetTextSegments());
-            projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
+            projectState.userPreferenceTable?.saveOrUpdate?.({
+              ...(preferences ?? {}),
+              bcv: null,
+            } as UserPreference);
 
-            const parsedTsvCorpus = parseTsv(fileContent, targetCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
+            const parsedTsvCorpus = parseTsv(
+              fileContent,
+              targetCorpus,
+              AlignmentSide.TARGET,
+              CorpusFileFormat.TSV_TARGET
+            );
             putVersesInCorpus({ ...targetCorpus, ...parsedTsvCorpus });
-            projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
+            projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(
+              AlignmentSide.TARGET,
+              [parsedTsvCorpus]
+            );
           } else {
-            projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [{
-              ...targetCorpus,
-              id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
-            }]);
+            projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(
+              AlignmentSide.TARGET,
+              [
+                {
+                  ...targetCorpus,
+                  id:
+                    projectToUpdate.targetCorpora?.corpora?.[0]?.id ??
+                    project.id,
+                },
+              ]
+            );
           }
           projectToUpdate.updatedAt = DateTime.now().toMillis();
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             projectToUpdate.lastSyncTime = 0;
-            await projectState.projectTable?.save?.(projectToUpdate, !!fileContent, false, true);
+            await projectState.projectTable?.save?.(
+              projectToUpdate,
+              !!fileContent,
+              false,
+              true
+            );
           } else {
-            await projectState.projectTable?.update?.(projectToUpdate, !!fileContent, false, true);
+            await projectState.projectTable?.update?.(
+              projectToUpdate,
+              !!fileContent,
+              false,
+              true
+            );
           }
           await dbApi.save({
             projectId: projectToUpdate.id,
             table: CORPORA_TABLE_NAME,
             itemOrItems: targetCorpus,
-            disableJournaling: true
+            disableJournaling: true,
           });
           if (type === 'update') {
-            setPreferences(p => ({
-              ...(p ?? {}) as UserPreference,
+            setPreferences((p) => ({
+              ...((p ?? {}) as UserPreference),
               initialized: InitializationStates.INITIALIZED,
             }));
           }
-          const updatedProjects = await projectState.projectTable?.getProjects(true);
-          setProjects(p => Array.from(updatedProjects?.values?.() ?? p));
+          const updatedProjects = await projectState.projectTable?.getProjects(
+            true
+          );
+          setProjects((p) => Array.from(updatedProjects?.values?.() ?? p));
           resolve(undefined);
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
-    }
-    , [dbApi, project, fileContent, setPreferences, dispatch, preferences, setProjects, projectId, projectState.projectTable, projectState.userPreferenceTable]);
+    },
+    [
+      dbApi,
+      project,
+      fileContent,
+      setPreferences,
+      dispatch,
+      preferences,
+      setProjects,
+      projectId,
+      projectState.projectTable,
+      projectState.userPreferenceTable,
+    ]
+  );
 
   const handleDelete = useCallback(async () => {
     if (projectId) {
       await projectState.projectTable?.remove?.(projectId);
-      setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
+      setProjects((ps: Project[]) =>
+        (ps || []).filter(
+          (p) => (p.id || '').trim() !== (projectId || '').trim()
+        )
+      );
       if (preferences?.currentProject === projectId) {
         projectState.linksTable.reset().catch(console.error);
         projectState.linksTable.setSourceName(DefaultProjectId);
         setPreferences((p: UserPreference | undefined) => ({
-          ...(p ?? {}) as UserPreference,
+          ...((p ?? {}) as UserPreference),
           currentProject: DefaultProjectId,
-          initialized: InitializationStates.UNINITIALIZED
+          initialized: InitializationStates.UNINITIALIZED,
         }));
       }
       setOpenConfirmDelete(false);
       handleClose();
     }
-  }, [projectId, projectState.projectTable, projectState.linksTable, setProjects, preferences?.currentProject, handleClose, setPreferences]);
+  }, [
+    projectId,
+    projectState.projectTable,
+    projectState.linksTable,
+    setProjects,
+    preferences?.currentProject,
+    handleClose,
+    setPreferences,
+  ]);
 
   const setInitialProjectState = useCallback(async () => {
-    const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
+    const foundProject = [...(projects?.values?.() ?? [])].find(
+      (p) => p.id === projectId
+    );
     if (foundProject) {
       setProject(foundProject as Project);
     }
@@ -248,14 +363,15 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
   }, [setInitialProjectState]);
 
   const tsvUploadGroup = useMemo<JSX.Element>(() => {
-    if (!!projectId) return (<></>);
+    if (!!projectId) return <></>;
     return (
       <Box
         sx={{
           mt: 2,
           display: 'flex',
-          flexDirection: 'row'
-        }}>
+          flexDirection: 'row',
+        }}
+      >
         <Box
           sx={(theme) => ({
             marginRight: '6px',
@@ -266,67 +382,106 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
             borderWidth: '1px',
             borderColor: theme.palette.text.disabled,
             paddingX: '8px',
-            flexGrow: 1
-          })}>
-          <UploadFile sx={{ color: uploadErrors.length ? 'error.main' : 'primary.main', m: 1 }} />
-          <Typography variant="subtitle2" sx={{ mt: .5 }} {...(uploadErrors.length ? { color: 'error' } : { color: 'primary' })}>
+            flexGrow: 1,
+          })}
+        >
+          <UploadFile
+            sx={{
+              color: uploadErrors.length ? 'error.main' : 'primary.main',
+              m: 1,
+            }}
+          />
+          <Typography
+            variant="subtitle2"
+            sx={{ mt: 0.5 }}
+            {...(uploadErrors.length
+              ? { color: 'error' }
+              : { color: 'primary' })}
+          >
             {uploadErrors.length ? (
               <>
-                {uploadErrors.map(error => <span style={{ display: 'block' }}>{error}</span>)}
+                {uploadErrors.map((error) => (
+                  <span style={{ display: 'block' }}>{error}</span>
+                ))}
               </>
-            ) : project.fileName}
+            ) : (
+              project.fileName
+            )}
           </Typography>
         </Box>
-        <Button variant="contained" component="label"
-                sx={{
-                  borderRadius: 10,
-                }}
-                disabled={project.location === ProjectLocation.REMOTE}>
-          <FileUpload/>
+        <Button
+          variant="contained"
+          component="label"
+          sx={{
+            borderRadius: 10,
+          }}
+          disabled={project.location === ProjectLocation.REMOTE}
+        >
+          <FileUpload />
           Upload
-          <input type="file" hidden
-                 onClick={(event) => {
-                   // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
-                   // event isn't thrown.
+          <input
+            type="file"
+            hidden
+            onClick={(event) => {
+              // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
+              // event isn't thrown.
 
-                   // @ts-ignore
-                   event.currentTarget.value = null;
-                 }}
-                 onChange={async (event) => {
-                   // grab file content
-                   const file = event!.target!.files![0];
-                   const content = await file.text();
-                   const errorMessages: string[] = [];
-                   const contentLines = content.split('\n');
-                   if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
-                     errorMessages.push('TSV must include \'text\' and \'id\' headers.');
-                   }
-                   let goodCtr = 0;
-                   for (const contentLine of contentLines) {
-                     goodCtr += !!contentLine ? 1 : 0;
-                     if (goodCtr > 1) {
-                       break;
-                     }
-                   }
-                   if (goodCtr < 2) {
-                     errorMessages.push('TSV must include at least one row of data.');
-                   }
-                   if (errorMessages.length) {
-                     setUploadErrors(errorMessages);
-                     return;
-                   }
+              // @ts-ignore
+              event.currentTarget.value = null;
+            }}
+            onChange={async (event) => {
+              // grab file content
+              const file = event!.target!.files![0];
+              const content = await file.text();
+              const errorMessages: string[] = [];
+              const contentLines = content.split('\n');
+              if (
+                !['text', 'id'].every((header) =>
+                  contentLines[0].includes(header)
+                )
+              ) {
+                errorMessages.push("TSV must include 'text' and 'id' headers.");
+              }
+              let goodCtr = 0;
+              for (const contentLine of contentLines) {
+                goodCtr += !!contentLine ? 1 : 0;
+                if (goodCtr > 1) {
+                  break;
+                }
+              }
+              if (goodCtr < 2) {
+                errorMessages.push(
+                  'TSV must include at least one row of data.'
+                );
+              }
+              if (errorMessages.length) {
+                setUploadErrors(errorMessages);
+                return;
+              }
 
-                   setUploadErrors([]);
-                   handleUpdate({ fileName: file.name });
-                   setFileContent(content);
-                 }}
+              setUploadErrors([]);
+              handleUpdate({ fileName: file.name });
+              setFileContent(content);
+            }}
           />
         </Button>
-      </Box>);
-  }, [uploadErrors, project.fileName, project.location, handleUpdate, setUploadErrors, setFileContent, projectId]);
+      </Box>
+    );
+  }, [
+    uploadErrors,
+    project.fileName,
+    project.location,
+    handleUpdate,
+    setUploadErrors,
+    setFileContent,
+    projectId,
+  ]);
 
   const groups = useCurrentUserGroups({ forceRefresh: true });
-  const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
+  const isAdmin = useMemo<boolean>(
+    () => (groups ?? []).includes(ADMIN_GROUP),
+    [groups]
+  );
 
   const isFormReadOnly = useMemo<boolean>(() => {
     if (project.location === ProjectLocation.REMOTE) return true;
@@ -336,174 +491,246 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
 
   return (
     <>
-      <Typography variant={'subtitle1'}
-                  sx={{
-                    alignSelf: 'start',
-                    justifyContent: 'left',
-                    mb: '8px',
-                    fontWeight: 'bold'
-                  }}>{!projectId ? 'Create' : 'Edit'} Project</Typography>
-          <Grid container flexDirection="column" alignItems="center" justifyContent="space-between"
-                sx={{ width: '100%', height: '100%' }}>
-            <FormGroup sx={{
-              width: '100%',
-            }}>
-              <Box
+      <Typography
+        variant={'subtitle1'}
+        sx={{
+          alignSelf: 'start',
+          justifyContent: 'left',
+          mb: '8px',
+          fontWeight: 'bold',
+        }}
+      >
+        {!projectId ? 'Create' : 'Edit'} Project
+      </Typography>
+      <Grid
+        container
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ width: '100%', height: '100%' }}
+      >
+        <FormGroup
+          sx={{
+            width: '100%',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+            }}
+          >
+            <FormControl
+              sx={{
+                flexGrow: 1,
+              }}
+            >
+              <TextField
+                size="small"
+                label={'Name'}
+                sx={{}}
+                fullWidth
+                type="text"
+                value={project.name}
+                disabled={isFormReadOnly}
+                onChange={({ target: { value: name } }) =>
+                  handleUpdate({ name })
+                }
+                error={invalidProjectName}
+                helperText={
+                  invalidProjectName ? 'Project name already in use.' : ''
+                }
+              />
+            </FormControl>
+            <FormControl>
+              <TextField
+                size="small"
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                }}>
-                <FormControl
-                  sx={{
-                    flexGrow: 1
-                  }}>
-                  <TextField size="small" label={'Name'} sx={{  }} fullWidth type="text" value={project.name}
-                             disabled={isFormReadOnly}
-                             onChange={({ target: { value: name } }) =>
-                               handleUpdate({ name })}
-                             error={invalidProjectName}
-                             helperText={invalidProjectName ? 'Project name already in use.' : ''}
-                  />
-                </FormControl>
-                <FormControl>
-                  <TextField
-                            size="small"
-                            sx={{
-                              ml: '2px',
-                              width: '64px'
-                            }}
-                            label={'Abbrev'}
-                            fullWidth
-                            type="text"
-                            value={project.abbreviation}
-                            disabled={isFormReadOnly}
-                            onChange={({ target: { value: abbreviation } }) =>
-                               handleUpdate({ abbreviation })}
-                  />
-                </FormControl>
-              </Box>
-              <Typography
-                sx={{
-                  ml: '12px',
-                  mt: '2px'
+                  ml: '2px',
+                  width: '64px',
                 }}
-                variant={'caption'}
-                color={'text.secondary'}>{project.fileName}</Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  width: '100%',
-                  mt: '8px'
-                }}>
-                <FormControl
-                  sx={{
-                    width: '90px'
-                  }}>
-                  <InputLabel id={'direction-label'} shrink>Direction</InputLabel>
-                  <Select
-                          size="small"
-                          label={'Direction'}
-                          sx={{
-                          }}
-                          fullWidth type="text" value={project.textDirection}
-                          disabled={isFormReadOnly}
-                          onChange={({ target: { value: textDirection } }) =>
-                            handleUpdate({ textDirection: textDirection as string })
-                          }>
-                    {
-                      Object.keys(TextDirection).map(td => (
-                        <MenuItem key={td.toLowerCase()} value={td.toLowerCase()}>
-                          {TextDirection[td as keyof typeof TextDirection]}
-                        </MenuItem>
-                      ))
-                    }
-                  </Select>
-                </FormControl>
-                <FormControl
-                  sx={{
-                    flexGrow: 1,
-                    ml: '2px'
-                  }}>
-                  <Autocomplete
-                    sx={{
-                    }}
-                    size="small"
-                    fullWidth
-                    disablePortal
-                    options={languageOptions}
-                    ListboxProps={{
-                      style: {
-                        maxHeight: 250
-                      }
-                    }}
-                    disabled={isFormReadOnly}
-                    value={ISO6393[project.languageCode as keyof typeof ISO6393] || ''}
-                    onChange={(_, language) =>
-                      handleUpdate({
-                        languageCode: Object.keys(ISO6393).find(k => ISO6393[k as keyof typeof ISO6393] === language) ?? ''
-                      })}
-                    renderInput={(params) => <TextField label={'Language'} {...params} />}
-                  />
-                </FormControl>
-              </Box>
+                label={'Abbrev'}
+                fullWidth
+                type="text"
+                value={project.abbreviation}
+                disabled={isFormReadOnly}
+                onChange={({ target: { value: abbreviation } }) =>
+                  handleUpdate({ abbreviation })
+                }
+              />
+            </FormControl>
+          </Box>
+          <Typography
+            sx={{
+              ml: '12px',
+              mt: '2px',
+            }}
+            variant={'caption'}
+            color={'text.secondary'}
+          >
+            {project.fileName}
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              width: '100%',
+              mt: '8px',
+            }}
+          >
+            <FormControl
+              sx={{
+                width: '90px',
+              }}
+            >
+              <InputLabel id={'direction-label'} shrink>
+                Direction
+              </InputLabel>
+              <Select
+                size="small"
+                label={'Direction'}
+                sx={{}}
+                fullWidth
+                type="text"
+                value={project.textDirection}
+                disabled={isFormReadOnly}
+                onChange={({ target: { value: textDirection } }) =>
+                  handleUpdate({ textDirection: textDirection as string })
+                }
+              >
+                {Object.keys(TextDirection).map((td) => (
+                  <MenuItem key={td.toLowerCase()} value={td.toLowerCase()}>
+                    {TextDirection[td as keyof typeof TextDirection]}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl
+              sx={{
+                flexGrow: 1,
+                ml: '2px',
+              }}
+            >
+              <Autocomplete
+                sx={{}}
+                size="small"
+                fullWidth
+                disablePortal
+                options={languageOptions}
+                ListboxProps={{
+                  style: {
+                    maxHeight: 250,
+                  },
+                }}
+                disabled={isFormReadOnly}
+                value={
+                  ISO6393[project.languageCode as keyof typeof ISO6393] || ''
+                }
+                onChange={(_, language) =>
+                  handleUpdate({
+                    languageCode:
+                      Object.keys(ISO6393).find(
+                        (k) => ISO6393[k as keyof typeof ISO6393] === language
+                      ) ?? '',
+                  })
+                }
+                renderInput={(params) => (
+                  <TextField label={'Language'} {...params} />
+                )}
+              />
+            </FormControl>
+          </Box>
 
-              {!projectId && tsvUploadGroup}
-              {
-                (projectId && (project.location === ProjectLocation.LOCAL || project.location === ProjectLocation.SYNCED)) &&
-                <UploadAlignmentGroup containers={[ project.sourceCorpora, project.targetCorpora ].filter(v => !!v)}
-                                      disableProjectButtons={false}
-                                      isCurrentProject={projectId === preferences?.currentProject}
-                                      isSignedIn={isSignedIn}
-                />
-              }
-            </FormGroup>
-          </Grid>
-          <Grid container justifyContent="space-between">
-            <Grid container alignItems="center" sx={{ width: 'fit-content' }}>
-              {
-                (projectId && allowDelete && (project.location === ProjectLocation.LOCAL || project.location === ProjectLocation.SYNCED))
-                  ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
-                            onClick={() => setOpenConfirmDelete(true)}
-                            startIcon={<DeleteOutline />}
-                  >Delete Local Project</Button>
-                  : <Box />
-              }
-              {
-                (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn && isAdmin)
-                  ?
-                  <Button
-                    variant="text"
-                    sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
-                    onClick={() => setOpenConfirmUnpublish(true)}
-                    startIcon={<Unpublished />}>Delete From Server</Button>
-                  : <Box />
-              }
-            </Grid>
-          </Grid>
+          {!projectId && tsvUploadGroup}
+          {projectId &&
+            (project.location === ProjectLocation.LOCAL ||
+              project.location === ProjectLocation.SYNCED) && (
+              <UploadAlignmentGroup
+                containers={[
+                  project.sourceCorpora,
+                  project.targetCorpora,
+                ].filter((v) => !!v)}
+                disableProjectButtons={false}
+                isCurrentProject={projectId === preferences?.currentProject}
+                isSignedIn={isSignedIn}
+              />
+            )}
+        </FormGroup>
+      </Grid>
+      <Grid container justifyContent="space-between">
+        <Grid container alignItems="center" sx={{ width: 'fit-content' }}>
+          {projectId &&
+          allowDelete &&
+          (project.location === ProjectLocation.LOCAL ||
+            project.location === ProjectLocation.SYNCED) ? (
+            <Button
+              variant="text"
+              color="error"
+              sx={{ textTransform: 'none', mr: 1 }}
+              onClick={() => setOpenConfirmDelete(true)}
+              startIcon={<DeleteOutline />}
+            >
+              Delete Local Project
+            </Button>
+          ) : (
+            <Box />
+          )}
+          {project &&
+          allowDelete &&
+          project.location === ProjectLocation.SYNCED &&
+          isSignedIn &&
+          isAdmin ? (
+            <Button
+              variant="text"
+              sx={(theme) => ({
+                textTransform: 'none',
+                color: theme.palette.text.secondary,
+              })}
+              onClick={() => setOpenConfirmUnpublish(true)}
+              startIcon={<Unpublished />}
+            >
+              Delete From Server
+            </Button>
+          ) : (
+            <Box />
+          )}
+        </Grid>
+      </Grid>
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'row',
-          alignSelf: 'end'
-        }}>
+          alignSelf: 'end',
+        }}
+      >
+        <Button onClick={handleClose}>Cancel</Button>
         <Button
-          onClick={handleClose}>Cancel</Button>
-        <Button
-          disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || isFormReadOnly}
-          onClick={(e) => wrapAsync(
-            async () => {
-              setForceShowBusyDialog(true);
-            },
-            async (e) => {
-              await handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e);
-              // handleClose() in the .then() ensures dialog doesn't close prematurely
-              handleClose();
-            },
-            async () => {
-              setForceShowBusyDialog(false);
-            })(e) }
-        >{!projectId ? 'Create' : 'Save'}</Button>
+          disabled={
+            !enableCreate ||
+            projectState.projectTable?.isDatabaseBusy() ||
+            isFormReadOnly
+          }
+          onClick={(e) =>
+            wrapAsync(
+              async () => {
+                setForceShowBusyDialog(true);
+              },
+              async (e) => {
+                await handleSubmit(
+                  projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE,
+                  e
+                );
+                // handleClose() in the .then() ensures dialog doesn't close prematurely
+                handleClose();
+              },
+              async () => {
+                setForceShowBusyDialog(false);
+              }
+            )(e)
+          }
+        >
+          {!projectId ? 'Create' : 'Save'}
+        </Button>
       </Box>
       <Dialog
         maxWidth="xl"
@@ -512,13 +739,24 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
       >
         <DialogContent sx={{ width: 650 }}>
           <Grid container justifyContent="space-between" alignItems="center">
-            <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
+            <Typography variant="subtitle1">
+              Are you sure you want to delete this project?
+            </Typography>
             <Grid item>
               <Grid container>
-                <Button variant="text" onClick={() => setOpenConfirmDelete(false)}>
+                <Button
+                  variant="text"
+                  onClick={() => setOpenConfirmDelete(false)}
+                >
                   Go Back
                 </Button>
-                <Button variant="contained" onClick={handleDelete} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
+                <Button
+                  variant="contained"
+                  onClick={handleDelete}
+                  sx={{ ml: 2, borderRadius: 10 }}
+                >
+                  Delete
+                </Button>
               </Grid>
             </Grid>
           </Grid>
@@ -531,41 +769,55 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
       >
         <DialogContent sx={{ width: 650 }}>
           <Grid container justifyContent="space-between" alignItems="center">
-            <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
+            <Typography variant="subtitle1">
+              Are you sure you want to delete this project?
+            </Typography>
             <Grid item>
               <Grid container>
-                <Button variant="text" onClick={() => setOpenConfirmUnpublish(false)}>
+                <Button
+                  variant="text"
+                  onClick={() => setOpenConfirmUnpublish(false)}
+                >
                   Go Back
                 </Button>
-                <Button variant="contained" onClick={() => {
-                  getUserGroups(true)
-                    .then((groups) => {
-                      const isAdmin = (groups ?? [] as string[])?.includes(ADMIN_GROUP);
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    getUserGroups(true).then((groups) => {
+                      const isAdmin = (groups ?? ([] as string[]))?.includes(
+                        ADMIN_GROUP
+                      );
                       const displayPermissionsErrorMsg = () => {
-                        setSnackBarObject({message: 'You do not have permission to complete this operation.', variant: 'error'});
+                        setSnackBarObject({
+                          message:
+                            'You do not have permission to complete this operation.',
+                          variant: 'error',
+                        });
                         setIsSnackBarOpen(true);
-                      }
+                      };
                       if (!isAdmin) {
                         displayPermissionsErrorMsg();
                         setOpenConfirmUnpublish(false);
                         return;
                       }
                       setOpenConfirmUnpublish(false);
-                      const initialProjectState = project.state ?? ProjectState.PUBLISHED;
-                      publishProject(project, ProjectState.DRAFT)
-                        .then(() => {
-                          return deleteProject(project.id)
-                            .then((response) => {
-                              if (!response || response?.success)
-                                return;
-                              if (response?.response.statusCode === 403) {
-                                void publishProject(project, initialProjectState);
-                                displayPermissionsErrorMsg();
-                              }
-                            });
+                      const initialProjectState =
+                        project.state ?? ProjectState.PUBLISHED;
+                      publishProject(project, ProjectState.DRAFT).then(() => {
+                        return deleteProject(project.id).then((response) => {
+                          if (!response || response?.success) return;
+                          if (response?.response.statusCode === 403) {
+                            void publishProject(project, initialProjectState);
+                            displayPermissionsErrorMsg();
+                          }
                         });
+                      });
                     });
-                }} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
+                  }}
+                  sx={{ ml: 2, borderRadius: 10 }}
+                >
+                  Delete
+                </Button>
               </Grid>
             </Grid>
           </Grid>

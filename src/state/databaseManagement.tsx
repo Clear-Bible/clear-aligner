@@ -23,29 +23,28 @@ export interface ProjectState {
 const DatabaseWaitInMs = 1_000;
 
 export interface DatabaseLoadState {
-  isLoaded: boolean,
-  isLoading: boolean
+  isLoaded: boolean;
+  isLoading: boolean;
 }
 
 export interface DatabaseBusyInfo {
-  isBusy?: boolean,
-  userText?: string,
-  progressCtr?: number,
-  progressMax?: number,
+  isBusy?: boolean;
+  userText?: string;
+  progressCtr?: number;
+  progressMax?: number;
 }
 
 export interface DatabaseStatus {
-  busyInfo: DatabaseBusyInfo,
-  databaseLoadState: DatabaseLoadState,
-  lastUpdateTime?: number,
-  lastStatusUpdateTime?: number,
+  busyInfo: DatabaseBusyInfo;
+  databaseLoadState: DatabaseLoadState;
+  lastUpdateTime?: number;
+  lastStatusUpdateTime?: number;
 }
 
 export const InitialDatabaseStatus = {
   busyInfo: { isBusy: false, progressCtr: 0, progressMax: 0 },
-  databaseLoadState: { isLoaded: false, isLoading: false }
+  databaseLoadState: { isLoaded: false, isLoading: false },
 } as DatabaseStatus;
-
 
 /**
  * intended to provide functionality common to any virtual table
@@ -72,7 +71,7 @@ export abstract class VirtualTable {
   }
 
   getDatabaseStatus = (): DatabaseStatus => ({
-    ..._.cloneDeep(this.databaseStatus)
+    ..._.cloneDeep(this.databaseStatus),
   });
 
   getLastUpdateTime = (): number | undefined => this.lastUpdateTime;
@@ -85,10 +84,13 @@ export abstract class VirtualTable {
   };
 
   getDatabaseBusyInfo = (): DatabaseBusyInfo => ({
-    ..._.cloneDeep(this.databaseStatus.busyInfo)
+    ..._.cloneDeep(this.databaseStatus.busyInfo),
   });
 
-  setDatabaseBusyInfo = (databaseBusyInfo: DatabaseBusyInfo, isReplace = false) => {
+  setDatabaseBusyInfo = (
+    databaseBusyInfo: DatabaseBusyInfo,
+    isReplace = false
+  ) => {
     this.databaseStatus.busyInfo = isReplace
       ? { ..._.cloneDeep(databaseBusyInfo) }
       : { ...this.databaseStatus.busyInfo, ..._.cloneDeep(databaseBusyInfo) };
@@ -111,8 +113,7 @@ export abstract class VirtualTable {
     this._onStatusUpdateImpl();
   };
 
-  protected _onStatusUpdateImpl = () => {
-  };
+  protected _onStatusUpdateImpl = () => {};
 
   isDatabaseBusy = () => this.databaseBusyCtr > 0;
 
@@ -168,7 +169,9 @@ export abstract class VirtualTable {
 
   waitForDatabase = async () => {
     while (this.databaseStatus.databaseLoadState.isLoading) {
-      await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
+      await new Promise((resolve) =>
+        window.setTimeout(resolve, DatabaseWaitInMs)
+      );
     }
   };
 
@@ -201,8 +204,7 @@ export abstract class VirtualTable {
     await this._onUpdateImpl(suppressOnUpdate);
   };
 
-  protected _onUpdateImpl = async (suppressOnUpdate = false) => {
-  };
+  protected _onUpdateImpl = async (suppressOnUpdate = false) => {};
 }
 
 // Table factories

@@ -1,7 +1,8 @@
 import {
   Autocomplete,
   Box,
-  Button, Grid,
+  Button,
+  Grid,
   Paper,
   SxProps,
   Table,
@@ -9,8 +10,9 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow, TextField,
-  Theme
+  TableRow,
+  TextField,
+  Theme,
 } from '@mui/material';
 import { useCallback, useMemo, useState } from 'react';
 import { useUsersFromServer } from '../../hooks/userInfoHooks';
@@ -24,17 +26,24 @@ interface UserEntryRowProps {
 const UserEntryRow = ({
   disabled,
   email,
-  deleteActionCallback
-                      }: UserEntryRowProps) => {
-  return (<TableRow>
-    <TableCell>
-      {email}
-    </TableCell>
-    <TableCell>
-      <Button disabled={disabled} variant={'outlined'} color={'error'} onClick={deleteActionCallback}>Delete</Button>
-    </TableCell>
-  </TableRow>);
-}
+  deleteActionCallback,
+}: UserEntryRowProps) => {
+  return (
+    <TableRow>
+      <TableCell>{email}</TableCell>
+      <TableCell>
+        <Button
+          disabled={disabled}
+          variant={'outlined'}
+          color={'error'}
+          onClick={deleteActionCallback}
+        >
+          Delete
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+};
 
 interface UserEmailAutocompleteProps {
   disabled?: boolean;
@@ -43,52 +52,59 @@ interface UserEmailAutocompleteProps {
 }
 
 const UserEmailAutocomplete = ({
-                                 disabled,
-                                 onSubmit,
-                                 currentMembers
+  disabled,
+  onSubmit,
+  currentMembers,
 }: UserEmailAutocompleteProps) => {
-
   const usersFromServer = useUsersFromServer();
-  const [ draftEmail, setDraftEmail ] = useState<string>('');
+  const [draftEmail, setDraftEmail] = useState<string>('');
 
-  const filteredUsersFromServer = useMemo<string[]|undefined>(() => {
+  const filteredUsersFromServer = useMemo<string[] | undefined>(() => {
     if (!usersFromServer) return undefined;
     return usersFromServer.filter((v) => !currentMembers.includes(v));
-  }, [ usersFromServer, currentMembers ]);
+  }, [usersFromServer, currentMembers]);
 
-  return (<>
-    <Grid
-      sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        width: '100%',
-        marginTop: '8px',
-        marginBottom: '8px'
-      }} >
-      <Autocomplete
-        disabled={disabled}
+  return (
+    <>
+      <Grid
         sx={{
-          flexGrow: 1,
-          marginTop: '2px',
-          marginRight: '8px'
+          display: 'flex',
+          flexDirection: 'row',
+          width: '100%',
+          marginTop: '8px',
+          marginBottom: '8px',
         }}
-        freeSolo
-        clearOnBlur
-        value={draftEmail}
-        options={!!filteredUsersFromServer ? filteredUsersFromServer : ['Loading...']}
-        onChange={(e, v, r) => setDraftEmail(v ?? '')}
-        renderInput={(params) => <TextField {...params} label={'Add User'} />}
-      />
-      <Button
-        disabled={disabled}
-        variant={'contained'}
-        onClick={() => {
-          onSubmit(draftEmail);
-          setDraftEmail('');
-        }}>Add</Button>
-    </Grid>
-  </>);
-}
+      >
+        <Autocomplete
+          disabled={disabled}
+          sx={{
+            flexGrow: 1,
+            marginTop: '2px',
+            marginRight: '8px',
+          }}
+          freeSolo
+          clearOnBlur
+          value={draftEmail}
+          options={
+            !!filteredUsersFromServer ? filteredUsersFromServer : ['Loading...']
+          }
+          onChange={(e, v, r) => setDraftEmail(v ?? '')}
+          renderInput={(params) => <TextField {...params} label={'Add User'} />}
+        />
+        <Button
+          disabled={disabled}
+          variant={'contained'}
+          onClick={() => {
+            onSubmit(draftEmail);
+            setDraftEmail('');
+          }}
+        >
+          Add
+        </Button>
+      </Grid>
+    </>
+  );
+};
 
 /**
  * props for project permissions component
@@ -107,56 +123,70 @@ const ProjectSharingPermissions = ({
   sx,
   disabled,
   members,
-  onMembersUpdated
-                            }: ProjectSharingPermissionsProps) => {
+  onMembersUpdated,
+}: ProjectSharingPermissionsProps) => {
+  const handleAdd = useCallback(
+    (member: string) => {
+      if (members.includes(member)) return;
+      onMembersUpdated([...members, member]);
+    },
+    [members, onMembersUpdated]
+  );
+  const handleRemoveMember = useCallback(
+    (idx: number) => {
+      onMembersUpdated(members.filter((v, i) => i !== idx));
+    },
+    [members, onMembersUpdated]
+  );
 
-  const handleAdd = useCallback((member: string) => {
-    if (members.includes(member)) return;
-    onMembersUpdated([ ...members, member ]);
-  }, [ members, onMembersUpdated ]);
-  const handleRemoveMember = useCallback((idx: number) => {
-    onMembersUpdated(members.filter((v, i) => i !== idx));
-  }, [ members, onMembersUpdated ]);
-
-  return (<Box sx={{
-    margin: '4px',
-    display: 'flex',
-    flexDirection: 'column',
-    ...sx
-  }}>
-    <UserEmailAutocomplete
-      disabled={disabled}
-      onSubmit={handleAdd}
-      currentMembers={members} />
-    <TableContainer
+  return (
+    <Box
       sx={{
-        marginTop: '8px',
-        marginBottom: '8px',
-        flexGrow: 1
+        margin: '4px',
+        display: 'flex',
+        flexDirection: 'column',
+        ...sx,
       }}
-      component={Paper}>
-      <Table
+    >
+      <UserEmailAutocomplete
+        disabled={disabled}
+        onSubmit={handleAdd}
+        currentMembers={members}
+      />
+      <TableContainer
         sx={{
-          width: '100%',
-          maxHeight: '100% !important'
-        }}>
-        <TableHead>
-          <TableRow>
-            <TableCell>User Email</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {members?.map((email, idx) => (
-            <UserEntryRow
-              key={idx}
-              disabled={disabled}
-              email={email}
-              deleteActionCallback={() => handleRemoveMember(idx)} />))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </Box>);
-}
+          marginTop: '8px',
+          marginBottom: '8px',
+          flexGrow: 1,
+        }}
+        component={Paper}
+      >
+        <Table
+          sx={{
+            width: '100%',
+            maxHeight: '100% !important',
+          }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell>User Email</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {members?.map((email, idx) => (
+              <UserEntryRow
+                key={idx}
+                disabled={disabled}
+                email={email}
+                deleteActionCallback={() => handleRemoveMember(idx)}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+};
 
 export default ProjectSharingPermissions;

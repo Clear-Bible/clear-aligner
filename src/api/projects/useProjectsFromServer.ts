@@ -1,4 +1,9 @@
-import { mapProjectDtoToProject, ProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
+import {
+  mapProjectDtoToProject,
+  ProjectDTO,
+  ProjectLocation,
+  ProjectState,
+} from '../../common/data/project/project';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppContext } from '../../App';
 import { Progress } from '../ApiModels';
@@ -23,77 +28,107 @@ export interface UseProjectsFromServerProps {
  * @param syncProjectsKey Used to requery project information when updated in the component that invokes this hook.
  * @param enabled Prevents automatically requerying remote projects when set to false.
  */
-export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UseProjectsFromServerProps): {
-  refetch: (args?: { persist: boolean; currentProjects: any }) => Promise<ProjectDTO[] | undefined>,
-  progress: Progress
+export const useProjectsFromServer = ({
+  syncProjectsKey,
+  enabled = true,
+}: UseProjectsFromServerProps): {
+  refetch: (args?: {
+    persist: boolean;
+    currentProjects: any;
+  }) => Promise<ProjectDTO[] | undefined>;
+  progress: Progress;
 } => {
   const { projectState, setProjects } = useContext(AppContext);
   const [progress, setProgress] = useState<Progress>(Progress.IDLE);
 
-  const getProjects = useCallback(async ({ persist, currentProjects } = { persist: false, currentProjects: [] }) => {
-    try {
-      setProgress(Progress.IN_PROGRESS);
+  const getProjects = useCallback(
+    async (
+      { persist, currentProjects } = { persist: false, currentProjects: [] }
+    ) => {
+      try {
+        setProgress(Progress.IN_PROGRESS);
 
-      const projectsResponse = await ApiUtils.generateRequest<ProjectDTO[]>({
-        requestPath: '/api/projects',
-        requestType: RequestType.GET
-      });
-      if (!projectsResponse.success) return undefined;
+        const projectsResponse = await ApiUtils.generateRequest<ProjectDTO[]>({
+          requestPath: '/api/projects',
+          requestType: RequestType.GET,
+        });
+        if (!projectsResponse.success) return undefined;
 
-      const projectsDtos = (projectsResponse.body ?? []) as ProjectDTO[];
-      const serverProjects = (
-        Array.isArray(projectsDtos)
-          ? projectsDtos
-            .filter(p => p.state === ProjectState.PUBLISHED)
-            .map(p => mapProjectDtoToProject(p, ProjectLocation.REMOTE))
-          : []
-      ).filter(p => p?.targetCorpora?.corpora) as Project[];
+        const projectsDtos = (projectsResponse.body ?? []) as ProjectDTO[];
+        const serverProjects = (
+          Array.isArray(projectsDtos)
+            ? projectsDtos
+                .filter((p) => p.state === ProjectState.PUBLISHED)
+                .map((p) => mapProjectDtoToProject(p, ProjectLocation.REMOTE))
+            : []
+        ).filter((p) => p?.targetCorpora?.corpora) as Project[];
 
-      // Save in local database if persist is specified.
-      if (persist) {
-        const localProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
-        for (const serverProject of serverProjects
-          .filter(foundProject => ProjectTable.projectHasTargetCorpora(foundProject))) {
-          serverProject.sourceCorpora = undefined;
-          const localProject: Project = localProjects.get(serverProject.id);
-          // Update valid projects stored locally that are local or synced.
-          serverProject.lastSyncTime = localProject?.lastSyncTime ?? serverProject?.lastSyncTime;
-          serverProject.updatedAt = localProject?.updatedAt ?? serverProject?.updatedAt;
-          if (ProjectTable.projectHasAllCorpora(localProject)) {
-            serverProject.location = ProjectLocation.SYNCED;
-            await projectState.projectTable?.update?.(serverProject, false);
-          } else {
-            await projectState.projectTable?.save?.(serverProject, false);
+        // Save in local database if persist is specified.
+        if (persist) {
+          const localProjects =
+            (await projectState.projectTable?.getProjects?.(true)) ?? new Map();
+          for (const serverProject of serverProjects.filter((foundProject) =>
+            ProjectTable.projectHasTargetCorpora(foundProject)
+          )) {
+            serverProject.sourceCorpora = undefined;
+            const localProject: Project = localProjects.get(serverProject.id);
+            // Update valid projects stored locally that are local or synced.
+            serverProject.lastSyncTime =
+              localProject?.lastSyncTime ?? serverProject?.lastSyncTime;
+            serverProject.updatedAt =
+              localProject?.updatedAt ?? serverProject?.updatedAt;
+            if (ProjectTable.projectHasAllCorpora(localProject)) {
+              serverProject.location = ProjectLocation.SYNCED;
+              await projectState.projectTable?.update?.(serverProject, false);
+            } else {
+              await projectState.projectTable?.save?.(serverProject, false);
+            }
+          }
+          const localOnlyProjects: Project[] = Array.from(
+            localProjects.values()
+          ).filter(
+            (localProject: Project) =>
+              !serverProjects.some(
+                (serverProject) => localProject.id === serverProject.id
+              )
+          );
+          const localizedServerProjects: Project[] = localOnlyProjects.filter(
+            (foundProject: Project) =>
+              ProjectTable.projectHasAnyCorpora(foundProject)
+          );
+          for (const localizedServerProject of localizedServerProjects) {
+            localizedServerProject.location = ProjectLocation.LOCAL;
+            localizedServerProject.lastSyncTime = 0;
+            localizedServerProject.updatedAt = DateTime.now().toMillis();
+            await projectState.projectTable?.update?.(
+              localizedServerProject,
+              false
+            );
+          }
+          const removedServerProjects: Project[] = localOnlyProjects.filter(
+            (foundProject: Project) =>
+              !ProjectTable.projectHasAnyCorpora(foundProject)
+          );
+          for (const removedServerProject of removedServerProjects) {
+            await projectState.projectTable?.remove(removedServerProject?.id);
           }
         }
-        const localOnlyProjects: Project[] = Array.from(localProjects.values())
-          .filter((localProject: Project) =>
-            !serverProjects.some(serverProject => localProject.id === serverProject.id));
-        const localizedServerProjects: Project[] = localOnlyProjects.filter((foundProject: Project) =>
-          ProjectTable.projectHasAnyCorpora(foundProject));
-        for (const localizedServerProject of localizedServerProjects) {
-          localizedServerProject.location = ProjectLocation.LOCAL;
-          localizedServerProject.lastSyncTime = 0;
-          localizedServerProject.updatedAt = DateTime.now().toMillis();
-          await projectState.projectTable?.update?.(localizedServerProject, false);
-        }
-        const removedServerProjects: Project[] = localOnlyProjects.filter((foundProject: Project) =>
-          !ProjectTable.projectHasAnyCorpora(foundProject));
-        for (const removedServerProject of removedServerProjects) {
-          await projectState.projectTable?.remove(removedServerProject?.id);
-        }
+        const updatedLocalProjects =
+          (await projectState.projectTable?.getProjects?.(true)) ?? new Map();
+        setProjects((prevResults) =>
+          Array.from(updatedLocalProjects.values() ?? prevResults)
+        );
+        setProgress(Progress.SUCCESS);
+        return projectsDtos;
+      } catch (x) {
+        console.error(x);
+        setProgress(Progress.FAILED);
+      } finally {
+        setTimeout(() => setProgress(Progress.IDLE), 5000);
       }
-      const updatedLocalProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
-      setProjects(prevResults => Array.from(updatedLocalProjects.values() ?? prevResults));
-      setProgress(Progress.SUCCESS);
-      return projectsDtos;
-    } catch (x) {
-      console.error(x);
-      setProgress(Progress.FAILED);
-    } finally {
-      setTimeout(() => setProgress(Progress.IDLE), 5000);
-    }
-  }, [projectState, setProjects]);
+    },
+    [projectState, setProjects]
+  );
 
   useEffect(() => {
     enabled && void getProjects();

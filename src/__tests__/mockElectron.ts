@@ -7,7 +7,7 @@ import { DatabaseApi } from '../hooks/useDatabase';
  */
 export const mockEnvironmentVarsOnWindow = (vars?: EnvironmentVariables) => {
   (window as any).environmentVariables = vars ?? {};
-}
+};
 
 /**
  * create a mock of the {@link DatabaseApi}
@@ -17,9 +17,9 @@ export const mockDatabaseApi = (api?: Partial<DatabaseApi>) => {
   return {
     getPreferences: async (requery) => ({}),
     toggleCorporaUpdatedFlagOff: async (projectId: string) => undefined,
-    ...api
+    ...api,
   } as DatabaseApi;
-}
+};
 
 /**
  * creates a mock with the given override values on the window object of the {@link DatabaseApi}
@@ -27,4 +27,4 @@ export const mockDatabaseApi = (api?: Partial<DatabaseApi>) => {
  */
 export const mockDatabaseApiOnWindow = (api?: Partial<DatabaseApi>) => {
   (window as any).databaseApi = mockDatabaseApi(api);
-}
+};

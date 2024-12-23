@@ -7,10 +7,22 @@ import { Project } from '../../state/projects/tableManager';
  * @param projectsList current list of projects to pick from
  * @param preferenceCurrentProject optional, preferred project selection (if available)
  */
-export const pickDeFactoCurrentProject = (projectsList: Project[], preferenceCurrentProject?: string) => {
-  const prefCurrentProject = projectsList.some((p) => p.id === preferenceCurrentProject && p.location !== ProjectLocation.REMOTE) ? preferenceCurrentProject : undefined;
-  const firstLocalOrSyncedProject = projectsList.find((p) => p.location !== ProjectLocation.REMOTE);
-  return prefCurrentProject
-    ?? firstLocalOrSyncedProject?.id
-    ?? projectsList.find((p) => DefaultProjectId === p.id)?.id;
+export const pickDeFactoCurrentProject = (
+  projectsList: Project[],
+  preferenceCurrentProject?: string
+) => {
+  const prefCurrentProject = projectsList.some(
+    (p) =>
+      p.id === preferenceCurrentProject && p.location !== ProjectLocation.REMOTE
+  )
+    ? preferenceCurrentProject
+    : undefined;
+  const firstLocalOrSyncedProject = projectsList.find(
+    (p) => p.location !== ProjectLocation.REMOTE
+  );
+  return (
+    prefCurrentProject ??
+    firstLocalOrSyncedProject?.id ??
+    projectsList.find((p) => DefaultProjectId === p.id)?.id
+  );
 };

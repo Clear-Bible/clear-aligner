@@ -26,7 +26,7 @@ const mockVerse: Verse = {
       text: 'And',
       position: 1,
       normalizedText: 'and',
-      lemma: "and",
+      lemma: 'and',
     },
     {
       id: '45005003002',
@@ -35,7 +35,7 @@ const mockVerse: Verse = {
       text: 'not',
       position: 2,
       normalizedText: 'not',
-      lemma: "not",
+      lemma: 'not',
     },
     {
       id: '45005003003',
@@ -44,7 +44,7 @@ const mockVerse: Verse = {
       text: 'only',
       position: 3,
       normalizedText: 'only',
-      lemma: "only",
+      lemma: 'only',
     },
     {
       id: '45005003004',
@@ -53,7 +53,7 @@ const mockVerse: Verse = {
       text: 'so',
       position: 4,
       normalizedText: 'so',
-      lemma: "so",
+      lemma: 'so',
     },
   ],
 };
@@ -185,7 +185,7 @@ RTLVerse.args = {
       textDirection: TextDirection.RTL,
     },
     hasGloss: false,
-    words: mockRtlWords
+    words: mockRtlWords,
   } as unknown as Corpus,
 } as VerseDisplayProps;
 
@@ -299,6 +299,6 @@ Hebrew.args = {
       fontFamily: 'sbl-hebrew',
     },
     hasGloss: false,
-    words: mockHebrewWords
+    words: mockHebrewWords,
   } as unknown as Corpus,
 } as VerseDisplayProps;

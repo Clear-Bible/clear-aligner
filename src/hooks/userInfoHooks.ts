@@ -20,7 +20,7 @@ export const ADMIN_GROUP = 'admin';
  */
 export interface UseCurrentUserGroupsProps {
   forceRefresh?: boolean;
-  refreshKey?: string
+  refreshKey?: string;
 }
 
 /**
@@ -28,9 +28,12 @@ export interface UseCurrentUserGroupsProps {
  * @param forceRefresh whether the request for the current user's groups should trigger a refresh from the server
  * @param refreshKey updating this key triggers an update
  */
-export const useCurrentUserGroups = ({ forceRefresh, refreshKey }: UseCurrentUserGroupsProps) => {
-  const [ groups, setGroups ] = useState<string[]>();
-  const [ lastRefreshKey, setLastRefreshKey ] = useState<string>(uuid());
+export const useCurrentUserGroups = ({
+  forceRefresh,
+  refreshKey,
+}: UseCurrentUserGroupsProps) => {
+  const [groups, setGroups] = useState<string[]>();
+  const [lastRefreshKey, setLastRefreshKey] = useState<string>(uuid());
   const network = useNetworkState();
 
   useEffect(() => {
@@ -42,13 +45,18 @@ export const useCurrentUserGroups = ({ forceRefresh, refreshKey }: UseCurrentUse
       })
       .catch((err) => console.error(err))
       .finally(() => {
-        if (!!refreshKey)
-          setLastRefreshKey(refreshKey);
-      })
-  }, [forceRefresh, refreshKey, setLastRefreshKey, lastRefreshKey, network?.online]);
+        if (!!refreshKey) setLastRefreshKey(refreshKey);
+      });
+  }, [
+    forceRefresh,
+    refreshKey,
+    setLastRefreshKey,
+    lastRefreshKey,
+    network?.online,
+  ]);
 
   return groups;
-}
+};
 
 /**
  * hook to retrieve whether the user is currently signed in
@@ -56,52 +64,68 @@ export const useCurrentUserGroups = ({ forceRefresh, refreshKey }: UseCurrentUse
 export const useIsSignedIn = (): boolean => {
   const { userStatus } = useContext(AppContext);
 
-  return useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
-}
+  return useMemo(
+    () =>
+      userStatus === userState.LoggedIn ||
+      userStatus === userState.CustomEndpoint,
+    [userStatus]
+  );
+};
 
 /**
  * convenience hook for checking if the current user is an admin or not
  * @param forceRefresh whether the request for the current user's groups should trigger a refresh from the server
  * @param refreshKey updating this key triggers an update
  */
-export const useIsAdmin = ({ forceRefresh, refreshKey }: UseCurrentUserGroupsProps): boolean => {
+export const useIsAdmin = ({
+  forceRefresh,
+  refreshKey,
+}: UseCurrentUserGroupsProps): boolean => {
   const groups = useCurrentUserGroups({ forceRefresh, refreshKey });
   return (groups ?? []).includes(ADMIN_GROUP);
-}
+};
 
 /**
  * retrieve the email address of the current user
  */
-export const useUserEmail = ({ forceRefresh, refreshKey }: UseCurrentUserGroupsProps): string|undefined => {
+export const useUserEmail = ({
+  forceRefresh,
+  refreshKey,
+}: UseCurrentUserGroupsProps): string | undefined => {
   const session = useMemoAsync<AuthSession>(async () => {
-    const s = await fetchAuthSession({ forceRefresh: forceRefresh ?? !!refreshKey });
+    const s = await fetchAuthSession({
+      forceRefresh: forceRefresh ?? !!refreshKey,
+    });
     return s;
-  }, [ forceRefresh, refreshKey ]);
+  }, [forceRefresh, refreshKey]);
 
-  const email = useMemo<string|undefined>(() => session?.tokens?.accessToken.payload.email as string|undefined, [ session?.tokens?.accessToken.payload.email ]);
+  const email = useMemo<string | undefined>(
+    () => session?.tokens?.accessToken.payload.email as string | undefined,
+    [session?.tokens?.accessToken.payload.email]
+  );
 
   return email;
-}
+};
 
 /**
  * retrieve user list from server
  */
-export const useUsersFromServer = (): string[]|undefined => {
-  const [ userList, setUserList ] = useState<string[]>();
+export const useUsersFromServer = (): string[] | undefined => {
+  const [userList, setUserList] = useState<string[]>();
 
   useEffect(() => {
     const retrieveList = async () => {
       const usersResponse = await generateRequest<string[]>({
         requestPath: '/api/non_admin_users',
-        requestType: RequestType.GET
+        requestType: RequestType.GET,
       });
       if (usersResponse.success) {
-        const list = await (usersResponse.response as any).body.json()
+        const list = await (usersResponse.response as any).body.json();
         setUserList(list as string[]);
       }
     };
     void retrieveList();
-  }, [ setUserList ]);
+  }, [setUserList]);
 
   return userList;
-}
+};
