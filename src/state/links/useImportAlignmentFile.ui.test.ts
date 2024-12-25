@@ -1,3 +1,1 @@
-
-test('useImportAlignmentFile:', async () => {
-});
+test('useImportAlignmentFile:', async () => {});

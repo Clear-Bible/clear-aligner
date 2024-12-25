@@ -4,20 +4,22 @@ import { LinkStatus, RepositoryLink } from '../../structs';
 
 test('LinksTable#saveAlignmentFile', async () => {
   let saveAllReceived;
-  const linksTable = new class extends LinksTable {
-    saveAll = async (inputLinks: RepositoryLink[],
+  const linksTable = new (class extends LinksTable {
+    saveAll = async (
+      inputLinks: RepositoryLink[],
       suppressOnUpdate = false,
       isForced = false,
       disableJournaling = false,
-      removeAllFirst = false): Promise<boolean> => {
+      removeAllFirst = false
+    ): Promise<boolean> => {
       saveAllReceived = inputLinks;
       return true;
-    }
-  }('default');
+    };
+  })('default');
 
   const alignmentFile: AlignmentFile = {
     meta: {
-      creator: 'user1234'
+      creator: 'user1234',
     },
     type: '',
     records: [
@@ -26,23 +28,23 @@ test('LinksTable#saveAlignmentFile', async () => {
           id: '000-111-222-333',
           origin: 'machine',
           status: LinkStatus.APPROVED,
-          note: []
+          note: [],
         },
-        source: [ '43003016005' ],
-        target: [ '43003016002' ]
+        source: ['43003016005'],
+        target: ['43003016002'],
       },
       {
         meta: {
           id: '777-888-999',
           origin: 'human',
           status: LinkStatus.CREATED,
-          note: []
+          note: [],
         },
-        source: [ '43003016006' ],
-        target: [ '43003016003' ]
-      }
-    ]
-  }
+        source: ['43003016006'],
+        target: ['43003016003'],
+      },
+    ],
+  };
 
   await linksTable.saveAlignmentFile(
     alignmentFile,
@@ -50,29 +52,29 @@ test('LinksTable#saveAlignmentFile', async () => {
     false,
     false,
     false,
-    true);
+    true
+  );
 
-  expect(saveAllReceived)
-    .toStrictEqual([
-      {
-        id: '000-111-222-333',
-        metadata: {
-          origin: 'machine',
-          status: LinkStatus.APPROVED,
-          note: []
-        },
-        sources: [ '43003016005' ],
-        targets: [ '43003016002' ]
+  expect(saveAllReceived).toStrictEqual([
+    {
+      id: '000-111-222-333',
+      metadata: {
+        origin: 'machine',
+        status: LinkStatus.APPROVED,
+        note: [],
       },
-      {
-        id: '777-888-999',
-        metadata: {
-          origin: 'human',
-          status: LinkStatus.CREATED,
-          note: []
-        },
-        sources: [ '43003016006' ],
-        targets: [ '43003016003' ]
-      }
-    ]);
+      sources: ['43003016005'],
+      targets: ['43003016002'],
+    },
+    {
+      id: '777-888-999',
+      metadata: {
+        origin: 'human',
+        status: LinkStatus.CREATED,
+        note: [],
+      },
+      sources: ['43003016006'],
+      targets: ['43003016003'],
+    },
+  ]);
 });

@@ -669,16 +669,22 @@ export const useSaveLink = (updateNonManualLinksToApproveOnSave?: boolean) => {
  * @param preserveFileIds whether id's of links in imported file should be preserved
  * @param fromServer whether to treat the imported file as if they're from a server
  */
-export const useImportAlignmentFile = (projectId?: string,
-                                       alignmentFile?: AlignmentFile,
-                                       saveKey?: string,
-                                       suppressOnUpdate = false,
-                                       suppressJournaling = false,
-                                       removeAllFirst = false,
-                                       preserveFileIds = false,
-                                       fromServer = false) => {
-  const { projectState, preferences, projects, setProjects } = React.useContext(AppContext);
-  const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [projects, projectId]);
+export const useImportAlignmentFile = (
+  projectId?: string,
+  alignmentFile?: AlignmentFile,
+  saveKey?: string,
+  suppressOnUpdate = false,
+  suppressJournaling = false,
+  removeAllFirst = false,
+  preserveFileIds = false,
+  fromServer = false
+) => {
+  const { projectState, preferences, projects, setProjects } =
+    React.useContext(AppContext);
+  const project = useMemo<Project>(
+    () => projects.find((p) => p.id === projectId)!,
+    [projects, projectId]
+  );
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -691,49 +697,69 @@ export const useImportAlignmentFile = (projectId?: string,
   }, [projectId, projectState.linksTable]);
 
   useEffect(() => {
-    if (!alignmentFile
-      || !saveKey
-      || prevSaveKey.current === saveKey) {
+    if (!alignmentFile || !saveKey || prevSaveKey.current === saveKey) {
       return;
     }
     const startStatus = {
       ...status,
-      isPending: true
+      isPending: true,
     };
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useImportAlignmentFile(): startStatus', startStatus);
-    linksTable.saveAlignmentFile(
-      alignmentFile, suppressOnUpdate,
-      false, suppressJournaling,
-      removeAllFirst, preserveFileIds)
+    linksTable
+      .saveAlignmentFile(
+        alignmentFile,
+        suppressOnUpdate,
+        false,
+        suppressJournaling,
+        removeAllFirst,
+        preserveFileIds
+      )
       .then(() => {
         const endStatus = {
           ...startStatus,
-          isPending: false
+          isPending: false,
         };
         setStatus(endStatus);
         if (!fromServer) {
-          project && projectState?.projectTable?.updateLastUpdated?.(project)
-            ?.then((result) => {
-              if (result) {
-                setProjects((projects) => projects.map((p) => {
-                  if (p.id !== result.id) return p;
-                  return {
-                    ...p,
-                    updatedAt: result.updatedAt
-                  };
-                }));
-              }
-            })
-            ?.catch?.(console.error);
+          project &&
+            projectState?.projectTable
+              ?.updateLastUpdated?.(project)
+              ?.then((result) => {
+                if (result) {
+                  setProjects((projects) =>
+                    projects.map((p) => {
+                      if (p.id !== result.id) return p;
+                      return {
+                        ...p,
+                        updatedAt: result.updatedAt,
+                      };
+                    })
+                  );
+                }
+              })
+              ?.catch?.(console.error);
         }
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
-  }, [preserveFileIds, project, linksTable, prevSaveKey,
-    alignmentFile, saveKey, status, suppressOnUpdate,
-    projects, setProjects, preferences?.currentProject, projectState?.projectTable, suppressJournaling,
-    removeAllFirst, fromServer]);
+  }, [
+    preserveFileIds,
+    project,
+    linksTable,
+    prevSaveKey,
+    alignmentFile,
+    saveKey,
+    status,
+    suppressOnUpdate,
+    projects,
+    setProjects,
+    preferences?.currentProject,
+    projectState?.projectTable,
+    suppressJournaling,
+    removeAllFirst,
+    fromServer,
+  ]);
 
   return { ...status };
 };
