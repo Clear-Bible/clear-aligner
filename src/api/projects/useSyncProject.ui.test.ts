@@ -1,17 +1,29 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { mockDatabaseApi, mockDatabaseApiOnWindow, mockEnvironmentVarsOnWindow } from '../../__tests__/mockElectron';
+import {
+  mockDatabaseApi,
+  mockDatabaseApiOnWindow,
+  mockEnvironmentVarsOnWindow,
+} from '../../__tests__/mockElectron';
 import React, { act } from 'react';
 import {
-  stepSwitchToProject, stepSyncingAlignments,
+  stepSwitchToProject,
+  stepSyncingAlignments,
   stepSyncingCorpora,
-  stepSyncingProject, stepUpdatingProject,
+  stepSyncingProject,
+  stepUpdatingProject,
   SyncProgress,
-  useSyncProject
+  useSyncProject,
 } from './useSyncProject';
 import { Project, ProjectTable } from '../../state/projects/tableManager';
-import { mockContext, mockContextWithWrapper } from '../../__tests__/mockContext';
+import {
+  mockContext,
+  mockContextWithWrapper,
+} from '../../__tests__/mockContext';
 import { mockProjectState } from '../../__tests__/mockModules/mockProjectState';
-import { mockPreferences, mockSetPreferences } from '../../__tests__/mockModules/mockPreferences';
+import {
+  mockPreferences,
+  mockSetPreferences,
+} from '../../__tests__/mockModules/mockPreferences';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
 import { mockContainers } from '../../__tests__/mockModules/corpora';
@@ -24,16 +36,12 @@ mockEnvironmentVarsOnWindow();
 mockDatabaseApiOnWindow();
 
 test('useSyncProject:incorrectProject', async () => {
-
   const ctx = mockContext({
-    projectState: mockProjectState({
-    })
+    projectState: mockProjectState({}),
   });
   const wrapper = mockContextWithWrapper(ctx);
-  const {
-    result,
-  } = renderHook(() => useSyncProject(), { wrapper });
-  const initialValue = result.current
+  const { result } = renderHook(() => useSyncProject(), { wrapper });
+  const initialValue = result.current;
 
   const expectedSourceName = 'abcdefg';
 
@@ -43,11 +51,11 @@ test('useSyncProject:incorrectProject', async () => {
 
   await act(async () => {
     result.current.sync(project);
-  })
+  });
 
   await waitFor(() => {
-    expect(result.current).not.toBe(initialValue)
-  })
+    expect(result.current).not.toBe(initialValue);
+  });
 
   // assert that the state has been properly modified to the initial state
   expect(result.current.progress).toBe(SyncProgress.SWITCH_TO_PROJECT);
@@ -55,56 +63,58 @@ test('useSyncProject:incorrectProject', async () => {
 
 test('useSyncProject:stepSwitchToProject', async () => {
   let progress = SyncProgress.SWITCH_TO_PROJECT;
-  const mockSetProgress = (p: SyncProgress) => progress = p;
+  const mockSetProgress = (p: SyncProgress) => (progress = p);
   const project = {
-    id: '1234'
+    id: '1234',
   } as Project;
   let prefs = mockPreferences({
     currentProject: '1234',
-    initialized: InitializationStates.INITIALIZED
+    initialized: InitializationStates.INITIALIZED,
   });
   await stepSwitchToProject(
     progress,
     mockSetProgress,
     prefs,
-    mockSetPreferences(prefs, (p: UserPreference) => prefs = p),
+    mockSetPreferences(prefs, (p: UserPreference) => (prefs = p)),
     project,
-    mockProjectState());
+    mockProjectState()
+  );
   expect(progress).toBe(SyncProgress.SYNCING_PROJECT);
 });
 
 test('useSyncProject:stepSyncingProject', async () => {
   let progress = SyncProgress.SYNCING_PROJECT;
-  const mockSetProgress = (p: SyncProgress) => progress = p;
+  const mockSetProgress = (p: SyncProgress) => (progress = p);
   const project = {
-    id: '1234'
+    id: '1234',
   } as Project;
   await stepSyncingProject(
     progress,
     mockSetProgress,
     project,
-    undefined as any as React.MutableRefObject<AbortController|undefined>,
+    undefined as any as React.MutableRefObject<AbortController | undefined>,
     (s: boolean) => undefined,
     (s: boolean) => undefined,
-    () => undefined);
+    () => undefined
+  );
   expect(progress).toBe(SyncProgress.SYNCING_CORPORA);
 });
 
 test('useSyncProject:stepSyncingCorpora', async () => {
   let progress = SyncProgress.SYNCING_PROJECT;
-  const mockSetProgress = (p: SyncProgress) => progress = p;
+  const mockSetProgress = (p: SyncProgress) => (progress = p);
   const project = {
     id: '1234',
     sourceCorpora: {
-      corpora: []
+      corpora: [],
     },
     targetCorpora: {
-      corpora: [ {
-          words: [
-            { id: '100100100' }
-          ]
-        } ]
-    }
+      corpora: [
+        {
+          words: [{ id: '100100100' }],
+        },
+      ],
+    },
   } as unknown as Project;
 
   const containersMock = mockContainers({
@@ -124,10 +134,10 @@ test('useSyncProject:stepSyncingCorpora', async () => {
       return {
         success: true,
         response: {
-          statusCode: 200
+          statusCode: 200,
         },
-        body: {} as ProjectTokenReport
-      }
+        body: {} as ProjectTokenReport,
+      };
     }
   );
 
@@ -137,40 +147,50 @@ test('useSyncProject:stepSyncingCorpora', async () => {
 
 test('useSyncProject:stepSyncingAlignments', async () => {
   let progress = SyncProgress.SYNCING_PROJECT;
-  const mockSetProgress = (p: SyncProgress) => progress = p;
+  const mockSetProgress = (p: SyncProgress) => (progress = p);
 
   const project = {
     id: '1234',
     sourceCorpora: {
-      corpora: []
+      corpora: [],
     },
     targetCorpora: {
-      corpora: [ {
-        words: [
-          { id: '100100100' }
-        ]
-      } ]
-    }
+      corpora: [
+        {
+          words: [{ id: '100100100' }],
+        },
+      ],
+    },
   } as unknown as Project;
 
   let mockUploadAlignmentsCalled = false;
 
-  const mockUploadAlignments = async (projectId?: string, controller?: AbortController) => {
+  const mockUploadAlignments = async (
+    projectId?: string,
+    controller?: AbortController
+  ) => {
     mockUploadAlignmentsCalled = true;
     return undefined;
-  }
+  };
 
   let mockSyncAlignmentsCalled = false;
 
-  const mockSyncAlignments = async (projectId?: string, controller?: AbortController) => {
+  const mockSyncAlignments = async (
+    projectId?: string,
+    controller?: AbortController
+  ) => {
     mockSyncAlignmentsCalled = true;
     return true;
-  }
+  };
 
   const mockDbApi = {
     getAllJournalEntries: async () => [],
-    deleteByIds: async ({ projectId, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => {
-    }
+    deleteByIds: async ({
+      projectId,
+      table,
+      itemIdOrIds,
+      disableJournaling,
+    }: DeleteByIdParams) => {},
   } as unknown as DatabaseApi;
 
   await stepSyncingAlignments(
@@ -181,7 +201,8 @@ test('useSyncProject:stepSyncingAlignments', async () => {
     () => undefined,
     () => undefined,
     mockUploadAlignments,
-    mockSyncAlignments);
+    mockSyncAlignments
+  );
 
   expect(progress).toBe(SyncProgress.UPDATING_PROJECT);
   expect(mockSyncAlignmentsCalled).toBeTruthy();
@@ -190,10 +211,10 @@ test('useSyncProject:stepSyncingAlignments', async () => {
 
 test('useSyncProject:stepUpdatingProject', async () => {
   let progress = SyncProgress.SYNCING_PROJECT;
-  const mockSetProgress = (p: SyncProgress) => progress = p;
+  const mockSetProgress = (p: SyncProgress) => (progress = p);
 
   const project = {
-    id: '1234'
+    id: '1234',
   } as Project;
 
   await stepUpdatingProject(
@@ -204,10 +225,11 @@ test('useSyncProject:stepUpdatingProject', async () => {
     async (p, s) => undefined,
     mockProjectState({
       projectTable: {
-        sync: async (project) => true
-      } as ProjectTable
+        sync: async (project) => true,
+      } as ProjectTable,
     }),
-    mockSetStateAction());
+    mockSetStateAction()
+  );
 
   expect(progress).toBe(SyncProgress.IDLE);
 });

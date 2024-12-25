@@ -14,31 +14,28 @@ interface ContextPanelProps {
   containers: NamedContainers;
   position?: BCVWP;
   visibleSourceVerses: Verse[];
+  style?: Partial<React.CSSProperties>;
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({
-                                                            containers,
-                                                            position,
-                                                            visibleSourceVerses
-                                                          }): ReactElement => {
+  containers,
+  position,
+  visibleSourceVerses,
+  style,
+}): ReactElement => {
   useDebug('ContextPanel');
 
-  if (!position
-    || (visibleSourceVerses?.length ?? 0) < 1) {
+  if (!position || (visibleSourceVerses?.length ?? 0) < 1) {
     return <></>;
   }
 
   return (
     <Stack
-      direction='row'
+      direction="row"
       spacing={2}
-      style={{
-        height: '18.7rem',
-        flexGrow: 0,
-        flexShrink: 0
-      }}
-      justifyContent='stretch'
-      alignItems='stretch'
+      style={{ height: '18.7rem', ...(style ?? {}) }}
+      justifyContent="stretch"
+      alignItems="stretch"
     >
       <Card
         elevation={6}
@@ -49,7 +46,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
           backgroundColor: theme.palette.primary.contrastText,
           backgroundImage: 'none',
           overflow: 'auto',
-          paddingTop: '21px'
+          paddingTop: '21px',
         })}
       >
         <InterlinearComponent

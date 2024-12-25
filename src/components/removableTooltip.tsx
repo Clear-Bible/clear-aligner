@@ -1,7 +1,6 @@
 import { Tooltip, TooltipProps } from '@mui/material';
 import { PropsWithChildren } from 'react';
 
-
 export interface RemovableTooltipProps extends TooltipProps {
   removed?: boolean;
 }
@@ -13,12 +12,10 @@ export interface RemovableTooltipProps extends TooltipProps {
  * @param others {@link TooltipProps} to be used for the MUI Tooltip component
  * @param children children of the MUI Tooltip
  */
-export const RemovableTooltip = ({ removed, children, ...others }: PropsWithChildren<RemovableTooltipProps>) =>
-  <>
-    {removed ?
-      <>{ children }</> :
-      <Tooltip {...others}>
-        {children}
-      </Tooltip>
-    }
-  </>
+export const RemovableTooltip = ({
+  removed,
+  children,
+  ...others
+}: PropsWithChildren<RemovableTooltipProps>) => (
+  <>{removed ? <>{children}</> : <Tooltip {...others}>{children}</Tooltip>}</>
+);

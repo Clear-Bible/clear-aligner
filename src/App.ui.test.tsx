@@ -1,8 +1,9 @@
-import { mockDatabaseApiOnWindow, mockEnvironmentVarsOnWindow } from './__tests__/mockElectron';
+import {
+  mockDatabaseApiOnWindow,
+  mockEnvironmentVarsOnWindow,
+} from './__tests__/mockElectron';
 
 mockEnvironmentVarsOnWindow();
 mockDatabaseApiOnWindow();
 
-test('Placeholder Test for <App />', () => {
-
-});
+test('Placeholder Test for <App />', () => {});

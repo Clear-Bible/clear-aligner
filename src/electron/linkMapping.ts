@@ -7,29 +7,31 @@ import { ServerAlignmentLinkDTO } from '../common/data/serverAlignmentLinkDTO';
  * @return {@link ServerAlignmentLink}
  */
 export const linkEntityToServerAlignmentLink = (l: {
-  id?: string,
-  sources: string[],
-  targets: string[],
-  metadata: LinkMetadata
+  id?: string;
+  sources: string[];
+  targets: string[];
+  metadata: LinkMetadata;
 }): ServerAlignmentLinkDTO => ({
   id: l.id,
   sources: l.sources,
   targets: l.targets,
-  meta: l.metadata
+  meta: l.metadata,
 });
 
 /**
  * converts a {@link ServerAlignmentLinkDTO} to a link entity
  * @param l {@link ServerAlignmentLink}
  */
-export const serverAlignmentLinkToLinkEntity = (l: ServerAlignmentLinkDTO): {
-    id?: string,
-    sources: string[],
-    targets: string[],
-    metadata: LinkMetadata
-  } => ({
+export const serverAlignmentLinkToLinkEntity = (
+  l: ServerAlignmentLinkDTO
+): {
+  id?: string;
+  sources: string[];
+  targets: string[];
+  metadata: LinkMetadata;
+} => ({
   id: l.id,
   sources: l.sources,
   targets: l.targets,
-  metadata: l.meta
+  metadata: l.meta,
 });

@@ -1,13 +1,31 @@
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { ADMIN_GROUP, useIsSignedIn } from '../../hooks/userInfoHooks';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
-import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
+import {
+  SyncProgress,
+  useSyncProject,
+} from '../../api/projects/useSyncProject';
 import { AppContext } from '../../App';
 import { userState } from '../profileAvatar/profileAvatar';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
-import { Button, Card, CardActionArea, CardContent, Grid, Theme, Tooltip, Typography } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  Grid,
+  Theme,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx';
 import { ProjectLocation } from '../../common/data/project/project';
 import {
@@ -18,7 +36,7 @@ import {
   Computer,
   Download,
   Sync,
-  Upload
+  Upload,
 } from '@mui/icons-material';
 import { grey } from '@mui/material/colors';
 import { RemovableTooltip } from '../../components/removableTooltip';
@@ -35,8 +53,11 @@ import {
   currentProjectBorderIndicatorHeight,
   projectCardHeight,
   projectCardMargin,
-  projectCardWidth
+  projectCardWidth,
 } from './styleConstants';
+import { AlignmentFile } from '../../structs/alignmentFile';
+import { useImportAlignmentFile } from '../../state/links/tableManager';
+import uuid from 'uuid-random';
 
 /**
  * props for the project card component
@@ -84,43 +105,86 @@ export interface ProjectCardProps {
  * @param isProjectDialogOpen whether the project settings display is being shown
  */
 export const ProjectCard: React.FC<ProjectCardProps> = ({
-                                                          project,
-                                                          groups,
-                                                          currentProject,
-                                                          onOpenProjectSettings,
-                                                          unavailableProjectNames,
-                                                          disableProjectButtons,
-                                                          isProjectDialogOpen
-                                                        }) => {
+  project,
+  groups,
+  currentProject,
+  onOpenProjectSettings,
+  unavailableProjectNames,
+  disableProjectButtons,
+  isProjectDialogOpen,
+}) => {
   useCorpusContainers();
 
-  const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
+  const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
+    alignmentFile?: AlignmentFile;
+    saveKey?: string;
+  }>();
+  const isAdmin = useMemo<boolean>(
+    () => (groups ?? []).includes(ADMIN_GROUP),
+    [groups]
+  );
 
-  const { downloadProject, dialog: downloadProjectDialog } = useDownloadProject();
+  const { downloadProject, dialog: downloadProjectDialog } =
+    useDownloadProject();
   const {
     sync: syncProject,
     progress: syncingProject,
     dialog: syncDialog,
     uniqueNameError,
-    setUniqueNameError
+    setUniqueNameError,
+    syncedAlignments,
   } = useSyncProject();
 
-  const { setPreferences, projectState, preferences, userStatus, setProjects } = useContext(AppContext);
-  const isCurrentProject = useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
+  useImportAlignmentFile(
+    project?.id,
+    alignmentFileSaveState?.alignmentFile,
+    alignmentFileSaveState?.saveKey,
+    false,
+    true,
+    true,
+    true,
+    true
+  );
+
+  useEffect(() => {
+    if (!syncedAlignments) {
+      return;
+    }
+    setAlignmentFileSaveState({
+      alignmentFile: syncedAlignments,
+      saveKey: uuid(),
+    });
+  }, [syncedAlignments]);
+
+  const { setPreferences, projectState, preferences, userStatus, setProjects } =
+    useContext(AppContext);
+  const isCurrentProject = useMemo(
+    () => project.id === currentProject?.id,
+    [project.id, currentProject?.id]
+  );
 
   const isSignedIn = useIsSignedIn();
-  const usingCustomEndpoint = useMemo(() => userStatus === userState.CustomEndpoint, [userStatus]);
+  const usingCustomEndpoint = useMemo(
+    () => userStatus === userState.CustomEndpoint,
+    [userStatus]
+  );
 
   const updateCurrentProject = useCallback(() => {
     projectState.linksTable.reset().catch(console.error);
     projectState.linksTable.setSourceName(project.id);
     setPreferences((p: UserPreference | undefined) => ({
-      ...(p ?? {}) as UserPreference,
+      ...((p ?? {}) as UserPreference),
       currentProject: project.id,
-      initialized: InitializationStates.UNINITIALIZED
+      initialized: InitializationStates.UNINITIALIZED,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
+  }, [
+    setPreferences,
+    preferences,
+    project.id,
+    projectState.userPreferenceTable,
+    projectState.linksTable,
+  ]);
 
   const syncLocalProjectWithServer = useCallback(() => {
     syncProject(project);
@@ -129,44 +193,53 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const locationIndicator = useMemo<JSX.Element>(() => {
     const propCompute = (theme: Theme): SystemStyleObject<Theme> => ({
       fill: theme.palette.text.secondary,
-      mt: .5
+      mt: 0.5,
     });
 
     switch (project.location) {
       case ProjectLocation.LOCAL:
-        return (<Computer sx={propCompute} />);
+        return <Computer sx={propCompute} />;
       case ProjectLocation.REMOTE:
-        return (<CloudOutlined sx={propCompute} />);
+        return <CloudOutlined sx={propCompute} />;
       case ProjectLocation.SYNCED:
-        return (<CloudDoneOutlined sx={propCompute} />);
+        return <CloudDoneOutlined sx={propCompute} />;
     }
   }, [project.location]);
 
-  const serverActionButtonDisabled: boolean = useMemo<boolean>(() => {
-    switch (project.location) {
-      case ProjectLocation.SYNCED:
-        if (!project) {
-          return true;
-        }
-        if (disableProjectButtons) {
-          return true;
-        }
-        const containers = [project.sourceCorpora, project.targetCorpora];
-        if (!isSignedIn || containers.length < 1) {
-          return true;
-        }
-        if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
-          return false;
-        }
-        if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
-          return false;
-        }
-        return !([...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-          .some((corpus) => !!corpus.updatedSinceSync));
-      default:
-        return ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons;
-    }
-  },
+  const serverActionButtonDisabled: boolean = useMemo<boolean>(
+    () => {
+      switch (project.location) {
+        case ProjectLocation.SYNCED:
+          if (!project) {
+            return true;
+          }
+          if (disableProjectButtons) {
+            return true;
+          }
+          const containers = [project.sourceCorpora, project.targetCorpora];
+          if (!isSignedIn || containers.length < 1) {
+            return true;
+          }
+          if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
+            return false;
+          }
+          if (
+            (project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)
+          ) {
+            return false;
+          }
+          return ![
+            ...(project.sourceCorpora?.corpora ?? []),
+            ...(project.targetCorpora?.corpora ?? []),
+          ].some((corpus) => !!corpus.updatedSinceSync);
+        default:
+          return (
+            ![SyncProgress.IDLE, SyncProgress.FAILED].includes(
+              syncingProject
+            ) || disableProjectButtons
+          );
+      }
+    },
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
     [
       project,
@@ -179,8 +252,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       project.targetCorpora,
       disableProjectButtons,
       isSignedIn,
-      syncingProject
-    ]);
+      syncingProject,
+    ]
+  );
 
   const serverActionButton = useMemo(() => {
     const signedOutIcon = (
@@ -194,11 +268,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 margin: 0,
                 padding: 0,
                 textTransform: 'none',
-                minWidth: '0px !important'
-              }}>
-            <span style={{ color: grey['500'] }}>Unavailable</span>
-            <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
-          </Button>
+                minWidth: '0px !important',
+              }}
+            >
+              <span style={{ color: grey['500'] }}>Unavailable</span>
+              <CloudOff
+                sx={(theme) => ({
+                  fill: theme.palette.text.secondary,
+                  mb: 0.5,
+                  ml: 0.5,
+                })}
+              />
+            </Button>
           </span>
         </Tooltip>
       </Grid>
@@ -225,72 +306,91 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         margin: 0,
         padding: 0,
         textTransform: 'none',
-        minWidth: '0px !important'
+        minWidth: '0px !important',
       };
       const iconStyle = (theme: Theme) => ({
-        fill: serverActionButtonDisabled ? theme.palette.text.secondary : theme.palette.primary.main
+        fill: serverActionButtonDisabled
+          ? theme.palette.text.secondary
+          : theme.palette.primary.main,
       });
       switch (project.location) {
         case ProjectLocation.LOCAL:
-          if (!isAdmin) return (<></>);
+          if (!isAdmin) return <></>;
           return (
-            <Button variant="text"
-                    disabled={serverActionButtonDisabled || !isAdmin}
-                    sx={buttonStyle}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      syncLocalProjectWithServer();
-                    }}>
+            <Button
+              variant="text"
+              disabled={serverActionButtonDisabled || !isAdmin}
+              sx={buttonStyle}
+              onClick={(e) => {
+                e.stopPropagation();
+                syncLocalProjectWithServer();
+              }}
+            >
               <Upload sx={iconStyle} />
             </Button>
           );
         case ProjectLocation.REMOTE:
           return (
-            <Button variant="text"
-                    disabled={serverActionButtonDisabled}
-                    sx={buttonStyle}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void downloadProject(project.id);
-                    }}>
+            <Button
+              variant="text"
+              disabled={serverActionButtonDisabled}
+              sx={buttonStyle}
+              onClick={(e) => {
+                e.stopPropagation();
+                void downloadProject(project.id);
+              }}
+            >
               <Download sx={iconStyle} />
             </Button>
           );
         case ProjectLocation.SYNCED:
           return (
-            <Button variant="text"
-                    disabled={serverActionButtonDisabled}
-                    sx={buttonStyle}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      syncProject(project);
-                    }}>
+            <Button
+              variant="text"
+              disabled={serverActionButtonDisabled}
+              sx={buttonStyle}
+              onClick={(e) => {
+                e.stopPropagation();
+                syncProject(project);
+              }}
+            >
               <Sync sx={iconStyle} />
             </Button>
           );
         default:
-          return (<></>);
+          return <></>;
       }
     })();
 
     return (
       <RemovableTooltip
         removed={serverActionButtonDisabled}
-        title={tooltipText}>
+        title={tooltipText}
+      >
         {actionButton}
       </RemovableTooltip>
     );
-  }, [isSignedIn, usingCustomEndpoint, syncLocalProjectWithServer, downloadProject, syncProject, project, isAdmin, serverActionButtonDisabled]);
+  }, [
+    isSignedIn,
+    usingCustomEndpoint,
+    syncLocalProjectWithServer,
+    downloadProject,
+    syncProject,
+    project,
+    isAdmin,
+    serverActionButtonDisabled,
+  ]);
 
-  const [ isProjectSharingDialogOpen, setIsProjectSharingDialogOpen ] = useState<boolean>();
+  const [isProjectSharingDialogOpen, setIsProjectSharingDialogOpen] =
+    useState<boolean>();
 
   const {
     dialog: deleteRemoteProjectDialog,
-    showDeleteProjectDialog: showDeleteRemoteProjectDialog
+    showDeleteProjectDialog: showDeleteRemoteProjectDialog,
   } = useDeleteProjectFromServerWithDialog({ project });
   const {
     dialog: deleteLocalProjectDialog,
-    showDeleteProjectDialog: showDeleteLocalProjectDialog
+    showDeleteProjectDialog: showDeleteLocalProjectDialog,
   } = useDeleteProjectFromLocalWithDialog({ project });
 
   const { settingsMenu, isSettingsMenuOpen } = useProjectCardSettingsMenu({
@@ -298,11 +398,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     project: project,
     onEdit: () => onOpenProjectSettings(project),
     onShare: () => setIsProjectSharingDialogOpen(true),
-    onSync: !serverActionButtonDisabled ? syncLocalProjectWithServer : undefined,
-    showDeleteFromServer: isAdmin && (project.location === ProjectLocation.SYNCED || project.location === ProjectLocation.REMOTE),
+    onSync: !serverActionButtonDisabled
+      ? syncLocalProjectWithServer
+      : undefined,
+    showDeleteFromServer:
+      isAdmin &&
+      (project.location === ProjectLocation.SYNCED ||
+        project.location === ProjectLocation.REMOTE),
     onDeleteFromServer: showDeleteRemoteProjectDialog,
-    showDeleteLocalProject: project.location === ProjectLocation.SYNCED || project.location === ProjectLocation.LOCAL,
-    onDeleteLocalProject: showDeleteLocalProjectDialog
+    showDeleteLocalProject:
+      project.location === ProjectLocation.SYNCED ||
+      project.location === ProjectLocation.LOCAL,
+    onDeleteLocalProject: showDeleteLocalProjectDialog,
   });
 
   const { dialog: projectSharingDialog } = useProjectSharingDialog({
@@ -312,112 +419,129 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     onSave: async (project: Project) => {
       project.updatedAt = DateTime.now().toMillis();
       await projectState.projectTable?.update?.(project, false, false, true);
-      const updatedProjects = await projectState.projectTable?.getProjects(true);
-      setProjects(p => Array.from(updatedProjects?.values?.() ?? p));
+      const updatedProjects = await projectState.projectTable?.getProjects(
+        true
+      );
+      setProjects((p) => Array.from(updatedProjects?.values?.() ?? p));
       setIsProjectSharingDialogOpen(false);
-    }
+    },
   });
 
   const cardContents: JSX.Element = (
-    <CardContent sx={{
-      margin: projectCardMargin,
-      display: 'flex',
-      flexDirection: 'column',
-      height: isCurrentProject ? `calc(100% + ${currentProjectBorderIndicatorHeight})` : '100%'
-    }}>
+    <CardContent
+      sx={{
+        margin: projectCardMargin,
+        display: 'flex',
+        flexDirection: 'column',
+        height: isCurrentProject
+          ? `calc(100% + ${currentProjectBorderIndicatorHeight})`
+          : '100%',
+      }}
+    >
       {project.location !== ProjectLocation.REMOTE && deleteLocalProjectDialog}
       {project.location !== ProjectLocation.LOCAL && deleteRemoteProjectDialog}
       {projectSharingDialog}
-      {isProjectDialogOpen ?
-        (<>
-          <ProjectSettings closeCallback={() => onOpenProjectSettings(undefined)} projectId={project.id}
-                           isSignedIn={isSignedIn} />
-        </>) : (
-          <>
+      {isProjectDialogOpen ? (
+        <>
+          <ProjectSettings
+            closeCallback={() => onOpenProjectSettings(undefined)}
+            projectId={project.id}
+            isSignedIn={isSignedIn}
+          />
+        </>
+      ) : (
+        <>
+          <Box
+            id={'project-title'}
+            sx={{
+              position: 'absolute',
+              width: `calc(100% - 10 * ${projectCardMargin})`,
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              fontWeight: 'fontWeightMedium',
+            }}
+          >
+            <Typography sx={{ color: 'text.primary' }} variant={'h6'}>
+              {project.name}
+            </Typography>
+            {settingsMenu}
+          </Box>
+          <Grid
+            container
+            justifyContent="center"
+            alignItems="center"
+            sx={{ height: '100%' }}
+          >
+            <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>
+              <CollectionsBookmark
+                sx={(theme) => ({
+                  color: theme.palette.text.secondary,
+                })}
+              />
+            </Typography>
+          </Grid>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              fontWeight: 'fontWeightMedium',
+              marginBottom: `calc(${projectCardMargin}/2)`,
+              ...(isCurrentProject
+                ? {
+                    transform: `translate(0, 7px)`,
+                  }
+                : {}),
+            }}
+          >
             <Box
-              id={'project-title'}
               sx={{
-                position: 'absolute',
-                width: `calc(100% - 10 * ${projectCardMargin})`,
                 display: 'flex',
                 flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                fontWeight: 'fontWeightMedium'
-              }}>
-              <Typography
-                sx={{ color: 'text.primary' }}
-                variant={'h6'}>
-                {project.name}
-              </Typography>
-              {settingsMenu}
+                justifyContent: 'flex-end',
+                alignItems: 'initial',
+              }}
+            >
+              {locationIndicator}
             </Box>
-            <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}>
-              <Typography variant="h6"
-                          sx={{ textAlign: 'center', mt: 4 }}>
-                <CollectionsBookmark sx={theme => ({
-                  color: theme.palette.text.secondary
-                })} />
-              </Typography>
-            </Grid>
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                fontWeight: 'fontWeightMedium',
-                marginBottom: `calc(${projectCardMargin}/2)`,
-                ...(isCurrentProject ? {
-                  transform: `translate(0, 7px)`
-                } : {})
-              }}>
+                justifyContent: 'flex-end',
+                alignItems: 'initial',
+              }}
+            >
               <Box
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'flex-end',
-                  alignItems: 'initial'
-                }}>
-                {locationIndicator}
+                  height: '100%',
+                  marginRight: '1em',
+                }}
+              >
+                {!!project.lastSyncTime &&
+                  syncingProject !== SyncProgress.FAILED && (
+                    <Typography variant="caption" color="text.secondary">
+                      <span style={{ fontWeight: 'bold' }}>Last sync</span>
+                      &nbsp;
+                      {DateTime.fromJSDate(
+                        new Date(project.lastSyncTime)
+                      ).toFormat('MMMM dd yyyy, hh:mm:ss a')}
+                    </Typography>
+                  )}
+                {syncingProject === SyncProgress.FAILED && (
+                  <Typography variant="caption" color="error">
+                    There was an error uploading this project.
+                  </Typography>
+                )}
               </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'flex-end',
-                  alignItems: 'initial'
-                }}>
-                <Box
-                  sx={{
-                    height: '100%',
-                    marginRight: '1em'
-                  }}>
-                  {
-                    (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary">
-                        <span style={{ fontWeight: 'bold' }}>Last sync</span>
-                        &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
-                      </Typography>
-                    )
-                  }
-                  {
-                    syncingProject === SyncProgress.FAILED && (
-                      <Typography
-                        variant="caption"
-                        color="error">
-                        There was an error uploading this project.
-                      </Typography>
-                    )
-                  }
-                </Box>
-                {serverActionButton}
-              </Box>
+              {serverActionButton}
             </Box>
-          </>
-        )}
+          </Box>
+        </>
+      )}
     </CardContent>
   );
 
@@ -425,37 +549,46 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     <>
       <Card
         variant={'outlined'}
-        sx={theme => ({
+        sx={(theme) => ({
           width: projectCardWidth,
           height: projectCardHeight,
           m: '3px',
           backgroundColor: theme.palette.primary.contrastText,
-          ...(isCurrentProject ? {
-            borderBottomWidth: currentProjectBorderIndicatorHeight,
-            borderBottomStyle: 'solid',
-            borderBottomColor: 'success.main'
-          } : {}),
-          position: 'relative'
-        })}>
-        {(project.location !== ProjectLocation.REMOTE && !isCurrentProject && !isProjectDialogOpen)
-          ? <>
+          ...(isCurrentProject
+            ? {
+                borderBottomWidth: currentProjectBorderIndicatorHeight,
+                borderBottomStyle: 'solid',
+                borderBottomColor: 'success.main',
+              }
+            : {}),
+          position: 'relative',
+        })}
+      >
+        {project.location !== ProjectLocation.REMOTE &&
+        !isCurrentProject &&
+        !isProjectDialogOpen ? (
+          <>
             <CardActionArea
               component={'div'}
               sx={{
                 width: '100%',
-                height: '100%'
+                height: '100%',
               }}
-              onClick={!(isSettingsMenuOpen || isProjectSharingDialogOpen) ? (e) => {
-                e.preventDefault();
-                !isCurrentProject && updateCurrentProject();
-              } : undefined}>
+              onClick={
+                !(isSettingsMenuOpen || isProjectSharingDialogOpen)
+                  ? (e) => {
+                      e.preventDefault();
+                      !isCurrentProject && updateCurrentProject();
+                    }
+                  : undefined
+              }
+            >
               {cardContents}
             </CardActionArea>
           </>
-          : <>
-            {cardContents}
-          </>
-        }
+        ) : (
+          <>{cardContents}</>
+        )}
       </Card>
       {syncDialog}
       {downloadProjectDialog}

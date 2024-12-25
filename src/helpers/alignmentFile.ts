@@ -5,41 +5,36 @@
 import { AlignmentFile, AlignmentRecord } from '../structs/alignmentFile';
 import { RepositoryLink, LinkStatus } from '../structs';
 
-
 export const saveAlignmentFile = (links: RepositoryLink[] | undefined) => {
   if (!links) return;
   // create starting instance
   const alignmentExport: AlignmentFile = {
     type: 'translation',
     meta: {
-      creator: 'ClearAligner'
+      creator: 'ClearAligner',
     },
     records: links
       .filter(Boolean)
-      .filter(link => link.id)
+      .filter((link) => link.id)
       .map(
         (link): AlignmentRecord =>
           ({
             meta: {
               id: link.id,
-              ...link.metadata
+              ...link.metadata,
             },
-            source: (link.sources ?? []),
-            target: (link.targets ?? [])
+            source: link.sources ?? [],
+            target: link.targets ?? [],
           } as AlignmentRecord)
-      )
+      ),
   };
 
   // Create alignment file content
-  const fileContent = JSON.stringify(
-    alignmentExport,
-    undefined,
-    2
-  );
+  const fileContent = JSON.stringify(alignmentExport, undefined, 2);
 
   // Create a Blob from the data
   const blob = new Blob([fileContent], {
-    type: 'application/json'
+    type: 'application/json',
   });
 
   // Create a URL for the Blob
@@ -79,12 +74,12 @@ export const saveAlignmentFile = (links: RepositoryLink[] | undefined) => {
  * Alignment check results, including error messages and validated data.
  */
 export interface AlignmentFileCheckResults {
-  maxErrorMessages: number,
+  maxErrorMessages: number;
   isFileValid: boolean;
   errorMessages: string[];
-  submittedLinks: number,
-  acceptedLinks: number,
-  rejectedLinks: number,
+  submittedLinks: number;
+  acceptedLinks: number;
+  rejectedLinks: number;
   validatedFile: AlignmentFile;
 }
 
@@ -93,7 +88,10 @@ export interface AlignmentFileCheckResults {
  * @param inputFile Input file text that may or may not be an alignment file.
  * @param maxErrorMessages Max error messages to generate.
  */
-export const checkAlignmentFile = (inputFile: string, maxErrorMessages = 100): AlignmentFileCheckResults => {
+export const checkAlignmentFile = (
+  inputFile: string,
+  maxErrorMessages = 100
+): AlignmentFileCheckResults => {
   const result: AlignmentFileCheckResults = {
     maxErrorMessages,
     isFileValid: false,
@@ -104,53 +102,68 @@ export const checkAlignmentFile = (inputFile: string, maxErrorMessages = 100): A
     validatedFile: {
       type: '',
       meta: {
-        creator: ''
+        creator: '',
       },
-      records: []
-    }
+      records: [],
+    },
   };
   let inputJson: any = {};
   try {
     inputJson = JSON.parse(inputFile);
   } catch (ex) {
-    result.errorMessages.push(`Input file is not valid JSON: ${(ex as any)?.message ?? ex}`);
+    result.errorMessages.push(
+      `Input file is not valid JSON: ${(ex as any)?.message ?? ex}`
+    );
     return result;
   }
   result.isFileValid = true;
   result.validatedFile.type = inputJson?.type ?? '';
   result.validatedFile.meta = inputJson?.meta ?? {
-    creator: ''
+    creator: '',
   };
   if (Array.isArray(inputJson?.records)) {
-    const linkArray = (inputJson?.records as any[]);
+    const linkArray = inputJson?.records as any[];
     result.submittedLinks = linkArray.length;
     linkArray.forEach((arrayEntry, entryIndex) => {
-      const linkNum = (entryIndex + 1);
+      const linkNum = entryIndex + 1;
       const possibleRecord = arrayEntry as AlignmentRecord | undefined;
-      const possibleOrigin = (possibleRecord?.meta?.origin as string | undefined);
+      const possibleOrigin = possibleRecord?.meta?.origin as string | undefined;
       let isRecordValid = true;
       if (!possibleOrigin) {
         isRecordValid = false;
-        result.errorMessages.length < maxErrorMessages
-        && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no origin (missing/empty "meta.origin" field).`);
+        result.errorMessages.length < maxErrorMessages &&
+          result.errorMessages.push(
+            `Link #${linkNum.toLocaleString()} has no origin (missing/empty "meta.origin" field).`
+          );
       }
-      const possibleStatus = (possibleRecord?.meta?.status as string | undefined);
-      if (!possibleStatus || !(camelCaseToSnakeCase(possibleStatus ?? '').toUpperCase() in LinkStatus)) {
+      const possibleStatus = possibleRecord?.meta?.status as string | undefined;
+      if (
+        !possibleStatus ||
+        !(
+          camelCaseToSnakeCase(possibleStatus ?? '').toUpperCase() in LinkStatus
+        )
+      ) {
         isRecordValid = false;
-        result.errorMessages.length < maxErrorMessages
-        && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no valid status (missing/invalid "meta.status" field).`);
+        result.errorMessages.length < maxErrorMessages &&
+          result.errorMessages.push(
+            `Link #${linkNum.toLocaleString()} has no valid status (missing/invalid "meta.status" field).`
+          );
       }
-      const possibleSource = (possibleRecord?.source as string[] | undefined);
+      const possibleSource = possibleRecord?.source as string[] | undefined;
       if (!possibleSource || (possibleSource?.length ?? 0) < 1) {
         isRecordValid = false;
-        result.errorMessages.length < maxErrorMessages
-        && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no source tokens (missing/empty "source" field).`);
+        result.errorMessages.length < maxErrorMessages &&
+          result.errorMessages.push(
+            `Link #${linkNum.toLocaleString()} has no source tokens (missing/empty "source" field).`
+          );
       }
-      const possibleTarget = (possibleRecord?.target as string[] | undefined);
+      const possibleTarget = possibleRecord?.target as string[] | undefined;
       if (!possibleTarget || (possibleTarget?.length ?? 0) < 1) {
         isRecordValid = false;
-        result.errorMessages.length < maxErrorMessages
-        && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no target tokens (missing/empty "target" field).`);
+        result.errorMessages.length < maxErrorMessages &&
+          result.errorMessages.push(
+            `Link #${linkNum.toLocaleString()} has no target tokens (missing/empty "target" field).`
+          );
       }
       if (isRecordValid) {
         result.validatedFile.records.push(possibleRecord as AlignmentRecord);
@@ -162,8 +175,10 @@ export const checkAlignmentFile = (inputFile: string, maxErrorMessages = 100): A
     });
   } else {
     result.isFileValid = false;
-    result.errorMessages.length < maxErrorMessages
-    && result.errorMessages.push('Input file has no alignment links (missing/empty "records" field).');
+    result.errorMessages.length < maxErrorMessages &&
+      result.errorMessages.push(
+        'Input file has no alignment links (missing/empty "records" field).'
+      );
   }
   return result;
 };
@@ -171,6 +186,6 @@ export const checkAlignmentFile = (inputFile: string, maxErrorMessages = 100): A
 /**
  * Transform Link State from camel case to snake case
  */
-function camelCaseToSnakeCase(str: string){
+function camelCaseToSnakeCase(str: string) {
   return str.replace(/[A-Z]/g, (letter: string) => `_${letter.toLowerCase()}`);
 }

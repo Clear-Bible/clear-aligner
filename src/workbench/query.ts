@@ -1,7 +1,13 @@
 /**
  * This file contains helper functions for interacting with the Corpus
  */
-import { Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
+import {
+  Corpus,
+  CorpusContainer,
+  CorpusFileFormat,
+  Verse,
+  Word,
+} from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 import { EmptyWordId } from 'state/links/tableManager';
 import { AppContextProps } from '../App';
@@ -12,7 +18,7 @@ import { AlignmentSide } from '../common/data/project/corpus';
 export enum InitializationStates {
   UNINITIALIZED,
   INITIALIZING,
-  INITIALIZED
+  INITIALIZED,
 }
 
 let IsLoadingAnyCorpora = false;
@@ -22,25 +28,32 @@ const dbApi = window.databaseApi as DatabaseApi;
 
 export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 
-/*
- function that handles any input from the exclude column in the tsv files
+/**
+ * Helper function used to handle any input from the exclude or required columns in the tsv files
+ * @param columnInput The column value of the specified field.
+ * @param defaultValue The default value to use when the TSV column isn't populated.
  */
-function sanitizeExclude(inputExclude: string){
-  if(!inputExclude){
-    return 0
+function sanitizeColumnInput(columnInput: string, defaultValue: number) {
+  if (!columnInput) {
+    return defaultValue;
   }
-  let workingExclude = inputExclude.trim().toLowerCase();
-  if (workingExclude.length < 1){
-    return 0
+  let workingColumnInput = columnInput.trim().toLowerCase();
+  if (workingColumnInput.length < 1) {
+    return defaultValue;
   }
-  let firstLetter = workingExclude[0];
-  if (firstLetter === 'n' || firstLetter === 'f'){
-    return 0
+  let firstLetter = workingColumnInput[0];
+  if (firstLetter === 'n' || firstLetter === 'f') {
+    return 0;
   }
-  return 1
+  return 1;
 }
 
-export const parseTsv = (fileContent: string, refCorpus: Corpus, side: AlignmentSide, fileType: CorpusFileFormat) => {
+export const parseTsv = (
+  fileContent: string,
+  refCorpus: Corpus,
+  side: AlignmentSide,
+  fileType: CorpusFileFormat
+) => {
   const [header, ...rows] = fileContent.split('\n');
   const headerMap: Record<string, number> = {};
   if (!refCorpus.wordsByVerse) {
@@ -56,11 +69,19 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
   rows.forEach((row) => {
     const values = row.split('\t');
 
-    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse, exclude: number;
+    let id,
+      wordKey,
+      wordRef: BCVWP,
+      pos,
+      word: Word,
+      verse,
+      exclude: number,
+      required: number;
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
-        const wordText = (values[headerMap['text']] || values[headerMap['lemma']] || '');
+        const wordText =
+          values[headerMap['text']] || values[headerMap['lemma']] || '';
 
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['id']];
@@ -71,7 +92,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         pos = +id.substring(8, 11); // grab word position
         if (!wordText || wordText.length < 1) return;
         const normalizedText = wordText.toLowerCase();
-        exclude = sanitizeExclude(values[headerMap['exclude']]);
+        exclude = sanitizeColumnInput(values[headerMap['exclude']], 0);
+        required = sanitizeColumnInput(values[headerMap['required']], 1);
 
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -82,6 +104,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           sourceVerse: values[headerMap['source_verse']] || '',
           normalizedText,
           exclude: exclude,
+          required: required,
+          lemma: (values[headerMap['lemma']] || '').toLowerCase(),
         };
 
         wordKey = normalizedText;
@@ -96,7 +120,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           sourceVerse: values[headerMap['source_verse']],
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
-          words: (verse.words || []).concat([word])
+          words: (verse.words || []).concat([word]),
         };
         refCorpus.words.push(word);
         break;
@@ -108,9 +132,11 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         pos = +id.substring(8, 11);
         // Gloss is defined at this level since both english and gloss headers can exist.
         // Either could be null within the TSV file.
-        const gloss = values[headerMap['english']] || values[headerMap['gloss']] || '-';
+        const gloss =
+          values[headerMap['english']] || values[headerMap['gloss']] || '-';
 
-        exclude = sanitizeExclude(values[headerMap['exclude']]);
+        exclude = sanitizeColumnInput(values[headerMap['exclude']], 0);
+        required = sanitizeColumnInput(values[headerMap['required']], 1);
 
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -119,10 +145,11 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           text: values[headerMap['text']] || values[headerMap['lemma']] || '',
           after: values[headerMap['after']],
           position: pos,
-          gloss: (new RegExp(/^(.+\..+)+$/)).test(gloss)
+          gloss: new RegExp(/^(.+\..+)+$/).test(gloss)
             ? gloss.replaceAll('.', ' ')
             : gloss,
           exclude: exclude,
+          required: required,
         } as Word;
 
         wordRef = BCVWP.parseFromString(id);
@@ -138,7 +165,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           ...verse,
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
-          words: (verse.words || []).concat([word])
+          words: (verse.words || []).concat([word]),
         };
         refCorpus.words.push(word);
         break;
@@ -147,7 +174,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
 
   return {
     ...refCorpus,
-    hasGloss
+    hasGloss,
   };
 };
 
@@ -191,19 +218,20 @@ const WordQueryBatchSize = 100_000;
 export const getCorpusFromDatabase = async (
   inputCorpus: Corpus,
   projectId?: string
-): Promise<Corpus|undefined> => {
+): Promise<Corpus | undefined> => {
   if (!projectId) return undefined;
   inputCorpus.wordsByVerse = {} as Record<string, Verse>;
   inputCorpus.words = [];
   let offset = 0;
   while (true) {
-    const words = (await dbApi.getAllWordsByCorpus(
+    const words = await dbApi.getAllWordsByCorpus(
       projectId,
       inputCorpus.side,
       inputCorpus.id,
-      WordQueryBatchSize, offset));
-    if (!words
-      || words.length < 1) {
+      WordQueryBatchSize,
+      offset
+    );
+    if (!words || words.length < 1) {
       break;
     }
     for (const word of words) {
@@ -218,7 +246,7 @@ export const getCorpusFromDatabase = async (
         sourceVerse: word.sourceVerse ?? verseId,
         bcvId: verseBCV,
         citation: verse.citation ?? `${verseBCV.chapter}:${verseBCV.verse}`,
-        words: (verse.words || []).concat([word])
+        words: (verse.words || []).concat([word]),
       };
       inputCorpus.words.push(word);
     }
@@ -230,46 +258,57 @@ export const getCorpusFromDatabase = async (
   return inputCorpus;
 };
 
-export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Promise<
-  Containers
-> => {
+export const getAvailableCorporaContainers = async (
+  appCtx: AppContextProps
+): Promise<Containers> => {
   if (!appCtx.preferences?.currentProject) {
     return {
       projectId: appCtx.preferences?.currentProject,
       sourceContainer: undefined,
-      targetContainer: undefined
+      targetContainer: undefined,
     };
   }
 
   IsLoadingAnyCorpora = true;
   try {
-    const inputCorpora: Corpus[] = ((await dbApi.getAllCorpora(appCtx.preferences?.currentProject)) ?? []);
-    const corpusPromises: Promise<Corpus|undefined>[] = inputCorpora
-      .map((inputCorpus) =>
-        getCorpusFromDatabase({
-          ...inputCorpus,
-          words: [],
-          wordsByVerse: {},
-          wordLocation: new Map<string, Set<BCVWP>>(),
-          books: {},
-          hasGloss: inputCorpus.side === AlignmentSide.SOURCE
-        }, appCtx.preferences?.currentProject));
-    const outputCorpora: Corpus[] =
-      (await Promise.all(corpusPromises))
-        .filter((c) => !!c)
-        .map((c) => c!);
-    outputCorpora.forEach(
-      outputCorpus => putVersesInCorpus(outputCorpus));
+    const inputCorpora: Corpus[] =
+      (await dbApi.getAllCorpora(appCtx.preferences?.currentProject)) ?? [];
+    const corpusPromises: Promise<Corpus | undefined>[] = inputCorpora.map(
+      (inputCorpus) =>
+        getCorpusFromDatabase(
+          {
+            ...inputCorpus,
+            words: [],
+            wordsByVerse: {},
+            wordLocation: new Map<string, Set<BCVWP>>(),
+            books: {},
+            hasGloss: inputCorpus.side === AlignmentSide.SOURCE,
+          },
+          appCtx.preferences?.currentProject
+        )
+    );
+    const outputCorpora: Corpus[] = (await Promise.all(corpusPromises))
+      .filter((c) => !!c)
+      .map((c) => c!);
+    outputCorpora.forEach((outputCorpus) => putVersesInCorpus(outputCorpus));
 
-    const sourceContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE,
-      outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.SOURCE));
-    const targetContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET,
-      outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.TARGET));
+    const sourceContainer = CorpusContainer.fromIdAndCorpora(
+      AlignmentSide.SOURCE,
+      outputCorpora.filter(
+        (outputCorpus) => outputCorpus.side === AlignmentSide.SOURCE
+      )
+    );
+    const targetContainer = CorpusContainer.fromIdAndCorpora(
+      AlignmentSide.TARGET,
+      outputCorpora.filter(
+        (outputCorpus) => outputCorpus.side === AlignmentSide.TARGET
+      )
+    );
 
     return {
       projectId: appCtx.preferences?.currentProject,
       sourceContainer,
-      targetContainer
+      targetContainer,
     };
   } finally {
     IsLoadingAnyCorpora = false;

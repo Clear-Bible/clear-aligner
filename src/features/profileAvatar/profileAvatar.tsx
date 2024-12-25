@@ -19,8 +19,8 @@ import { blue, green, grey, red } from '@mui/material/colors';
  */
 export const userState = {
   LoggedIn: {
-    color:  green['500'],
-    label: 'Logged In'
+    color: green['500'],
+    label: 'Logged In',
   },
   LoggedOut: {
     color: red['500'],
@@ -28,13 +28,13 @@ export const userState = {
   },
   Offline: {
     color: grey['500'],
-    label: 'Offline'
+    label: 'Offline',
   },
   CustomEndpoint: {
     color: blue['500'],
-    label: 'Custom Server'
-  }
-}
+    label: 'Custom Server',
+  },
+};
 
 interface ProfileMenuProps {
   isSignInButtonVisible: boolean;
@@ -45,16 +45,20 @@ interface ProfileMenuProps {
  * The ProfileMenu component is used for users to see the
  * User Profile Menu when the Avatar is clicked
  */
-const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignInButtonDisabled}) => {
+const ProfileMenu: React.FC<ProfileMenuProps> = ({
+  isSignInButtonVisible,
+  isSignInButtonDisabled,
+}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [popOverAnchorEl, setPopOverAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [popOverAnchorEl, setPopOverAnchorEl] =
+    React.useState<null | HTMLElement>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
   const [showLoginError, setShowLoginError] = React.useState(false);
   const { network, setUserStatus } = useContext(AppContext);
-  const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
+  const { setIsSnackBarOpen, setSnackBarObject } = useContext(AppContext);
   const [showPasswordResetURL, setShowPasswordResetURL] = React.useState(false);
-  const [emailAddress, setEmailAddress] = React.useState("")
-  const [password, setPassword] = React.useState("")
+  const [emailAddress, setEmailAddress] = React.useState('');
+  const [password, setPassword] = React.useState('');
 
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -63,41 +67,45 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   const handleClose = () => {
     setAnchorEl(null);
   };
-  const handleLoginClick = (event: { currentTarget: React.SetStateAction<HTMLElement | null>; }) => {
-    setPopOverAnchorEl(document.getElementById("anchorButton"));
-    handleClose()
+  const handleLoginClick = (event: {
+    currentTarget: React.SetStateAction<HTMLElement | null>;
+  }) => {
+    setPopOverAnchorEl(document.getElementById('anchorButton'));
+    handleClose();
 
     setIsLoginModalOpen(true);
-  }
+  };
   const handleLoginModalClose = () => {
     setIsLoginModalOpen(false);
     setShowLoginError(false);
     setShowPasswordResetURL(false);
-    setPassword("");
-    setEmailAddress("");
-  }
-  const handleSignOut = async() => {
-    try{
+    setPassword('');
+    setEmailAddress('');
+  };
+  const handleSignOut = async () => {
+    try {
       await signOut();
       setIsSnackBarOpen(true);
-      setSnackBarMessage("Signed out of ClearAligner Sync.")
+      setSnackBarObject({
+        message: 'Signed out of ClearAligner Sync.',
+        autoHide: true,
+      });
       setUserStatus(userState.LoggedOut);
       handleClose();
+    } catch (error) {
+      console.log('error signing out: ', error);
     }
-    catch(error){
-      console.log('error signing out: ', error)
-    }
-  }
+  };
   return (
     <div>
       <Button
         id="anchorButton"
         sx={{
-          color: 'white'
+          color: 'white',
         }}
         onClick={handleClick}
       >
-        <Person/>
+        <Person />
       </Button>
 
       <Menu
@@ -117,8 +125,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
           horizontal: 'right',
         }}
       >
-        {isSignInButtonVisible
-          ? (<MenuItem
+        {isSignInButtonVisible ? (
+          <MenuItem
             onClick={handleLoginClick}
             disabled={isSignInButtonDisabled}
           >
@@ -126,18 +134,15 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
             Sign in to ClearAligner Sync
-          </MenuItem>)
-          : (<MenuItem
-            disabled={network.online === false}
-            onClick={handleSignOut}
-          >
+          </MenuItem>
+        ) : (
+          <MenuItem disabled={network.online === false} onClick={handleSignOut}>
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
             Sign out of ClearAligner Sync
-          </MenuItem>)
-        }
-
+          </MenuItem>
+        )}
       </Menu>
       <Login
         isLoginModalOpen={isLoginModalOpen}
@@ -155,37 +160,35 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
       />
     </div>
   );
-}
-
+};
 
 /**
  * This ProfileAvatar component is used for users to access a menu
  * with login/logout, settings, about, etc.
  */
 export const ProfileAvatar = () => {
-  const [isSignInButtonVisible, setIsSignInButtonVisible] = React.useState(true)
-  const [isSignInButtonDisabled, setIsSignInButtonDisabled] = React.useState(false)
+  const [isSignInButtonVisible, setIsSignInButtonVisible] =
+    React.useState(true);
+  const [isSignInButtonDisabled, setIsSignInButtonDisabled] =
+    React.useState(false);
   const { network, userStatus } = useContext(AppContext);
 
   // Update Network and Logged In Status
-  useEffect( () => {
-    if(network.online){
-      setIsSignInButtonDisabled(false)
+  useEffect(() => {
+    if (network.online) {
+      setIsSignInButtonDisabled(false);
+    } else {
+      setIsSignInButtonDisabled(true);
     }
-    else{
-      setIsSignInButtonDisabled(true)
-    }
-  },[network])
+  }, [network]);
 
   useEffect(() => {
-    if(userStatus === userState.LoggedIn){
+    if (userStatus === userState.LoggedIn) {
       setIsSignInButtonVisible(false);
-    }
-    else if (userStatus === userState.LoggedOut){
+    } else if (userStatus === userState.LoggedOut) {
       setIsSignInButtonVisible(true);
     }
-  },[userStatus])
-
+  }, [userStatus]);
 
   const StyledBadge = styled(Badge)(({ theme }) => ({
     '& .MuiBadge-badge': {
@@ -206,29 +209,28 @@ export const ProfileAvatar = () => {
     },
   }));
 
-  return(
+  return (
     <>
-        <StyledBadge
-          overlap="circular"
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          variant="dot"
+      <StyledBadge
+        overlap="circular"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        variant="dot"
+        sx={{
+          margin: 1,
+        }}
+      >
+        <Avatar
           sx={{
-            margin: 1,
+            height: 30,
+            width: 30,
           }}
         >
-            <Avatar
-              sx={{
-                height: 30,
-                width: 30,
-              }}
-            >
-              <ProfileMenu
-                isSignInButtonVisible={isSignInButtonVisible}
-                isSignInButtonDisabled={isSignInButtonDisabled}
-              />
-            </Avatar>
-        </StyledBadge>
+          <ProfileMenu
+            isSignInButtonVisible={isSignInButtonVisible}
+            isSignInButtonDisabled={isSignInButtonDisabled}
+          />
+        </Avatar>
+      </StyledBadge>
     </>
-
-  )
-}
+  );
+};

@@ -6,7 +6,11 @@ import { Corpus, RepositoryLink, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay, WordDisplayVariant } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
+import {
+  useDataLastUpdated,
+  useFindLinksByBCV,
+  useGetLink,
+} from '../../state/links/tableManager';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { compressAlignedWords } from '../../helpers/compressAlignedWords';
 import { GridApiCommunity } from '@mui/x-data-grid/internals';
@@ -42,19 +46,22 @@ const VerseWidthAdjustmentFactor = 1.895;
  * @constructor
  */
 export const VerseDisplay = ({
-                               readonly,
-                               variant,
-                               corpus,
-                               verse,
-                               onlyLinkIds,
-                               apiRef
-                             }: VerseDisplayProps) => {
+  readonly,
+  variant,
+  corpus,
+  verse,
+  onlyLinkIds,
+  apiRef,
+}: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
     [verse?.words]
   );
-  const alignmentSide = useMemo(() => corpus?.side as AlignmentSide, [corpus?.side]);
+  const alignmentSide = useMemo(
+    () => corpus?.side as AlignmentSide,
+    [corpus?.side]
+  );
   const { result: onlyLink } = useGetLink(
     (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
     `${verse.bcvId?.toReferenceString()}-${dataLastUpdated}`
@@ -69,22 +76,24 @@ export const VerseDisplay = ({
   );
 
   const linkMap = useMemo(() => {
-    if ((!allLinks || allLinks.length < 1)
-      && !onlyLink) {
+    if ((!allLinks || allLinks.length < 1) && !onlyLink) {
       return;
     }
     const result = new Map<string, RepositoryLink[]>();
     (allLinks ?? [onlyLink as RepositoryLink])
-      .filter(link => onlyLinkIds?.includes(link!.id!) ?? true)
-      .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
-        ? link!.sources
-        : link!.targets) ?? [])
-        .forEach(wordId => {
+      .filter((link) => onlyLinkIds?.includes(link!.id!) ?? true)
+      .forEach((link) =>
+        (
+          (alignmentSide === AlignmentSide.SOURCE
+            ? link!.sources
+            : link!.targets) ?? []
+        ).forEach((wordId) => {
           if (!result.has(wordId)) {
             result.set(wordId, []);
           }
           result.get(wordId)!.push(link!);
-        }));
+        })
+      );
     return result;
   }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 
@@ -94,15 +103,17 @@ export const VerseDisplay = ({
      * condensing algorithm so that tokens are visible in the table
      */
     let isAlignedWordCutoff = false;
-    const computedColumnWidth = apiRef ? apiRef.current.getColumn('verse').computedWidth : 0;
+    const computedColumnWidth = apiRef
+      ? apiRef.current.getColumn('verse').computedWidth
+      : 0;
 
     // iterate over verse Tokens and calculate its length
     let printableVerse = '';
     let printableVerseUpToAlignedWord = '';
 
-    verseTokens.forEach(token => {
-      token.forEach(subToken => {
-        printableVerse += ((!!printableVerse ? ' ' : '') + subToken.text);
+    verseTokens.forEach((token) => {
+      token.forEach((subToken) => {
+        printableVerse += (!!printableVerse ? ' ' : '') + subToken.text;
         // we want to keep going in case we're looking at multiple target tokens
         if (linkMap?.has(subToken.id)) {
           printableVerseUpToAlignedWord = printableVerse;
@@ -115,7 +126,8 @@ export const VerseDisplay = ({
     const canvasContext = textCanvas.getContext('2d');
     if (canvasContext) {
       const printableVerseWidth = canvasContext.measureText(verseText).width;
-      const adjustedPrintableVerseWidth = printableVerseWidth * VerseWidthAdjustmentFactor;
+      const adjustedPrintableVerseWidth =
+        printableVerseWidth * VerseWidthAdjustmentFactor;
       if (adjustedPrintableVerseWidth > computedColumnWidth) {
         isAlignedWordCutoff = true;
       }
@@ -124,23 +136,24 @@ export const VerseDisplay = ({
     return readonly && isAlignedWordCutoff && linkMap
       ? compressAlignedWords(verseTokens, linkMap)
       : verseTokens;
-
   }, [apiRef, linkMap, readonly, verseTokens]);
 
   // aligned word is visible in the table
-  return <>
-    {(displayTokens || []).map(
-      (token: Word[], index): ReactElement => <WordDisplay
-        key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
-        variant={variant}
-        links={linkMap}
-        readonly={readonly}
-        onlyLinkIds={onlyLinkIds}
-        corpus={corpus}
-        parts={token}
-      />
-    )}
-  </>;
-
-
+  return (
+    <>
+      {(displayTokens || []).map(
+        (token: Word[], index): ReactElement => (
+          <WordDisplay
+            key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+            variant={variant}
+            links={linkMap}
+            readonly={readonly}
+            onlyLinkIds={onlyLinkIds}
+            corpus={corpus}
+            parts={token}
+          />
+        )
+      )}
+    </>
+  );
 };

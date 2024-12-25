@@ -21,12 +21,6 @@
     "outDir": "app",
     "rootDir": "src"
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "src/__tests__/**/*",
-    "src/**/*.test.ts",
-    "src/**/*.test.tsx"
-  ]
+  "include": ["src"],
+  "exclude": ["src/__tests__/**/*", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

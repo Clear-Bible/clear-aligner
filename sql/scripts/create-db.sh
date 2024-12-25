@@ -23,7 +23,7 @@ else
     -sf "create-template-db.sql"
   python3 ./create-db.py \
     -of "${templateDbPath}" \
-    -cf '../../src/tsv/source_macula_hebrew.tsv' \
+    -cf '../../src/tsv/source_macula_hebrew+required.tsv' \
     -ci 'wlc-hebot' \
     -cn 'WLC' \
     -cfn 'Macula Hebrew Old Testament' \
@@ -33,7 +33,7 @@ else
     -cff 'sbl-hebrew'
   python3 ./create-db.py \
     -of "${templateDbPath}" \
-    -cf '../../src/tsv/source_macula_greek_SBLGNT.tsv' \
+    -cf '../../src/tsv/source_macula_greek_SBLGNT+required.tsv' \
     -ci 'sbl-gnt' \
     -cn 'SBLGNT' \
     -cfn 'SBL Greek New Testament' \

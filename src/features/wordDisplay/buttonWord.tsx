@@ -1,13 +1,38 @@
-import { Corpus, LanguageInfo, LinkOriginManual, LinkStatus, RepositoryLink, TextDirection, Word } from '../../structs';
+import {
+  Corpus,
+  LanguageInfo,
+  LinkOriginManual,
+  LinkStatus,
+  RepositoryLink,
+  TextDirection,
+  Word,
+} from '../../structs';
 import React, { useMemo, useRef } from 'react';
-import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
+import {
+  Button,
+  decomposeColor,
+  Stack,
+  SvgIconOwnProps,
+  SxProps,
+  Theme,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
 import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import { AutoAwesome, Cancel, CheckCircle, CommentOutlined, Flag, InsertLink, Lightbulb } from '@mui/icons-material';
+import {
+  AutoAwesome,
+  Cancel,
+  CheckCircle,
+  CommentOutlined,
+  Flag,
+  InsertLink,
+  Lightbulb,
+} from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
@@ -68,34 +93,49 @@ export interface ButtonWordProps extends LimitedToLinks {
  * @param fillWidth
  */
 export const ButtonWord = ({
-                             disabled,
-                             links,
-                             tokens,
-                             corpus,
-                             enableGlossDisplay,
-                             suppressAfter,
-                             disableHighlighting,
-                             fillWidth = false
-                           }: ButtonWordProps) => {
-  const { language: languageInfo } = useMemo(() => corpus ?? { language: undefined }, [corpus]);
+  disabled,
+  links,
+  tokens,
+  corpus,
+  enableGlossDisplay,
+  suppressAfter,
+  disableHighlighting,
+  fillWidth = false,
+}: ButtonWordProps) => {
+  const { language: languageInfo } = useMemo(
+    () => corpus ?? { language: undefined },
+    [corpus]
+  );
 
   return (
-    <LocalizedButtonGroup id={tokens?.[0]?.id}
-                          disabled={disabled}
-                          languageInfo={languageInfo}
-                          sx={{
-                            borderStyle: 'none',
-                            ...(fillWidth ? { width: '100%' } : {}),
-                            '.MuiButtonGroup-grouped': {
-                              padding: '0px !important',
-                              minWidth: '12px !important',
-                              height: enableGlossDisplay ? '82px !important' : '62px !important'
-                            }
-                          }}>
-      {tokens?.map((token) => <ButtonToken key={token.id} token={token} completeWord={tokens}
-                                           enableGlossDisplay={enableGlossDisplay} links={links}
-                                           languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled}
-                                           hoverHighlightingDisabled={disableHighlighting} fillWidth={fillWidth} />)}
+    <LocalizedButtonGroup
+      id={tokens?.[0]?.id}
+      disabled={disabled}
+      languageInfo={languageInfo}
+      sx={{
+        borderStyle: 'none',
+        ...(fillWidth ? { width: '100%' } : {}),
+        '.MuiButtonGroup-grouped': {
+          padding: '0px !important',
+          minWidth: '12px !important',
+          height: enableGlossDisplay ? '82px !important' : '62px !important',
+        },
+      }}
+    >
+      {tokens?.map((token) => (
+        <ButtonToken
+          key={token.id}
+          token={token}
+          completeWord={tokens}
+          enableGlossDisplay={enableGlossDisplay}
+          links={links}
+          languageInfo={languageInfo}
+          suppressAfter={suppressAfter}
+          disabled={disabled}
+          hoverHighlightingDisabled={disableHighlighting}
+          fillWidth={fillWidth}
+        />
+      ))}
     </LocalizedButtonGroup>
   );
 };
@@ -145,36 +185,49 @@ export interface ButtonTokenProps {
  * @param fillWidth True to use max available width.
  */
 export const ButtonToken = ({
-                              disabled,
-                              links,
-                              token,
-                              completeWord,
-                              languageInfo,
-                              enableGlossDisplay,
-                              showRejected,
-                              suppressAfter,
-                              hoverHighlightingDisabled,
-                              fillWidth = false
-                            }: ButtonTokenProps) => {
+  disabled,
+  links,
+  token,
+  completeWord,
+  languageInfo,
+  enableGlossDisplay,
+  showRejected,
+  suppressAfter,
+  hoverHighlightingDisabled,
+  fillWidth = false,
+}: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isTokenExcluded = token.exclude === 1;
+  const isTokenRequired = token.required === 1;
 
-  const alphaTransparencyValueForButtonTokens = useMemo( () => theme.palette.mode === 'light' ? '.12' : '.25', [theme.palette.mode])
+  const alphaTransparencyValueForButtonTokens = useMemo(
+    () => (theme.palette.mode === 'light' ? '.12' : '.25'),
+    [theme.palette.mode]
+  );
 
   /**
    * element id for the color gradient svg to be referenced in order to use the gradient
    */
-  const gradientSvgId = useMemo<string>(() => `machine-color-gradient-${token.side}-${token.id}`, [token.side, token.id]);
-  const gradientSvgUrl = useMemo<string>(() => `url(#${gradientSvgId})`, [gradientSvgId]);
-  const gradientSvg = useMemo<React.JSX.Element>(() =>
-    (<svg width={0} height={0}>
-      <linearGradient id={gradientSvgId} x1={1} y1={0} x2={1} y2={1}>
-        <stop offset={0} stopColor={gradientTopColor} />
-        <stop offset={1} stopColor={gradientBottomColor} />
-      </linearGradient>
-    </svg>), [gradientSvgId]);
-
+  const gradientSvgId = useMemo<string>(
+    () => `machine-color-gradient-${token.side}-${token.id}`,
+    [token.side, token.id]
+  );
+  const gradientSvgUrl = useMemo<string>(
+    () => `url(#${gradientSvgId})`,
+    [gradientSvgId]
+  );
+  const gradientSvg = useMemo<React.JSX.Element>(
+    () => (
+      <svg width={0} height={0}>
+        <linearGradient id={gradientSvgId} x1={1} y1={0} x2={1} y2={1}>
+          <stop offset={0} stopColor={gradientTopColor} />
+          <stop offset={1} stopColor={gradientBottomColor} />
+        </linearGradient>
+      </svg>
+    ),
+    [gradientSvgId]
+  );
 
   /**
    * whether the current token is being hovered by the user
@@ -196,12 +249,15 @@ export const ButtonToken = ({
    * links currently being hovered over by the user, if any
    */
   const currentlyHoveredLinks = useMemo<RepositoryLink[]>(() => {
-    if (!links
-      || !currentlyHoveredToken?.id) {
+    if (!links || !currentlyHoveredToken?.id) {
       return [];
     }
     const sanitized = BCVWP.sanitize(currentlyHoveredToken.id);
-    const result = [...links.values()].flatMap((a) => a).find((link: RepositoryLink) => link[currentlyHoveredToken.side].includes(sanitized));
+    const result = [...links.values()]
+      .flatMap((a) => a)
+      .find((link: RepositoryLink) =>
+        link[currentlyHoveredToken.side].includes(sanitized)
+      );
     return result ? [result] : [];
   }, [links, currentlyHoveredToken?.id, currentlyHoveredToken?.side]);
 
@@ -211,13 +267,18 @@ export const ButtonToken = ({
   const memberOfLinks = useMemo(() => {
     const foundLinks = links?.get(BCVWP.sanitize(token.id));
     if (showRejected) return foundLinks;
-    return foundLinks?.filter((link) => link?.metadata.status !== LinkStatus.REJECTED);
+    return foundLinks?.filter(
+      (link) => link?.metadata.status !== LinkStatus.REJECTED
+    );
   }, [links, showRejected, token.id]);
 
   /**
    * since rejected links no longer show up, we must filter the links and choose a primary link to use for display purposes that this token is a member of
    */
-  const memberOfPrimaryLink = useMemo(() => memberOfLinks?.[0], [memberOfLinks]);
+  const memberOfPrimaryLink = useMemo(
+    () => memberOfLinks?.[0],
+    [memberOfLinks]
+  );
 
   const anchorEl = useRef();
 
@@ -225,44 +286,66 @@ export const ButtonToken = ({
    * editedLink is an object representing the currently selected tokens that comprise an
    * inProgressLink
    */
-  const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
+  const editedLink = useAppSelector(
+    (state) => state.alignment.present.inProgressLink
+  );
 
   /**
    * indicates if this token is a member of any link
    */
-  const isMemberOfAnyLink = useMemo(() => !!memberOfPrimaryLink, [memberOfPrimaryLink]);
+  const isMemberOfAnyLink = useMemo(
+    () => !!memberOfPrimaryLink,
+    [memberOfPrimaryLink]
+  );
   /**
    * indicates whether this token was a member of the link which is currently being edited (does not indicate if it is currently selected in the edited link, just that it was a member of that link before it was opened for editing)
    */
-  const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
+  const isMemberOfEditedLink = useMemo<boolean>(
+    () => memberOfPrimaryLink?.id === editedLink?.id,
+    [memberOfPrimaryLink?.id, editedLink?.id]
+  );
 
-  const { onOpenEditor, editorDialog, hasNote, isEditorOpen } = useLinkNotes({ memberOfLink: memberOfPrimaryLink });
+  const { onOpenEditor, editorDialog, hasNote, isEditorOpen } = useLinkNotes({
+    memberOfLink: memberOfPrimaryLink,
+  });
 
   // Allow the user to right-click on an alignment and change it's state
-  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink, onOpenEditor);
+  const [ContextMenuAlignmentState, handleRightClick] =
+    useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink, onOpenEditor);
 
-  const { wasSubmittedForConsideration, isMostRelevantSuggestion, scoreIsRelevant } = useTokenSuggestionRelevancyScore(token, isMemberOfAnyLink);
+  const {
+    wasSubmittedForConsideration,
+    isMostRelevantSuggestion,
+    scoreIsRelevant,
+  } = useTokenSuggestionRelevancyScore(token, isMemberOfAnyLink);
 
   const isSelectedInEditedLink = useMemo<boolean>(() => {
     switch (token.side) {
       case AlignmentSide.SOURCE:
-        return !!editedLink?.sources.includes( BCVWP.sanitize(token.id) );
+        return !!editedLink?.sources.includes(BCVWP.sanitize(token.id));
       case AlignmentSide.TARGET:
-        return !!editedLink?.targets.includes( BCVWP.sanitize(token.id) );
+        return !!editedLink?.targets.includes(BCVWP.sanitize(token.id));
     }
-  }, [ token.id, token.side, editedLink?.sources, editedLink?.targets ]);
+  }, [token.id, token.side, editedLink?.sources, editedLink?.targets]);
 
-  const isCurrentlyHoveredToken = useMemo<boolean>(() => token?.side === currentlyHoveredToken?.side && token?.id === currentlyHoveredToken?.id, [ token.id, token.side, currentlyHoveredToken?.id, currentlyHoveredToken?.side ]);
+  const isCurrentlyHoveredToken = useMemo<boolean>(
+    () =>
+      token?.side === currentlyHoveredToken?.side &&
+      token?.id === currentlyHoveredToken?.id,
+    [
+      token.id,
+      token.side,
+      currentlyHoveredToken?.id,
+      currentlyHoveredToken?.side,
+    ]
+  );
 
   /**
    * whether this token is a member of an alignment that the currently hovered token is a member of
    */
-  const isInLinkWithCurrentlyHoveredToken = useMemo(
-    () => {
-      return _.intersection(memberOfLinks, currentlyHoveredLinks).length > 0;
-    },
-    [memberOfLinks, currentlyHoveredLinks]
-  );
+  const isInLinkWithCurrentlyHoveredToken = useMemo(() => {
+    return _.intersection(memberOfLinks, currentlyHoveredLinks).length > 0;
+  }, [memberOfLinks, currentlyHoveredLinks]);
 
   /**
    * This is the color used for the iconography and borders in an unselected state
@@ -271,11 +354,11 @@ export const ButtonToken = ({
   const buttonPrimaryColor = useMemo(() => {
     if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) {
       return theme.palette.tokenButtons.defaultTokenButtons.selected;
-    }
-    else if (wasSubmittedForConsideration && scoreIsRelevant) {
-      return theme.palette.mode === 'light' ? theme.palette.secondary.light : theme.palette.secondary.main;
-    }
-    else if (!memberOfPrimaryLink?.metadata.status) {
+    } else if (wasSubmittedForConsideration && scoreIsRelevant) {
+      return theme.palette.mode === 'light'
+        ? theme.palette.secondary.light
+        : theme.palette.secondary.main;
+    } else if (!memberOfPrimaryLink?.metadata.status) {
       return theme.palette.text.disabled;
     }
     switch (memberOfPrimaryLink?.metadata.status) {
@@ -290,107 +373,153 @@ export const ButtonToken = ({
       default:
         return theme.palette.text.disabled;
     }
-  }, [ wasSubmittedForConsideration, scoreIsRelevant, memberOfPrimaryLink?.metadata.status, isSelectedInEditedLink, theme ]);
+  }, [
+    wasSubmittedForConsideration,
+    scoreIsRelevant,
+    memberOfPrimaryLink?.metadata.status,
+    isSelectedInEditedLink,
+    theme,
+  ]);
 
-  const buttonNormalBackgroundColor = useMemo(() => theme.palette.background.default, [theme.palette.background.default]);
+  const buttonNormalBackgroundColor = useMemo(
+    () => theme.palette.background.default,
+    [theme.palette.background.default]
+  );
 
   /**
    * This is the computed color for the sx object for the Button.
    */
   const computedButtonColor = useMemo(() => {
-    if(isMostRelevantSuggestion) {
-      return theme.palette.mode === 'light' ?
-        theme.palette.tokenButtons.defaultTokenButtons.text :
-        theme.palette.tokenButtons.defaultTokenButtons.textContrast
-    }
-    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
-      return theme.palette.tokenButtons.defaultTokenButtons.textContrast
-    }
-    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
-      return theme.palette.tokenButtons.defaultTokenButtons.text
-    }
-    else if (memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
+    if (isMostRelevantSuggestion) {
+      return theme.palette.mode === 'light'
+        ? theme.palette.tokenButtons.defaultTokenButtons.text
+        : theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    } else if (
+      !memberOfPrimaryLink?.metadata.status &&
+      isSelectedInEditedLink &&
+      theme.palette.mode === 'dark'
+    ) {
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast;
-    }
-    else if (isSelectedInEditedLink){
-      return theme.palette.text.primary
+    } else if (
+      !memberOfPrimaryLink?.metadata.status &&
+      isSelectedInEditedLink
+    ) {
+      return theme.palette.tokenButtons.defaultTokenButtons.text;
+    } else if (
+      memberOfPrimaryLink?.metadata.status &&
+      isSelectedInEditedLink &&
+      theme.palette.mode === 'dark'
+    ) {
+      return theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    } else if (isSelectedInEditedLink) {
+      return theme.palette.text.primary;
     }
     // If this token is excluded, then make sure it gets the specified excluded color from the theme.
     // !important ensures it overrides the color it gets as a result of disabled being set to true.
-    else if(isTokenExcluded){
-      return `${theme.palette.tokenButtons.excludedTokenButtons.text} !important`
+    else if (isTokenExcluded) {
+      return `${theme.palette.tokenButtons.excludedTokenButtons.text} !important`;
+    } else {
+      return (isSelectedInEditedLink || isMostRelevantSuggestion) &&
+        !isHoveredToken
+        ? buttonNormalBackgroundColor
+        : theme.palette.text.primary;
     }
-    else{
-      return (isSelectedInEditedLink || isMostRelevantSuggestion) && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary
-    }
-  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, isTokenExcluded, theme, memberOfPrimaryLink])
+  }, [
+    buttonNormalBackgroundColor,
+    isHoveredToken,
+    isMostRelevantSuggestion,
+    isSelectedInEditedLink,
+    isTokenExcluded,
+    theme,
+    memberOfPrimaryLink,
+  ]);
 
   /**
    * This is the icon to indicate the source of the alignment
    */
-  const sourceIndicator = useMemo<React.JSX.Element>(() => {
-    const color = (() => {
-      if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
-        return buttonNormalBackgroundColor;
-      }
-      else if (isCurrentlyHoveredToken) {
-        return buttonPrimaryColor;
-      }
-      else if (isMostRelevantSuggestion){
-       return theme.palette.tokenButtons.suggestedTokenButtons.icon;
-      }
-      else if (isSelectedInEditedLink || wasSubmittedForConsideration) {
-        return buttonNormalBackgroundColor;
-      }
-      else {
-        return buttonPrimaryColor;
-      }
-    })();
-    const iconProps: SvgIconOwnProps = {
-      sx: {
-        fontSize: iconSize,
-        margin: iconMargin,
-        color,
-      }
-    };
-    const emptyBox = (<Box
-      sx={{
-        height: iconSize,
-        margin: iconMargin
-      }}>
-    </Box>);
-    if (isMostRelevantSuggestion) {
-      return (
-        <Lightbulb
-          {...{
-            ...iconProps,
-            sx: iconProps?.sx,
+  const sourceIndicator = useMemo<React.JSX.Element>(
+    () => {
+      const color = (() => {
+        if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
+          return buttonNormalBackgroundColor;
+        } else if (isCurrentlyHoveredToken) {
+          return buttonPrimaryColor;
+        } else if (isMostRelevantSuggestion) {
+          return theme.palette.tokenButtons.suggestedTokenButtons.icon;
+        } else if (isSelectedInEditedLink || wasSubmittedForConsideration) {
+          return buttonNormalBackgroundColor;
+        } else {
+          return buttonPrimaryColor;
+        }
+      })();
+      const iconProps: SvgIconOwnProps = {
+        sx: {
+          fontSize: iconSize,
+          margin: iconMargin,
+          color,
+        },
+      };
+      const emptyBox = (
+        <Box
+          sx={{
+            height: iconSize,
+            margin: iconMargin,
           }}
-        />
+        ></Box>
       );
-    }
-    if (!memberOfPrimaryLink) {
-      return emptyBox;
-    }
-    /* eslint-disable no-fallthrough */
-    switch (memberOfPrimaryLink?.metadata.origin) {
-      case LinkOriginManual:
+      if (isMostRelevantSuggestion) {
+        return (
+          <Lightbulb
+            {...{
+              ...iconProps,
+              sx: iconProps?.sx,
+            }}
+          />
+        );
+      }
+      if (!memberOfPrimaryLink) {
         return emptyBox;
-      default:
-        return (<AutoAwesome {...{
-          sx: {
-            ...iconProps?.sx,
-            ...(memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
-              ? {
-                color: undefined,
-                fill: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : gradientSvgUrl
-              } : {})
-          }
-        }} />);
-    }
-  },
+      }
+      /* eslint-disable no-fallthrough */
+      switch (memberOfPrimaryLink?.metadata.origin) {
+        case LinkOriginManual:
+          return emptyBox;
+        default:
+          return (
+            <AutoAwesome
+              {...{
+                sx: {
+                  ...iconProps?.sx,
+                  ...(memberOfPrimaryLink?.metadata.status ===
+                  LinkStatus.CREATED
+                    ? {
+                        color: undefined,
+                        fill:
+                          color === buttonNormalBackgroundColor
+                            ? buttonNormalBackgroundColor
+                            : gradientSvgUrl,
+                      }
+                    : {}),
+                },
+              }}
+            />
+          );
+      }
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ isMostRelevantSuggestion, wasSubmittedForConsideration, memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
+    [
+      isMostRelevantSuggestion,
+      wasSubmittedForConsideration,
+      memberOfPrimaryLink,
+      memberOfPrimaryLink?.metadata.origin,
+      buttonPrimaryColor,
+      isCurrentlyHoveredToken,
+      isSelectedInEditedLink,
+      buttonNormalBackgroundColor,
+      gradientSvgUrl,
+      memberOfPrimaryLink?.metadata.status,
+    ]
+  );
 
   /**
    * This is the icon to indicate if there are notes on the alignment
@@ -399,14 +528,11 @@ export const ButtonToken = ({
     const color = (() => {
       if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
         return buttonNormalBackgroundColor;
-      }
-      else if (isCurrentlyHoveredToken) {
-        return buttonPrimaryColor
-      }
-      else if (isSelectedInEditedLink) {
+      } else if (isCurrentlyHoveredToken) {
+        return buttonPrimaryColor;
+      } else if (isSelectedInEditedLink) {
         return buttonNormalBackgroundColor;
-      }
-      else {
+      } else {
         return buttonPrimaryColor;
       }
     })();
@@ -415,317 +541,451 @@ export const ButtonToken = ({
         fontSize: iconSize,
         margin: iconMargin,
         color,
-      }
+      },
     };
     if (hasNote) {
-      return (<CommentOutlined
-                {...{
-                  sx: {
-                    ...iconProps?.sx
-                  }
-                }} />);
+      return (
+        <CommentOutlined
+          {...{
+            sx: {
+              ...iconProps?.sx,
+            },
+          }}
+        />
+      );
     }
-    return (<>
-    </>);
-  }, [ isCurrentlyHoveredToken, buttonPrimaryColor, isSelectedInEditedLink, buttonNormalBackgroundColor, hasNote ]);
+    return <></>;
+  }, [
+    isCurrentlyHoveredToken,
+    buttonPrimaryColor,
+    isSelectedInEditedLink,
+    buttonNormalBackgroundColor,
+    hasNote,
+  ]);
 
   /**
    * This computes the styled icon corresponding to the status
    * of the link.
    */
-  const statusIndicator = useMemo<React.JSX.Element>(() => {
+  const statusIndicator = useMemo<React.JSX.Element>(
+    () => {
       const color = (() => {
-        if(isCurrentlyHoveredToken && isSelectedInEditedLink){
+        if (isCurrentlyHoveredToken && isSelectedInEditedLink) {
           return buttonNormalBackgroundColor;
-        }
-        else if (isCurrentlyHoveredToken) {
+        } else if (isCurrentlyHoveredToken) {
           return buttonPrimaryColor;
-        }
-        else if (isSelectedInEditedLink) {
+        } else if (isSelectedInEditedLink) {
           return buttonNormalBackgroundColor;
-        }
-        else{
+        } else {
           return buttonPrimaryColor;
         }
       })();
       const baseSx: SxProps<Theme> = {
         fontSize: iconSize,
         margin: iconMargin,
-        color
+        color,
       };
       switch (memberOfPrimaryLink?.metadata.status) {
         case LinkStatus.APPROVED:
-          return (<CheckCircle sx={{
-            ...baseSx
-          }} />);
+          return (
+            <CheckCircle
+              sx={{
+                ...baseSx,
+              }}
+            />
+          );
         case LinkStatus.CREATED:
-          return (<InsertLink sx={{
-            ...baseSx
-          }} />);
+          return (
+            <InsertLink
+              sx={{
+                ...baseSx,
+              }}
+            />
+          );
         case LinkStatus.NEEDS_REVIEW:
-          return (<Flag sx={() => ({
-            ...baseSx
-          })} />);
+          return (
+            <Flag
+              sx={() => ({
+                ...baseSx,
+              })}
+            />
+          );
         case LinkStatus.REJECTED:
-          return (<Cancel sx={{
-            ...baseSx
-          }} />);
+          return (
+            <Cancel
+              sx={{
+                ...baseSx,
+              }}
+            />
+          );
       }
       if (memberOfPrimaryLink) {
-        return (<InsertLink sx={{
-          ...baseSx
-        }} />);
+        return (
+          <InsertLink
+            sx={{
+              ...baseSx,
+            }}
+          />
+        );
       }
-      return (<Box sx={{
-        height: iconSize,
-        margin: iconMargin
-      }}>
-      </Box>);
+      return (
+        <Box
+          sx={{
+            height: iconSize,
+            margin: iconMargin,
+          }}
+        ></Box>
+      );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor]);
+    [
+      memberOfPrimaryLink,
+      memberOfPrimaryLink?.metadata.status,
+      memberOfPrimaryLink?.metadata.origin,
+      isSelectedInEditedLink,
+      buttonNormalBackgroundColor,
+      isCurrentlyHoveredToken,
+      buttonPrimaryColor,
+    ]
+  );
 
-  const gradientTopColorDecomposed = useMemo(() => decomposeColor(gradientTopColor), []);
-  const gradientBottomColorDecomposed = useMemo(() => decomposeColor(gradientBottomColor), []);
+  const gradientTopColorDecomposed = useMemo(
+    () => decomposeColor(gradientTopColor),
+    []
+  );
+  const gradientBottomColorDecomposed = useMemo(
+    () => decomposeColor(gradientBottomColor),
+    []
+  );
 
-  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values, alphaTransparencyValueForButtonTokens]);
+  const backgroundImageGradientTransparent = useMemo(
+    () =>
+      `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`,
+    [
+      gradientTopColorDecomposed.values,
+      gradientBottomColorDecomposed.values,
+      alphaTransparencyValueForButtonTokens,
+    ]
+  );
 
   /**
    * The css styling used when the buttonWord is hovered.
    */
   const hoverSx: SxProps<Theme> = useMemo(() => {
-    if(isSelectedInEditedLink){
+    if (isSelectedInEditedLink) {
       return {
-        backgroundColor: buttonPrimaryColor
+        backgroundColor: buttonPrimaryColor,
+      };
+    } else if (!memberOfPrimaryLink) {
+      return {
+        backgroundColor:
+          theme.palette.tokenButtons.defaultTokenButtons.rollover,
+        color: theme.palette.tokenButtons.defaultTokenButtons.text,
+      };
+    } else if (buttonPrimaryColor === theme.palette.text.disabled) {
+      const decomposedColor = decomposeColor(theme.palette.primary.main);
+      return {
+        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`,
+      };
+    } else if (
+      memberOfPrimaryLink?.metadata.origin !== LinkOriginManual &&
+      memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
+    ) {
+      return {
+        backgroundColor: undefined,
+        backgroundImage: backgroundImageGradientTransparent,
+      };
+    } else {
+      const rgbColor = decomposeColor(buttonPrimaryColor);
+      return {
+        backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`,
       };
     }
-    else if (!memberOfPrimaryLink) {
-      return ({
-        backgroundColor: theme.palette.tokenButtons.defaultTokenButtons.rollover,
-        color: theme.palette.tokenButtons.defaultTokenButtons.text,
-      })
-    }
-    else if (buttonPrimaryColor === theme.palette.text.disabled) {
-      const decomposedColor = decomposeColor(theme.palette.primary.main);
-      return ({
-        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
-      });
-    }
-    else if (memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
-      return ({
-        backgroundColor: undefined,
-        backgroundImage: backgroundImageGradientTransparent
-      });
-    }
-    else {
-      const rgbColor = decomposeColor(buttonPrimaryColor);
-      return ({
-        backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
-      });
-    }
-  }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink, theme, alphaTransparencyValueForButtonTokens, isSelectedInEditedLink]);
+  }, [
+    buttonPrimaryColor,
+    backgroundImageGradientTransparent,
+    memberOfPrimaryLink,
+    theme,
+    alphaTransparencyValueForButtonTokens,
+    isSelectedInEditedLink,
+  ]);
 
-  const wordPart = useMemo<number | undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
-  const wordLength = useMemo<number>(() => completeWord.length, [completeWord.length]);
+  const wordPart = useMemo<number | undefined>(
+    () => BCVWP.parseFromString(token.id).part,
+    [token.id]
+  );
+  const wordLength = useMemo<number>(
+    () => completeWord.length,
+    [completeWord.length]
+  );
 
   const textJustification = useMemo<string>(() => {
-    if (!wordPart || wordLength < 2)
-      return 'center';
-    const beginning = languageInfo?.textDirection === TextDirection.LTR ? 'left' : 'right';
-    const end = languageInfo?.textDirection === TextDirection.LTR ? 'right' : 'left';
+    if (!wordPart || wordLength < 2) return 'center';
+    const beginning =
+      languageInfo?.textDirection === TextDirection.LTR ? 'left' : 'right';
+    const end =
+      languageInfo?.textDirection === TextDirection.LTR ? 'right' : 'left';
     if (wordPart === 1) return end;
     return beginning;
   }, [wordPart, wordLength, languageInfo?.textDirection]);
 
   const marginLeft = useMemo<string>(() => {
-    if (!wordPart || wordLength < 2)
-      return defaultMargin;
+    if (!wordPart || wordLength < 2) return defaultMargin;
     if (wordPart > 1)
-      return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
-    return languageInfo?.textDirection === TextDirection.LTR ? defaultMargin : noMargin;
+      return languageInfo?.textDirection === TextDirection.LTR
+        ? noMargin
+        : defaultMargin;
+    return languageInfo?.textDirection === TextDirection.LTR
+      ? defaultMargin
+      : noMargin;
   }, [wordPart, wordLength, languageInfo?.textDirection]);
 
   const marginRight = useMemo<string>(() => {
-    if (!wordPart || wordLength < 2)
-      return defaultMargin;
+    if (!wordPart || wordLength < 2) return defaultMargin;
     if (wordPart > 1)
-      return languageInfo?.textDirection === TextDirection.LTR ? defaultMargin : noMargin;
-    return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
+      return languageInfo?.textDirection === TextDirection.LTR
+        ? defaultMargin
+        : noMargin;
+    return languageInfo?.textDirection === TextDirection.LTR
+      ? noMargin
+      : defaultMargin;
   }, [languageInfo?.textDirection, wordPart, wordLength]);
 
-  const isSpecialMachineLearningCase = useMemo<boolean>(() => memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED, [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]);
+  const isSpecialMachineLearningCase = useMemo<boolean>(
+    () =>
+      memberOfPrimaryLink?.metadata.origin !== LinkOriginManual &&
+      memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED,
+    [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]
+  );
 
   /**
    * This is the computed border color for the sx object for the Button.
    */
   const computedBorderColor = useMemo(() => {
-    // If this token is excluded, make sure it has no border
-    if(isTokenExcluded){
-      return `transparent !important`
+    // If this token is excluded or not required, make sure it has no border
+    if (isTokenExcluded || !isTokenRequired) {
+      return `transparent !important`;
+    } else {
+      return (isSpecialMachineLearningCase && isSelectedInEditedLink) ||
+        isMostRelevantSuggestion
+        ? 'transparent !important'
+        : `${buttonPrimaryColor} !important`;
     }
-    else{
-      return ((isSpecialMachineLearningCase && isSelectedInEditedLink) || isMostRelevantSuggestion) ? 'transparent !important' : `${buttonPrimaryColor} !important`
-    }
-  },[buttonPrimaryColor, isMostRelevantSuggestion, isSelectedInEditedLink, isSpecialMachineLearningCase, isTokenExcluded])
+  }, [
+    buttonPrimaryColor,
+    isMostRelevantSuggestion,
+    isSelectedInEditedLink,
+    isSpecialMachineLearningCase,
+    isTokenExcluded,
+    isTokenRequired,
+  ]);
 
   /**
    * This is the computed color for the text of the Gloss, when gloss is used.
    */
   const computedGlossColor = useMemo(() => {
-    if(isMostRelevantSuggestion && isHoveredToken ){
-      return theme.palette.mode === 'light' ?
-        theme.palette.tokenButtons.defaultTokenButtons.textContrast :
-        theme.palette.tokenButtons.defaultTokenButtons.text;
-    }
-    else if (isMostRelevantSuggestion){
-     return theme.palette.mode === 'light' ?
-       theme.palette.tokenButtons.defaultTokenButtons.text :
-       theme.palette.tokenButtons.defaultTokenButtons.textContrast;
-    }
-    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark') {
-      return theme.palette.tokenButtons.defaultTokenButtons.textContrast
-    }
-    else if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink ) {
-      return theme.palette.tokenButtons.defaultTokenButtons.text
-    }
-    else if (memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink && theme.palette.mode === 'dark'){
+    if (isMostRelevantSuggestion && isHoveredToken) {
+      return theme.palette.mode === 'light'
+        ? theme.palette.tokenButtons.defaultTokenButtons.textContrast
+        : theme.palette.tokenButtons.defaultTokenButtons.text;
+    } else if (isMostRelevantSuggestion) {
+      return theme.palette.mode === 'light'
+        ? theme.palette.tokenButtons.defaultTokenButtons.text
+        : theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    } else if (
+      !memberOfPrimaryLink?.metadata.status &&
+      isSelectedInEditedLink &&
+      theme.palette.mode === 'dark'
+    ) {
       return theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    } else if (
+      !memberOfPrimaryLink?.metadata.status &&
+      isSelectedInEditedLink
+    ) {
+      return theme.palette.tokenButtons.defaultTokenButtons.text;
+    } else if (
+      memberOfPrimaryLink?.metadata.status &&
+      isSelectedInEditedLink &&
+      theme.palette.mode === 'dark'
+    ) {
+      return theme.palette.tokenButtons.defaultTokenButtons.textContrast;
+    } else if (isSelectedInEditedLink && !isHoveredToken) {
+      return theme.palette.tokenButtons.defaultTokenButtons.text;
+    } else if (isMostRelevantSuggestion && !isHoveredToken) {
+      return buttonNormalBackgroundColor;
+    } else {
+      return theme.palette.tokenButtons.defaultTokenButtons.text;
     }
-    else if(isSelectedInEditedLink && !isHoveredToken){
-      return theme.palette.tokenButtons.defaultTokenButtons.text
-    }
-    else if(isMostRelevantSuggestion && !isHoveredToken){
-      return buttonNormalBackgroundColor
-    }
-    else{
-      return theme.palette.tokenButtons.defaultTokenButtons.text
-    }
-  },[buttonNormalBackgroundColor, isHoveredToken, isMostRelevantSuggestion, isSelectedInEditedLink, theme, memberOfPrimaryLink?.metadata.status])
+  }, [
+    buttonNormalBackgroundColor,
+    isHoveredToken,
+    isMostRelevantSuggestion,
+    isSelectedInEditedLink,
+    theme,
+    memberOfPrimaryLink?.metadata.status,
+  ]);
 
-  return (<>
-    <Box
-      onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
-      ref={anchorEl}
-      sx={{
-        ...(fillWidth ? { width: '100%' } : {})
-      }}
-    >
-    {isMemberOfAnyLink && editorDialog}
-    <Button
-      disabled={isEditorOpen || isTokenExcluded || disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
-      component={'button'}
-      sx={() => ({
-        textTransform: 'none',
-        color: computedButtonColor,
-        borderColor: computedBorderColor,
-        '&:hover': hoverSx,
-        padding: '0 !important',
-        ...(isSelectedInEditedLink || isMostRelevantSuggestion ? {
-          backgroundColor:  buttonPrimaryColor,
-        } : {}),
-        /**
-         * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
-         */
-        ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {}),
-        ...(fillWidth ? { width: '100%' } : {})
-      })}
-      onMouseEnter={!!hoverHighlightingDisabled || (!editedLink && isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
-      onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
-      onClick={() => {
-        if (isEditorOpen) return;
-        return dispatch(toggleTextSegment({
-          foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v),
-          word: token
-        }));
-      }}
-      onKeyDown={(e) => {
-        if (e.key === ' ') { // prevent the space bar from triggering a click action so it can be used for control panel actions
-          e.preventDefault();
+  return (
+    <>
+      <Box
+        onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) =>
+          handleRightClick(event, token.id, links)
         }
-      }} >
-      {gradientSvg}
-      <LocalizedTextDisplay
+        ref={anchorEl}
         sx={{
-          width: '100%',
-          height: '100%'
+          ...(fillWidth ? { width: '100%' } : {}),
         }}
-        languageInfo={languageInfo}>
-        <Box
-          sx={{
-            display: 'flex',
-            height: '100%',
-            flexDirection: 'column'
-          }}>
-          <Box
-            dir={'ltr'}
+      >
+        {isMemberOfAnyLink && editorDialog}
+        <Button
+          disabled={
+            isEditorOpen ||
+            isTokenExcluded ||
+            disabled ||
+            (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)
+          }
+          component={'button'}
+          sx={() => ({
+            textTransform: 'none',
+            color: computedButtonColor,
+            borderColor: computedBorderColor,
+            '&:hover': hoverSx,
+            padding: '0 !important',
+            ...(isSelectedInEditedLink || isMostRelevantSuggestion
+              ? {
+                  backgroundColor: buttonPrimaryColor,
+                }
+              : {}),
+            /**
+             * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
+             */
+            ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink
+              ? hoverSx
+              : {}),
+            ...(fillWidth ? { width: '100%' } : {}),
+          })}
+          onMouseEnter={
+            !!hoverHighlightingDisabled ||
+            (!editedLink && isSelectedInEditedLink)
+              ? () => {}
+              : () => dispatch(hover(token))
+          }
+          onMouseLeave={
+            !!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))
+          }
+          onClick={() => {
+            if (isEditorOpen) return;
+            return dispatch(
+              toggleTextSegment({
+                foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v),
+                word: token,
+              })
+            );
+          }}
+          onKeyDown={(e) => {
+            if (e.key === ' ') {
+              // prevent the space bar from triggering a click action so it can be used for control panel actions
+              e.preventDefault();
+            }
+          }}
+        >
+          {gradientSvg}
+          <LocalizedTextDisplay
             sx={{
               width: '100%',
-              display: 'flex',
-              justifyContent: 'space-between',
-              m: 0
-            }}>
-            {sourceIndicator}
-            {upperRightHandCornerIndicator}
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              marginLeft,
-              marginRight,
-              alignItems: 'center',
-              justifyContent: `${textJustification} !important`,
-              minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
-              flexGrow: 1,
-            }}>
-            <Stack>
-              {/*
-                * word text display
-                */}
-                <LocalizedTextDisplay
-                  languageInfo={languageInfo}
-                  sx={{
-                    display: 'flex',
-                    width: '100%',
-                    justifyContent: `${textJustification} !important`,
-                    fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
-                  }}>
-                  {token.text}
-                </LocalizedTextDisplay>
-                {/*
-                * gloss display
-                */}
-                {enableGlossDisplay ?
-                  <Typography
-                    variant={'caption'}
+              height: '100%',
+            }}
+            languageInfo={languageInfo}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                height: '100%',
+                flexDirection: 'column',
+              }}
+            >
+              <Box
+                dir={'ltr'}
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  m: 0,
+                }}
+              >
+                {sourceIndicator}
+                {upperRightHandCornerIndicator}
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  marginLeft,
+                  marginRight,
+                  alignItems: 'center',
+                  justifyContent: `${textJustification} !important`,
+                  minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
+                  flexGrow: 1,
+                }}
+              >
+                <Stack>
+                  {/*
+                   * word text display
+                   */}
+                  <LocalizedTextDisplay
+                    languageInfo={languageInfo}
                     sx={{
                       display: 'flex',
                       width: '100%',
                       justifyContent: `${textJustification} !important`,
-                      color: computedGlossColor,
-                    }}>
-                    {token.gloss ?? '-'}
-                  </Typography> : <></>}
-              </Stack>
+                      fontSize: languageInfo?.code === 'heb' ? '19px' : '13px',
+                    }}
+                  >
+                    {token.text}
+                  </LocalizedTextDisplay>
+                  {/*
+                   * gloss display
+                   */}
+                  {enableGlossDisplay ? (
+                    <Typography
+                      variant={'caption'}
+                      sx={{
+                        display: 'flex',
+                        width: '100%',
+                        justifyContent: `${textJustification} !important`,
+                        color: computedGlossColor,
+                      }}
+                    >
+                      {token.gloss ?? '-'}
+                    </Typography>
+                  ) : (
+                    <></>
+                  )}
+                </Stack>
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  width: '100%',
+                  justifyContent: 'right',
+                  m: 0,
+                }}
+              >
+                {statusIndicator}
+              </Box>
             </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                width: '100%',
-                justifyContent: 'right',
-                m: 0
-              }}>
-              {statusIndicator}
-            </Box>
-          </Box>
-        </LocalizedTextDisplay>
-      </Button>
-      <ContextMenuAlignmentState />
-    </Box>
-    {!!token.after && !suppressAfter
-      ? <Button disabled={true}>
-        <LocalizedTextDisplay languageInfo={languageInfo}>
-          {token.after}
-        </LocalizedTextDisplay>
-      </Button> : ''}
-  </>);
+          </LocalizedTextDisplay>
+        </Button>
+        <ContextMenuAlignmentState />
+      </Box>
+      {!!token.after && !suppressAfter ? (
+        <Button disabled={true}>
+          <LocalizedTextDisplay languageInfo={languageInfo}>
+            {token.after}
+          </LocalizedTextDisplay>
+        </Button>
+      ) : (
+        ''
+      )}
+    </>
+  );
 };

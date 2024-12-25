@@ -6,13 +6,17 @@ export interface WordOrPartDTO {
   side: AlignmentSide;
   corpusId: string;
   text: string;
+  lemma: string;
   after?: string;
   gloss?: string;
   sourceVerseBcv?: string;
   exclude?: number;
+  required?: number;
 }
 
-export const mapWordOrPartToWordOrPartDTO = (wordOrPart: Word): WordOrPartDTO => ({
+export const mapWordOrPartToWordOrPartDTO = (
+  wordOrPart: Word
+): WordOrPartDTO => ({
   id: wordOrPart.id,
   side: wordOrPart.side,
   corpusId: wordOrPart.corpusId,
@@ -20,10 +24,14 @@ export const mapWordOrPartToWordOrPartDTO = (wordOrPart: Word): WordOrPartDTO =>
   after: wordOrPart.after,
   gloss: wordOrPart.gloss,
   sourceVerseBcv: wordOrPart.sourceVerse,
-  exclude: wordOrPart.exclude
+  exclude: wordOrPart.exclude,
+  required: wordOrPart.required,
+  lemma: wordOrPart.lemma,
 });
 
-export const mapWordOrPartDtoToWordOrPart = (wordOrPart: WordOrPartDTO): Word => ({
+export const mapWordOrPartDtoToWordOrPart = (
+  wordOrPart: WordOrPartDTO
+): Word => ({
   id: wordOrPart.id,
   side: wordOrPart.side as unknown as AlignmentSide,
   corpusId: wordOrPart.corpusId,
@@ -33,5 +41,7 @@ export const mapWordOrPartDtoToWordOrPart = (wordOrPart: WordOrPartDTO): Word =>
   sourceVerse: wordOrPart.sourceVerseBcv,
   position: 0,
   normalizedText: wordOrPart.text?.toLowerCase() ?? '',
-  exclude: wordOrPart.exclude
+  lemma: wordOrPart.lemma?.toLowerCase() ?? '',
+  exclude: wordOrPart.exclude,
+  required: wordOrPart.required,
 });
