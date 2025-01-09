@@ -58,6 +58,9 @@ import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728
 import { LinkEntity } from '../../common/data/project/linkEntity';
 import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
 import { AddRequiredToWordsOrParts1734371090123 } from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
+import {
+  AddLemmaExcludeRequiredData1736355165644
+} from '../typeorm-migrations/project/1736355165644-add-lemma-exclude-required-data';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -433,6 +436,7 @@ export class ProjectRepository extends BaseRepository {
       AddNotesToLinks1728604421335,
       AddLemmaToWordsOrParts1734038034739,
       AddRequiredToWordsOrParts1734371090123,
+      AddLemmaExcludeRequiredData1736355165644
     ];
   };
 
