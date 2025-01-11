@@ -39,7 +39,10 @@ contextBridge.exposeInMainWorld('databaseApi', {
     ipcRenderer.invoke(`${ChannelPrefix}:getFirstBcvFromSource`, sourceName),
   hasBcvInSource: (sourceName, bcvId) =>
     ipcRenderer.invoke(`${ChannelPrefix}:hasBcvInSource`, sourceName, bcvId),
-
+  removeLinksMarkedToDelete: (sourceName) =>
+    ipcRenderer.invoke(`${ChannelPrefix}:removeLinksMarkedToDelete`, sourceName),
+  bulkInsertLinks: (args) =>
+    ipcRenderer.invoke(`${ChannelPrefix}:bulkInsertLinks`, args),
   getFirstJournalEntryUploadChunk: (sourceName) =>
     ipcRenderer.invoke(
       `${ChannelPrefix}:getFirstJournalEntryUploadChunk`,

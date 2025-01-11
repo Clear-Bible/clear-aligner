@@ -233,6 +233,18 @@ export const setUpIpcMain = (): void => {
         return await ProjectRepositoryInstance.hasBcvInSource(...args);
       }
     );
+    ipcMain.handle(
+      `${ChannelPrefix}:removeLinksMarkedToDelete`,
+      async (event, ...args) => {
+        return await ProjectRepositoryInstance.removeLinksMarkedToDelete(...args);
+      }
+    );
+    ipcMain.handle(
+      `${ChannelPrefix}:bulkInsertLinks`,
+      async (event, ...args) => {
+        return await ProjectRepositoryInstance.bulkInsertLinks(...args);
+      }
+    );
   } catch (ex) {
     console.error('ipcMain.handle()', ex);
   }

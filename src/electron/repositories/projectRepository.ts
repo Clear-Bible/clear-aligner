@@ -4,25 +4,17 @@
 import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import {
+  Corpus,
   CreateBulkJournalEntryParams,
   DeleteByIdParams,
   DeleteParams,
   InsertParams,
-  RepositoryLink,
   LinkStatus,
-  SaveParams,
-  Corpus,
+  RepositoryLink,
+  SaveParams
 } from '../../structs';
 import { PivotWordFilter } from '../../features/concordanceView/concordanceView';
-import {
-  Column,
-  DataSource,
-  Entity,
-  EntityManager,
-  EntitySchema,
-  In,
-  PrimaryColumn,
-} from 'typeorm';
+import { Column, DataSource, Entity, EntityManager, EntitySchema, In, PrimaryColumn } from 'typeorm';
 import { BaseRepository } from './baseRepository';
 import fs from 'fs';
 import path from 'path';
@@ -32,32 +24,31 @@ import { AddLinkStatus1715305810421 } from '../typeorm-migrations/project/171530
 import { AddJournalLinkTable1718060579447 } from '../typeorm-migrations/project/1718060579447-add-journal-link-table';
 import uuid from 'uuid-random';
 import { createPatch, Operation } from 'rfc6902';
-import {
-  mapLinkEntityToServerAlignmentLink,
-  ServerAlignmentLinkDTO,
-} from '../../common/data/serverAlignmentLinkDTO';
+import { mapLinkEntityToServerAlignmentLink, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import {
   JournalEntry,
   JournalEntryDTO,
   JournalEntryType,
-  mapJournalEntryEntityToJournalEntryDTO,
+  mapJournalEntryEntityToJournalEntryDTO
 } from '../../common/data/journalEntryDTO';
 import { generateJsonString } from '../../common/generateJsonString';
 import { AddBulkInserts1720060108764 } from '../typeorm-migrations/project/1720060108764-add-bulk-inserts';
 import { SERVER_TRANSMISSION_CHUNK_SIZE } from '../../common/constants';
-import {
-  AlignmentSide,
-  CorpusDTO,
-  CorpusEntity,
-  CorpusEntityWithLanguage,
-} from '../../common/data/project/corpus';
+import { AlignmentSide, CorpusDTO, CorpusEntity, CorpusEntityWithLanguage } from '../../common/data/project/corpus';
 import { CorporaTimestamps1720241454613 } from '../typeorm-migrations/project/1720241454613-corpora-timestamps';
-import { JournalEntriesDiffToBody1720419515419 } from '../typeorm-migrations/project/1720419515419-journal-entries-diff-to-body';
+import {
+  JournalEntriesDiffToBody1720419515419
+} from '../typeorm-migrations/project/1720419515419-journal-entries-diff-to-body';
 import { LinkNote } from '../../common/data/project/linkNote';
 import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728604421335-add-notes-to-links';
 import { LinkEntity } from '../../common/data/project/linkEntity';
-import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
-import { AddRequiredToWordsOrParts1734371090123 } from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
+import {
+  AddLemmaToWordsOrParts1734038034739
+} from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
+import {
+  AddRequiredToWordsOrParts1734371090123
+} from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
+import { AddToDeleteToLinkTable1736370112759 } from '../typeorm-migrations/project/1736370112759-add-link-to-delete';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -250,6 +241,9 @@ const linkSchema = new EntitySchema({
     targets_text: {
       type: 'text',
     },
+    to_delete: {
+      type: 'integer',
+    },
   },
 });
 
@@ -433,6 +427,7 @@ export class ProjectRepository extends BaseRepository {
       AddNotesToLinks1728604421335,
       AddLemmaToWordsOrParts1734038034739,
       AddRequiredToWordsOrParts1734371090123,
+      AddToDeleteToLinkTable1736370112759
     ];
   };
 
@@ -652,6 +647,30 @@ export class ProjectRepository extends BaseRepository {
     return result;
   };
 
+  removeLinksMarkedToDelete = async (sourceName: string) => {
+    try {
+      this.logDatabaseTime('removeLinksMarkedToDelete()');
+      const entityManager = (await this.getDataSource(sourceName))!.manager;
+      await entityManager.query("delete from links where links.to_delete = 1");
+      for (const side of ['source', 'target']) {
+        await entityManager.query(`
+          delete from links__${side}_words
+            where link_id in (
+              select lsw.link_id from links__${side}_words lsw
+                left join links l on l.id = lsw.link_id
+                    where l.id is null
+          )
+       `);
+      }
+      return true;
+    } catch (ex) {
+      console.error('removeLinksMarkedToDelete()', ex);
+      return false;
+    } finally {
+      this.logDatabaseTimeEnd('removeLinksMarkedToDelete()');
+    }
+  };
+
   insert = async <T>({
     projectId,
     table,
@@ -707,7 +726,7 @@ export class ProjectRepository extends BaseRepository {
                               ),
                             } as JournalEntryEntity)
                         )
-                      )
+                      ),
                 );
                 break;
               case CorporaTableName:
@@ -750,6 +769,56 @@ export class ProjectRepository extends BaseRepository {
       return false;
     } finally {
       this.logDatabaseTimeEnd('insert()');
+    }
+  };
+
+  /**
+   * Marks duplicate links in verses for removal, then inserts links in bulk through
+   * the insert method.
+   * @param projectId The data source's unique id.
+   * @param itemOrItems The links to update.
+   * @param chunkSize The size the inserts should be chunked to.
+   * @param disableJournaling Boolean denoting the use of journaling.
+   */
+  bulkInsertLinks = async <T>({
+                            projectId,
+                            itemOrItems,
+                            chunkSize,
+                            disableJournaling,
+                          }: Partial<InsertParams<T>>) => {
+    try {
+      this.logDatabaseTime('bulkInsertLinks()');
+      const entityManager = (await this.getDataSource(projectId!))!.manager;
+      // Mark duplicate links for removal
+      const uniqueSourceVerseIds: Set<string> = new Set();
+      const uniqueTargetVerseIds: Set<string> = new Set();
+      (itemOrItems as RepositoryLink[]).forEach(link => {
+        link.sources.forEach(wordId => uniqueSourceVerseIds.add(wordId.substring(0, 8)));
+        link.targets.forEach(wordId => uniqueTargetVerseIds.add(wordId.substring(0, 8)));
+      });
+      const formatVerseIds = (verseIds: Set<string>) =>
+        Array.from(verseIds).map(vId => `'${vId}'`).join(",");
+      await entityManager.query(`
+        update links set to_delete = 1 from links l
+            join links__target_words ltw on l.id = ltw.link_id
+            join links__source_words lsw on l.id = lsw.link_id
+          where substr(lsw.word_id, 9, 8) in (${formatVerseIds(uniqueSourceVerseIds)})
+             or substr(ltw.word_id, 9, 8) in (${formatVerseIds(uniqueTargetVerseIds)})`
+      );
+      // Insert new links
+      await this.insert({
+        projectId: projectId!,
+        table: LinkTableName,
+        itemOrItems,
+        chunkSize,
+        disableJournaling
+      });
+      return true;
+    } catch (ex) {
+      console.error('bulkInsertLinks()', ex, itemOrItems);
+      return false;
+    } finally {
+      this.logDatabaseTimeEnd('bulkInsertLinks()');
     }
   };
 

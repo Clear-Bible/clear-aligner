@@ -258,15 +258,15 @@ export class LinksTable extends VirtualTable {
       this.logDatabaseTime('saveAll(): saved');
       let progressCtr = 0;
       let progressMax = outputLinks.length;
+
       this.setDatabaseBusyInfo({
         userText: `Loading ${outputLinks.length.toLocaleString()} links...`,
         progressCtr,
         progressMax,
       });
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
-        await dbApi.insert({
+        await dbApi.bulkInsertLinks({
           projectId: this.getSourceName(),
-          table: LinkTableName,
           itemOrItems: chunk,
           chunkSize: DatabaseInsertChunkSize,
           disableJournaling: true,
@@ -300,6 +300,11 @@ export class LinksTable extends VirtualTable {
       this.setDatabaseBusyText('Updating link text...');
       await dbApi.updateAllLinkText(this.getSourceName());
       this.logDatabaseTimeEnd('saveAll(): text');
+
+      this.logDatabaseTime('removeAll(): links marked for deletion');
+      this.setDatabaseBusyText('Removing previous links in modified verses...');
+      await dbApi.removeLinksMarkedToDelete(this.getSourceName());
+      this.logDatabaseTimeEnd('removeAll(): links marked for deletion');
 
       await this._onUpdate(suppressOnUpdate);
       return true;

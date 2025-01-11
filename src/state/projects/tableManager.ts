@@ -2,7 +2,7 @@
  * This file contains the ProjectTable Class and supporting functions.
  */
 import { VirtualTable } from '../databaseManagement';
-import { Corpus, CorpusContainer, Word } from '../../structs';
+import { Corpus, CorpusContainer, InsertParams, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
@@ -305,6 +305,20 @@ export class ProjectTable extends VirtualTable {
     // @ts-ignore
     return await window.databaseApi
       .hasBcvInSource(sourceName, bcvId.trim())
+      .catch(console.error);
+  };
+
+  removeLinksMarkedToDelete = async (sourceName: string) => {
+    // @ts-ignore
+    return await window.databaseApi
+      .removeLinksMarkedToDelete(sourceName)
+      .catch(console.error);
+  };
+
+  bulkInsertLinks = async <T>(insertParams: Partial<InsertParams<T>>) => {
+    // @ts-ignore
+    return await window.databaseApi
+      .bulkInsertLinks(insertParams)
       .catch(console.error);
   };
 
