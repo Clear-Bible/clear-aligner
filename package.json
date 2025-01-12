@@ -13,11 +13,13 @@
     "@mui/x-data-grid": "^6.18.2",
     "@reduxjs/toolkit": "^1.8.1",
     "@rgrove/parse-xml": "^3.0.0",
+    "@types/d3": "6.7.0",
     "@types/luxon": "^3.4.2",
     "@uidotdev/usehooks": "^2.4.1",
     "aws-amplify": "^6.3.8",
     "better-sqlite3": "^9.4.3",
     "cache-manager": "^5.4.0",
+    "d3": "6.7.0",
     "electron-is-dev": "^2.0.0",
     "luxon": "^3.4.2",
     "queue-promise": "^2.2.1",
@@ -164,6 +166,14 @@
       {
         "from": "schemas/AlignmentFileSchema.json",
         "to": "schemas/AlignmentFileSchema.json"
+      },
+      {
+        "from": "src/tsv/source_macula_greek_SBLGNT+required.tsv",
+        "to": "src/tsv/source_macula_greek_SBLGNT+required.tsv"
+      },
+      {
+        "from": "src/tsv/source_macula_hebrew+required.tsv",
+        "to": "src/tsv/source_macula_hebrew+required.tsv"
       }
     ]
   },
