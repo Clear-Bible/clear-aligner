@@ -686,10 +686,6 @@ export const useImportAlignmentFile = (
 ) => {
   const { projectState, preferences, projects, setProjects } =
     React.useContext(AppContext);
-  const project = useMemo<Project>(
-    () => projects.find((p) => p.id === projectId)!,
-    [projects, projectId]
-  );
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -700,6 +696,10 @@ export const useImportAlignmentFile = (
     }
     return new LinksTable(projectId);
   }, [projectId, projectState.linksTable]);
+  const project = useMemo<Project>(
+    () => projects.find((p) => p.id === linksTable.getSourceName())!,
+    [projects, linksTable]
+  );
 
   useEffect(() => {
     if (!alignmentFile || !saveKey || prevSaveKey.current === saveKey) {

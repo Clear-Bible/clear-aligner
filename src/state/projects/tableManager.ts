@@ -117,7 +117,6 @@ export class ProjectTable extends VirtualTable {
     createDataSource?: boolean
   ): Promise<Project | undefined> => {
     try {
-      if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
 
       await this.sync(project).catch(console.error);
