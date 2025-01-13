@@ -5,10 +5,9 @@ import fs from 'fs';
 const WORDS_OR_PARTS_TABLE_NAME = 'words_or_parts';
 const REQUIRED_COLUMN_NAME = 'required';
 const LEMMA_COLUMN_NAME = 'lemma';
-const EXCLUDE_COLUMN_NAME = 'exclude';
 const ID_COLUMN_NAME = 'id'
 
-export class AddLemmaExcludeRequiredData1736355165644 implements MigrationInterface {
+export class AddLemmaRequiredData1736355165644 implements MigrationInterface {
 
     private sanitizeColumnInput (columnInput: string, defaultValue: string){
       const workingColumnInput = columnInput.trim().toLowerCase();
@@ -32,11 +31,9 @@ export class AddLemmaExcludeRequiredData1736355165644 implements MigrationInterf
       const needToRunMigration = await queryRunner.query(`select count(1) == 0 from ${WORDS_OR_PARTS_TABLE_NAME}
                      where ${WORDS_OR_PARTS_TABLE_NAME}.${LEMMA_COLUMN_NAME} is not null and ${WORDS_OR_PARTS_TABLE_NAME}.${LEMMA_COLUMN_NAME} != '' `)
 
-      console.log('needtoRunMigration is: ', needToRunMigration)
-
 
       if(needToRunMigration[0]['count(1) == 0'] == 1){
-        console.log('inside if')
+        console.log('inside addLemmaExclude migration')
         const dataGreek = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_greek_SBLGNT+required.tsv', 'utf-8'));
         const dataHebrew = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_hebrew+required.tsv', 'utf-8'));
         console.log('dataGreek.length is: ', dataGreek.length)
