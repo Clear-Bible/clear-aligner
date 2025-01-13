@@ -10,6 +10,18 @@ const ID_COLUMN_NAME = 'id'
 
 export class AddLemmaExcludeRequiredData1736355165644 implements MigrationInterface {
 
+    private sanitizeColumnInput (columnInput: string, defaultValue: string){
+      const workingColumnInput = columnInput.trim().toLowerCase();
+      if(workingColumnInput.length < 1){
+        return defaultValue;
+      }
+      const firstLetter = workingColumnInput[0];
+      if(firstLetter == 'n' || firstLetter == 'f'){
+        return 0;
+      }
+      return 1;
+    }
+
     public async up(queryRunner: QueryRunner): Promise<void> {
       console.log('inside AddLemmaExcludeRequiredData1736355165644 migration')
 
@@ -32,20 +44,23 @@ export class AddLemmaExcludeRequiredData1736355165644 implements MigrationInterf
 
         const promises: Promise<any>[] = [];
 
+
         dataGreek.forEach((row) => {
-            const workingRef = 'sources:' + row['xml:id'].slice(1);
-            promises.push(queryRunner.query(`UPDATE '${WORDS_OR_PARTS_TABLE_NAME}'
+          const workingRef = 'sources:' + row['xml:id'].slice(1);
+          const workingRequiredValue = this.sanitizeColumnInput(row.required, '1')
+          promises.push(queryRunner.query(`UPDATE '${WORDS_OR_PARTS_TABLE_NAME}'
                                   SET '${LEMMA_COLUMN_NAME}' = '${row.lemma}',
-                                      '${REQUIRED_COLUMN_NAME}' = '${row.required}'
+                                      '${REQUIRED_COLUMN_NAME}' = '${workingRequiredValue}'
                                   WHERE ${WORDS_OR_PARTS_TABLE_NAME}.${ID_COLUMN_NAME} = '${workingRef}';
                                   `));
         })
 
         dataHebrew.forEach((row) => {
           const workingRef = 'sources:' + row['xml:id'].slice(1);
+          const workingRequiredValue = this.sanitizeColumnInput(row.required, '1')
           promises.push(queryRunner.query(`UPDATE '${WORDS_OR_PARTS_TABLE_NAME}'
                                   SET '${LEMMA_COLUMN_NAME}' = '${row.lemma}',
-                                      '${REQUIRED_COLUMN_NAME}' = '${row.required}'
+                                      '${REQUIRED_COLUMN_NAME}' = '${workingRequiredValue}'
                                   WHERE ${WORDS_OR_PARTS_TABLE_NAME}.${ID_COLUMN_NAME} = '${workingRef}';
                                   `));
         })
