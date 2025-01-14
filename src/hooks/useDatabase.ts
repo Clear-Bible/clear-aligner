@@ -179,7 +179,7 @@ export interface DatabaseApi {
   removeLinksMarkedToDelete: (
     sourceName: string
   ) => Promise<boolean>;
-  bulkInsertLinks: <T>(insertParams: Partial<InsertParams<T>>) => Promise<boolean>;
+  markIntersectingLinksForDeletion: (insertParams: { projectId: string; links: RepositoryLink[]; }) => Promise<boolean>;
   languageGetAll: (sourceName: string) => Promise<LanguageInfo[]>;
   languageFindByIds: (
     sourceName: string,

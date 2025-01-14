@@ -240,9 +240,9 @@ export const setUpIpcMain = (): void => {
       }
     );
     ipcMain.handle(
-      `${ChannelPrefix}:bulkInsertLinks`,
+      `${ChannelPrefix}:markIntersectingLinksForDeletion`,
       async (event, ...args) => {
-        return await ProjectRepositoryInstance.bulkInsertLinks(...args);
+        return await ProjectRepositoryInstance.markIntersectingLinksForDeletion(...args);
       }
     );
   } catch (ex) {

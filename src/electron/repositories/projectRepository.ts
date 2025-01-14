@@ -776,23 +776,19 @@ export class ProjectRepository extends BaseRepository {
    * Marks duplicate links in verses for removal, then inserts links in bulk through
    * the insert method.
    * @param projectId The data source's unique id.
-   * @param itemOrItems The links to update.
-   * @param chunkSize The size the inserts should be chunked to.
-   * @param disableJournaling Boolean denoting the use of journaling.
+   * @param links The links to update.
    */
-  bulkInsertLinks = async <T>({
+  markIntersectingLinksForDeletion = async <T>({
                             projectId,
-                            itemOrItems,
-                            chunkSize,
-                            disableJournaling,
-                          }: Partial<InsertParams<T>>) => {
+                            links,
+                          }: { projectId: string; links: RepositoryLink[]; }) => {
     try {
-      this.logDatabaseTime('bulkInsertLinks()');
+      this.logDatabaseTime('markIntersectingLinksForDeletion()');
       const entityManager = (await this.getDataSource(projectId!))!.manager;
       // Mark duplicate links for removal
       const uniqueSourceVerseIds: Set<string> = new Set();
       const uniqueTargetVerseIds: Set<string> = new Set();
-      (itemOrItems as RepositoryLink[]).forEach(link => {
+      links.forEach(link => {
         link.sources.forEach(wordId => uniqueSourceVerseIds.add(wordId.substring(0, 8)));
         link.targets.forEach(wordId => uniqueTargetVerseIds.add(wordId.substring(0, 8)));
       });
@@ -805,20 +801,12 @@ export class ProjectRepository extends BaseRepository {
           where substr(lsw.word_id, 9, 8) in (${formatVerseIds(uniqueSourceVerseIds)})
              or substr(ltw.word_id, 9, 8) in (${formatVerseIds(uniqueTargetVerseIds)})`
       );
-      // Insert new links
-      await this.insert({
-        projectId: projectId!,
-        table: LinkTableName,
-        itemOrItems,
-        chunkSize,
-        disableJournaling
-      });
       return true;
     } catch (ex) {
-      console.error('bulkInsertLinks()', ex, itemOrItems);
+      console.error('markIntersectingLinksForDeletion()', ex, links);
       return false;
     } finally {
-      this.logDatabaseTimeEnd('bulkInsertLinks()');
+      this.logDatabaseTimeEnd('markIntersectingLinksForDeletion()');
     }
   };
 

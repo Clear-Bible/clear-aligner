@@ -2,7 +2,7 @@
  * This file contains the ProjectTable Class and supporting functions.
  */
 import { VirtualTable } from '../databaseManagement';
-import { Corpus, CorpusContainer, InsertParams, Word } from '../../structs';
+import { Corpus, CorpusContainer, InsertParams, RepositoryLink, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
@@ -314,10 +314,10 @@ export class ProjectTable extends VirtualTable {
       .catch(console.error);
   };
 
-  bulkInsertLinks = async <T>(insertParams: Partial<InsertParams<T>>) => {
+  markIntersectingLinksForDeletion = async <T>(insertParams: { projectId: string; links: RepositoryLink[]; }) => {
     // @ts-ignore
     return await window.databaseApi
-      .bulkInsertLinks(insertParams)
+      .markIntersectingLinksForDeletion(insertParams)
       .catch(console.error);
   };
 

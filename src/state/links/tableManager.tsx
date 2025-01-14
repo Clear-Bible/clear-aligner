@@ -264,9 +264,16 @@ export class LinksTable extends VirtualTable {
         progressCtr,
         progressMax,
       });
-      for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
-        await dbApi.bulkInsertLinks({
+      for (const links of _.chunk(outputLinks, UIInsertChunkSize)) {
+        await dbApi.markIntersectingLinksForDeletion({
           projectId: this.getSourceName(),
+          links
+        });
+      }
+      for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
+        await dbApi.insert({
+          projectId: this.getSourceName(),
+          table: LinkTableName,
           itemOrItems: chunk,
           chunkSize: DatabaseInsertChunkSize,
           disableJournaling: true,

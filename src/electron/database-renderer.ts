@@ -41,8 +41,8 @@ contextBridge.exposeInMainWorld('databaseApi', {
     ipcRenderer.invoke(`${ChannelPrefix}:hasBcvInSource`, sourceName, bcvId),
   removeLinksMarkedToDelete: (sourceName) =>
     ipcRenderer.invoke(`${ChannelPrefix}:removeLinksMarkedToDelete`, sourceName),
-  bulkInsertLinks: (args) =>
-    ipcRenderer.invoke(`${ChannelPrefix}:bulkInsertLinks`, args),
+  markIntersectingLinksForDeletion: (args) =>
+    ipcRenderer.invoke(`${ChannelPrefix}:markIntersectingLinksForDeletion`, args),
   getFirstJournalEntryUploadChunk: (sourceName) =>
     ipcRenderer.invoke(
       `${ChannelPrefix}:getFirstJournalEntryUploadChunk`,
