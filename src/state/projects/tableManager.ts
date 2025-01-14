@@ -314,7 +314,7 @@ export class ProjectTable extends VirtualTable {
       .catch(console.error);
   };
 
-  markIntersectingLinksForDeletion = async <T>(insertParams: { projectId: string; links: RepositoryLink[]; }) => {
+  markIntersectingLinksForDeletion = async (insertParams: { projectId: string; links: RepositoryLink[]; }) => {
     // @ts-ignore
     return await window.databaseApi
       .markIntersectingLinksForDeletion(insertParams)

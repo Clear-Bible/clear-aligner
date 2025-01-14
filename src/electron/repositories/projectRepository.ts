@@ -778,7 +778,7 @@ export class ProjectRepository extends BaseRepository {
    * @param projectId The data source's unique id.
    * @param links The links to update.
    */
-  markIntersectingLinksForDeletion = async <T>({
+  markIntersectingLinksForDeletion = async ({
                             projectId,
                             links,
                           }: { projectId: string; links: RepositoryLink[]; }) => {
