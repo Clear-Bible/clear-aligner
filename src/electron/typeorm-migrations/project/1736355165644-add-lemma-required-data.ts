@@ -2,10 +2,9 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as d3 from "d3";
 import fs from 'fs';
 
+
 const WORDS_OR_PARTS_TABLE_NAME = 'words_or_parts';
-const REQUIRED_COLUMN_NAME = 'required';
 const LEMMA_COLUMN_NAME = 'lemma';
-const ID_COLUMN_NAME = 'id'
 
 export class AddLemmaRequiredData1736355165644 implements MigrationInterface {
 
@@ -22,7 +21,7 @@ export class AddLemmaRequiredData1736355165644 implements MigrationInterface {
     }
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-      console.log('inside AddLemmaExcludeRequiredData1736355165644 migration')
+      console.log('inside AddLemmaRequiredData1736355165644 migration')
 
       /*
        * Check to see if data has already been changed from the default value. If it hasn't, then
@@ -33,42 +32,28 @@ export class AddLemmaRequiredData1736355165644 implements MigrationInterface {
 
 
       if(needToRunMigration[0]['count(1) == 0'] == 1){
-        console.log('inside addLemmaExclude migration')
         const dataGreek = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_greek_SBLGNT+required.tsv', 'utf-8'));
         const dataHebrew = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_hebrew+required.tsv', 'utf-8'));
-        console.log('dataGreek.length is: ', dataGreek.length)
-        console.log('dataHebrew.length is: ', dataHebrew.length)
+        const fullParsedData = [...dataHebrew, ...dataGreek]
 
-        const promises: Promise<any>[] = [];
+        const queryBuilderPromisesArray: Promise<any>[] = [];
 
+        await queryRunner.startTransaction();
 
-        dataGreek.forEach((row) => {
-          const workingRef = 'sources:' + row['xml:id'].slice(1);
-          const workingRequiredValue = this.sanitizeColumnInput(row.required, '1')
-          promises.push(queryRunner.query(`UPDATE '${WORDS_OR_PARTS_TABLE_NAME}'
-                                  SET '${LEMMA_COLUMN_NAME}' = '${row.lemma}',
-                                      '${REQUIRED_COLUMN_NAME}' = '${workingRequiredValue}'
-                                  WHERE ${WORDS_OR_PARTS_TABLE_NAME}.${ID_COLUMN_NAME} = '${workingRef}';
-                                  `));
-        })
+        fullParsedData.forEach((row) => {
+            const workingRef = 'sources:' + row['xml:id'].slice(1);
+            const workingRequiredValue = this.sanitizeColumnInput(row.required, '1')
+            queryBuilderPromisesArray.push(queryRunner.manager.createQueryBuilder().update(WORDS_OR_PARTS_TABLE_NAME)
+              .set({ lemma: row.lemma, required: workingRequiredValue})
+              .where("id = :id", {id: workingRef}).execute());
+          })
 
-        dataHebrew.forEach((row) => {
-          const workingRef = 'sources:' + row['xml:id'].slice(1);
-          const workingRequiredValue = this.sanitizeColumnInput(row.required, '1')
-          promises.push(queryRunner.query(`UPDATE '${WORDS_OR_PARTS_TABLE_NAME}'
-                                  SET '${LEMMA_COLUMN_NAME}' = '${row.lemma}',
-                                      '${REQUIRED_COLUMN_NAME}' = '${workingRequiredValue}'
-                                  WHERE ${WORDS_OR_PARTS_TABLE_NAME}.${ID_COLUMN_NAME} = '${workingRef}';
-                                  `));
-        })
-
-
-      await Promise.all(promises);
+      await Promise.all(queryBuilderPromisesArray);
+      await queryRunner.commitTransaction();
       }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-      console.log('inside down method in migration')
     }
 
 }
