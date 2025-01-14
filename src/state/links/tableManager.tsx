@@ -10,7 +10,7 @@ import {
 } from '../databaseManagement';
 import uuid from 'uuid-random';
 import _ from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AlignmentFile } from '../../structs/alignmentFile';
 import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
@@ -20,7 +20,6 @@ import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlig
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import { Project } from '../projects/tableManager';
 
 const DatabaseInsertChunkSize = 5_000;
 const UIInsertChunkSize = 10_000;

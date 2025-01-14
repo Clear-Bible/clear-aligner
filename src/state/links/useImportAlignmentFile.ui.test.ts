@@ -72,10 +72,9 @@ test('useImportAlignmentFile:', async () => {
   };
 
   const wrapper = mockContextWithWrapper(ctx);
-  const { result } = renderHook(
-    () => useImportAlignmentFile('1234', alignmentFile, 'key'),
-    { wrapper }
-  );
+  renderHook(() => useImportAlignmentFile('1234', alignmentFile, 'key'), {
+    wrapper,
+  });
   expect(saveAlignmentFileCalled).toBeTruthy();
   expect(receivedAlignmentFile).toStrictEqual(alignmentFile);
 });
