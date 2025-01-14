@@ -19,7 +19,7 @@ export const mockContext = (
     projectState: mockProjectState(ctx?.projectState),
     setProjectState: mockSetStateAction<ProjectState>(),
     setPreferences: mockSetStateAction<UserPreference>(),
-    projects: [],
+    projects: ctx?.projects ?? [],
     setProjects: mockSetStateAction<Project[]>(),
     containers: mockContainers(),
     network: {

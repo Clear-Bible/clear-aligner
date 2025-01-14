@@ -1,5 +1,4 @@
-import { checkAlignmentFile, saveAlignmentFile } from './alignmentFile';
-import { LinkStatus } from '../structs';
+import { checkAlignmentFile } from './alignmentFile';
 
 test('minimal alignment file should pass parse check without errors', async () => {
   let result = checkAlignmentFile(
@@ -49,21 +48,3 @@ test('alignment file with valid records should pass parse check without errors',
   expect(result.isFileValid).toBe(true);
   expect(result.errorMessages).toStrictEqual([]);
 });
-
-/*test('saveAlignmentFile: ', async () => {
-  saveAlignmentFile([
-      {
-        id: '000-111-222-333',
-        metadata: {
-          origin: 'machine',
-          status: LinkStatus.APPROVED,
-          note: []
-        },
-        sources: [ '43003016005' ],
-        targets: [ '43003016002' ]
-      }
-  ]);
-});
-
-test('importAlignmentFile: ', async () => {
-}); //*/

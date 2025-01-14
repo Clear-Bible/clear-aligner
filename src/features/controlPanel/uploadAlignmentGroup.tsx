@@ -13,7 +13,6 @@ import React, {
 } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile } from '../../structs/alignmentFile';
-import { useImportAlignmentFile } from '../../state/links/tableManager';
 import { Button } from '@mui/material';
 import uuid from 'uuid-random';
 import {
@@ -31,6 +30,7 @@ import { Project } from '../../state/projects/tableManager';
 import { BusyDialogContext } from '../../utils/useBusyDialogContext';
 import { useGetAllLinks } from '../../state/links/useGetAllLinks';
 import { wrapAsync } from '../../utils/wrapAsync';
+import { useImportAlignmentFile } from '../../state/links/useImportAlignmentFile';
 
 const UploadAlignmentGroup = ({
   project,

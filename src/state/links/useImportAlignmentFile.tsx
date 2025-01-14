@@ -42,7 +42,7 @@ export const useImportAlignmentFile = (
   }>({ isPending: false });
   const prevSaveKey = useRef<string | undefined>();
   const linksTable = useMemo(() => {
-    if (!projectId) {
+    if (!projectId || projectState.linksTable.getSourceName() === projectId) {
       return projectState.linksTable;
     }
     return new LinksTable(projectId);
