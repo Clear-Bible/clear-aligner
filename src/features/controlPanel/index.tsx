@@ -28,7 +28,9 @@ interface ControlPanelProps {
   style?: Partial<React.CSSProperties>;
 }
 
-export const ControlPanel: React.FC<ControlPanelProps> = ({style}): ReactElement => {
+export const ControlPanel: React.FC<ControlPanelProps> = ({
+  style,
+}): ReactElement => {
   useDebug('ControlPanel');
 
   const dispatch = useAppDispatch();
@@ -119,7 +121,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({style}): ReactElement
           marginBottom: '6px',
           flexGrow: 0,
           flexShrink: 0,
-          ...(style ?? {})
+          ...(style ?? {}),
         }}
       >
         <span>

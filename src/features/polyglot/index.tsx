@@ -32,7 +32,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({
   containers,
   position,
   setNewVisibleVerses,
-  style
+  style,
 }) => {
   useDebug('Polyglot');
 
@@ -72,7 +72,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({
             ControlPanelFormat[ControlPanelFormat.VERTICAL]
               ? undefined
               : '2rem',
-          ...(style ?? {})
+          ...(style ?? {}),
         }}
         justifyContent="stretch"
         alignItems="stretch"
