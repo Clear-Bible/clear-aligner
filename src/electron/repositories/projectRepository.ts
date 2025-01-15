@@ -647,6 +647,10 @@ export class ProjectRepository extends BaseRepository {
     return result;
   };
 
+  /**
+   * Removes links that have been marked with to_delete = 1
+   * @param sourceName The identifier for the project to remove links from.
+   */
   removeLinksMarkedToDelete = async (sourceName: string) => {
     try {
       this.logDatabaseTime('removeLinksMarkedToDelete()');

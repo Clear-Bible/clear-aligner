@@ -2,7 +2,7 @@
  * This file contains the ProjectTable Class and supporting functions.
  */
 import { VirtualTable } from '../databaseManagement';
-import { Corpus, CorpusContainer, InsertParams, RepositoryLink, Word } from '../../structs';
+import { Corpus, CorpusContainer, RepositoryLink, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
