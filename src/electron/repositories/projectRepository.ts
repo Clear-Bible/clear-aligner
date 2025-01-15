@@ -496,6 +496,9 @@ export class ProjectRepository extends BaseRepository {
   };
   upgradeCorpora = async(projectId: string) => {
     console.log('inside upgradeCorpora')
+    if(await this.checkCorporaUpgrade(projectId) === false){
+      return;
+    }
     const dataGreek = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_greek_SBLGNT+required.tsv', 'utf-8'));
     const dataHebrew = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_hebrew+required.tsv', 'utf-8'));
     const fullParsedData = [...dataHebrew, ...dataGreek];
