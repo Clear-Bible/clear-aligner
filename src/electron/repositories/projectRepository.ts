@@ -647,10 +647,10 @@ export class ProjectRepository extends BaseRepository {
    * @param sourceName The identifier for the project to remove links from.
    * @param links RepositoryLink[] to retrieve verse ids from.
    */
-  removeIntersectingLinksByVerseId = async ({sourceName, links}: { sourceName: string; links: RepositoryLink[]; }) => {
+  removeIntersectingLinksByVerseId = async ({projectId, links}: { projectId: string; links: RepositoryLink[]; }) => {
     try {
       this.logDatabaseTime('removeIntersectingLinksByVerseId()');
-      const entityManager = (await this.getDataSource(sourceName))!.manager;
+      const entityManager = (await this.getDataSource(projectId))!.manager;
       const uniqueSourceVerseIds: Set<string> = new Set();
       const uniqueTargetVerseIds: Set<string> = new Set();
       links.forEach(link => {
