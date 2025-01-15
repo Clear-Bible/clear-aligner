@@ -270,10 +270,12 @@ export class LinksTable extends VirtualTable {
         });
         progressCtr += links.length;
         this.setDatabaseBusyProgress(progressCtr, progressMax);
+        const fromLinkTitle = LinksTable.createLinkTitle(links[0]);
+        const toLinkTitle = LinksTable.createLinkTitle(links[links.length - 1]);
         this.setDatabaseBusyText(
           links.length === progressMax
-            ? `Finished preparing (${progressCtr.toLocaleString()} links)...`
-            : `Preparing (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} links)...`
+            ? `Loading ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} links)...`
+            : `Loading ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} links)...`
         );
       }
       progressCtr = 0;
