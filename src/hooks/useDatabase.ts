@@ -198,6 +198,20 @@ export interface DatabaseApi {
    * @param projectId
    */
   toggleCorporaUpdatedFlagOff: (projectId: string) => Promise<void>;
+  /**
+   * Check if we need to upgrade the corpora
+   * this will be used for any long-running database migrations
+   * that can't be done effectively inside a TypeORM migration
+   * @param projectId
+   */
+  checkCorporaUpgrade: (projectId: string) => Promise<boolean>;
+  /**
+   * Check if we need to upgrade the corpora
+   * this will be used for any long-running database migrations
+   * that can't be done effectively inside a TypeORM migration
+   * @param projectId
+   */
+  upgradeCorpora: (projectId: string) => Promise<void>;
 }
 
 export const useDatabase = (): DatabaseApi => {

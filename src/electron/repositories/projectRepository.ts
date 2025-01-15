@@ -21,7 +21,7 @@ import {
   EntityManager,
   EntitySchema,
   In,
-  PrimaryColumn,
+  PrimaryColumn, UpdateResult
 } from 'typeorm';
 import { BaseRepository } from './baseRepository';
 import fs from 'fs';
@@ -58,9 +58,7 @@ import { AddNotesToLinks1728604421335 } from '../typeorm-migrations/project/1728
 import { LinkEntity } from '../../common/data/project/linkEntity';
 import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
 import { AddRequiredToWordsOrParts1734371090123 } from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
-import {
-  AddLemmaRequiredData1736355165644
-} from '../typeorm-migrations/project/1736355165644-add-lemma-required-data';
+import * as d3 from 'd3';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -436,7 +434,6 @@ export class ProjectRepository extends BaseRepository {
       AddNotesToLinks1728604421335,
       AddLemmaToWordsOrParts1734038034739,
       AddRequiredToWordsOrParts1734371090123,
-      AddLemmaRequiredData1736355165644
     ];
   };
 
@@ -480,6 +477,58 @@ export class ProjectRepository extends BaseRepository {
       .set({ updatedSinceSync: 0 })
       .where('updated_since_sync != 0')
       .execute();
+  };
+  checkCorporaUpgrade = async(projectId: string) => {
+    console.log('inside checkCorporaUpgrade function, projectId is: ', projectId)
+    try {
+      const entityManager = (await this.getDataSource(projectId))!.manager;
+      const queryResult = await entityManager.query(`
+                select count(1) == 0
+                from words_or_parts
+                where words_or_parts.lemma is not null and words_or_parts.lemma != '' `)
+
+      const needToUpgradeCorpora = queryResult[0]['count(1) == 0'] == 1;
+      return needToUpgradeCorpora;
+    }
+    catch(err){
+      console.error('checkCorporaUpgrade()', err);
+    }
+  };
+  upgradeCorpora = async(projectId: string) => {
+    console.log('inside upgradeCorpora')
+    const dataGreek = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_greek_SBLGNT+required.tsv', 'utf-8'));
+    const dataHebrew = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_hebrew+required.tsv', 'utf-8'));
+    const fullParsedData = [...dataHebrew, ...dataGreek];
+    const src = await this.getDataSource(projectId)!;
+    console.log('fullParsedData.length is: ', fullParsedData.length)
+
+    function sanitizeColumnInput (columnInput: string, defaultValue: string){
+      const workingColumnInput = columnInput.trim().toLowerCase();
+      if(workingColumnInput.length < 1){
+        return defaultValue;
+      }
+      const firstLetter = workingColumnInput[0];
+      if(firstLetter == 'n' || firstLetter == 'f'){
+        return 0;
+      }
+      return 1;
+    }
+
+    const queryBuilderPromisesArray: Promise<UpdateResult>[] = [];
+
+    fullParsedData.forEach((row, index) => {
+        const workingRef = 'sources:' + row['xml:id'].slice(1);
+        const workingRequiredValue = sanitizeColumnInput(row.required, '1')
+        queryBuilderPromisesArray.push(src?.createQueryBuilder().update(WordsOrParts)
+          .set({ lemma: row.lemma, required: workingRequiredValue})
+          .where("id = :id", {id: workingRef}).execute()!);
+
+        index++
+    })
+
+    await Promise.all(queryBuilderPromisesArray);
+
+    console.log('leaving upgradeCorpora')
   };
 
   removeTargetWordsOrParts = async (sourceName: string) => {

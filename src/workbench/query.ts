@@ -261,6 +261,7 @@ export const getCorpusFromDatabase = async (
 export const getAvailableCorporaContainers = async (
   appCtx: AppContextProps
 ): Promise<Containers> => {
+
   if (!appCtx.preferences?.currentProject) {
     return {
       projectId: appCtx.preferences?.currentProject,
@@ -271,6 +272,14 @@ export const getAvailableCorporaContainers = async (
 
   IsLoadingAnyCorpora = true;
   try {
+    console.log('*insideGetAvailableCorporaContainers')
+
+    const needToUpgradeCorpora = await dbApi.checkCorporaUpgrade(appCtx.preferences.currentProject);
+    console.log('result of checkCorporaUpgrade:', needToUpgradeCorpora);
+    if(needToUpgradeCorpora){
+      await dbApi.upgradeCorpora(appCtx.preferences.currentProject)
+    }
+
     const inputCorpora: Corpus[] =
       (await dbApi.getAllCorpora(appCtx.preferences?.currentProject)) ?? [];
     const corpusPromises: Promise<Corpus | undefined>[] = inputCorpora.map(
