@@ -234,15 +234,9 @@ export const setUpIpcMain = (): void => {
       }
     );
     ipcMain.handle(
-      `${ChannelPrefix}:removeLinksMarkedToDelete`,
+      `${ChannelPrefix}:removeIntersectingLinksByVerseId`,
       async (event, ...args) => {
-        return await ProjectRepositoryInstance.removeLinksMarkedToDelete(...args);
-      }
-    );
-    ipcMain.handle(
-      `${ChannelPrefix}:markIntersectingLinksForDeletion`,
-      async (event, ...args) => {
-        return await ProjectRepositoryInstance.markIntersectingLinksForDeletion(...args);
+        return await ProjectRepositoryInstance.removeIntersectingLinksByVerseId(...args);
       }
     );
   } catch (ex) {

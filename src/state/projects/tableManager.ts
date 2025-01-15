@@ -307,17 +307,10 @@ export class ProjectTable extends VirtualTable {
       .catch(console.error);
   };
 
-  removeLinksMarkedToDelete = async (sourceName: string) => {
+  removeIntersectingLinksByVerseId = async (insertParams: { projectId: string; links: RepositoryLink[]; }) => {
     // @ts-ignore
     return await window.databaseApi
-      .removeLinksMarkedToDelete(sourceName)
-      .catch(console.error);
-  };
-
-  markIntersectingLinksForDeletion = async (insertParams: { projectId: string; links: RepositoryLink[]; }) => {
-    // @ts-ignore
-    return await window.databaseApi
-      .markIntersectingLinksForDeletion(insertParams)
+      .removeIntersectingLinksByVerseId(insertParams)
       .catch(console.error);
   };
 

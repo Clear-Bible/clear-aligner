@@ -48,7 +48,6 @@ import {
 import {
   AddRequiredToWordsOrParts1734371090123
 } from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
-import { AddToDeleteToLinkTable1736370112759 } from '../typeorm-migrations/project/1736370112759-add-link-to-delete';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -241,9 +240,6 @@ const linkSchema = new EntitySchema({
     targets_text: {
       type: 'text',
     },
-    to_delete: {
-      type: 'integer',
-    },
   },
 });
 
@@ -427,7 +423,6 @@ export class ProjectRepository extends BaseRepository {
       AddNotesToLinks1728604421335,
       AddLemmaToWordsOrParts1734038034739,
       AddRequiredToWordsOrParts1734371090123,
-      AddToDeleteToLinkTable1736370112759
     ];
   };
 
@@ -648,14 +643,29 @@ export class ProjectRepository extends BaseRepository {
   };
 
   /**
-   * Removes links that have been marked with to_delete = 1
+   * Removes intersecting links based on provided verse ids
    * @param sourceName The identifier for the project to remove links from.
+   * @param links RepositoryLink[] to retrieve verse ids from.
    */
-  removeLinksMarkedToDelete = async (sourceName: string) => {
+  removeIntersectingLinksByVerseId = async ({sourceName, links}: { sourceName: string; links: RepositoryLink[]; }) => {
     try {
-      this.logDatabaseTime('removeLinksMarkedToDelete()');
+      this.logDatabaseTime('removeIntersectingLinksByVerseId()');
       const entityManager = (await this.getDataSource(sourceName))!.manager;
-      await entityManager.query("delete from links where links.to_delete = 1");
+      const uniqueSourceVerseIds: Set<string> = new Set();
+      const uniqueTargetVerseIds: Set<string> = new Set();
+      links.forEach(link => {
+        link.sources.forEach(wordId => uniqueSourceVerseIds.add(wordId.substring(0, 8)));
+        link.targets.forEach(wordId => uniqueTargetVerseIds.add(wordId.substring(0, 8)));
+      });
+      const formatVerseIds = (verseIds: Set<string>) =>
+        Array.from(verseIds).map(vId => `'${vId}'`).join(",");
+      await entityManager.query(`delete from links where id in (
+          select l.id from links l
+            join links__target_words ltw on l.id = ltw.link_id
+            join links__source_words lsw on l.id = lsw.link_id
+          where substr(lsw.word_id, 9, 8) in (${formatVerseIds(uniqueSourceVerseIds)})
+            or substr(ltw.word_id, 9, 8) in (${formatVerseIds(uniqueTargetVerseIds)})
+      )`);
       for (const side of ['source', 'target']) {
         await entityManager.query(`
           delete from links__${side}_words
@@ -668,10 +678,10 @@ export class ProjectRepository extends BaseRepository {
       }
       return true;
     } catch (ex) {
-      console.error('removeLinksMarkedToDelete()', ex);
+      console.error('removeIntersectingLinksByVerseId()', ex);
       return false;
     } finally {
-      this.logDatabaseTimeEnd('removeLinksMarkedToDelete()');
+      this.logDatabaseTimeEnd('removeIntersectingLinksByVerseId()');
     }
   };
 
@@ -773,44 +783,6 @@ export class ProjectRepository extends BaseRepository {
       return false;
     } finally {
       this.logDatabaseTimeEnd('insert()');
-    }
-  };
-
-  /**
-   * Marks duplicate links in verses for removal, then inserts links in bulk through
-   * the insert method.
-   * @param projectId The data source's unique id.
-   * @param links The links to update.
-   */
-  markIntersectingLinksForDeletion = async ({
-                            projectId,
-                            links,
-                          }: { projectId: string; links: RepositoryLink[]; }) => {
-    try {
-      this.logDatabaseTime('markIntersectingLinksForDeletion()');
-      const entityManager = (await this.getDataSource(projectId!))!.manager;
-      // Mark duplicate links for removal
-      const uniqueSourceVerseIds: Set<string> = new Set();
-      const uniqueTargetVerseIds: Set<string> = new Set();
-      links.forEach(link => {
-        link.sources.forEach(wordId => uniqueSourceVerseIds.add(wordId.substring(0, 8)));
-        link.targets.forEach(wordId => uniqueTargetVerseIds.add(wordId.substring(0, 8)));
-      });
-      const formatVerseIds = (verseIds: Set<string>) =>
-        Array.from(verseIds).map(vId => `'${vId}'`).join(",");
-      await entityManager.query(`
-        update links set to_delete = 1 from links l
-            join links__target_words ltw on l.id = ltw.link_id
-            join links__source_words lsw on l.id = lsw.link_id
-          where substr(lsw.word_id, 9, 8) in (${formatVerseIds(uniqueSourceVerseIds)})
-             or substr(ltw.word_id, 9, 8) in (${formatVerseIds(uniqueTargetVerseIds)})`
-      );
-      return true;
-    } catch (ex) {
-      console.error('markIntersectingLinksForDeletion()', ex, links);
-      return false;
-    } finally {
-      this.logDatabaseTimeEnd('markIntersectingLinksForDeletion()');
     }
   };
 

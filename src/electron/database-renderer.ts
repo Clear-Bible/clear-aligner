@@ -39,10 +39,8 @@ contextBridge.exposeInMainWorld('databaseApi', {
     ipcRenderer.invoke(`${ChannelPrefix}:getFirstBcvFromSource`, sourceName),
   hasBcvInSource: (sourceName, bcvId) =>
     ipcRenderer.invoke(`${ChannelPrefix}:hasBcvInSource`, sourceName, bcvId),
-  removeLinksMarkedToDelete: (sourceName) =>
-    ipcRenderer.invoke(`${ChannelPrefix}:removeLinksMarkedToDelete`, sourceName),
-  markIntersectingLinksForDeletion: (args) =>
-    ipcRenderer.invoke(`${ChannelPrefix}:markIntersectingLinksForDeletion`, args),
+  removeIntersectingLinksByVerseId: (args) =>
+    ipcRenderer.invoke(`${ChannelPrefix}:removeIntersectingLinksByVerseId`, args),
   getFirstJournalEntryUploadChunk: (sourceName) =>
     ipcRenderer.invoke(
       `${ChannelPrefix}:getFirstJournalEntryUploadChunk`,

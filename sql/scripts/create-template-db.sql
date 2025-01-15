@@ -25,8 +25,7 @@ CREATE TABLE links
         constraint links_pk
             primary key on conflict ignore,
     sources_text TEXT,
-    targets_text TEXT,
-    to_delete    integer
+    targets_text TEXT
 );
 CREATE TABLE IF NOT EXISTS "words_or_parts"
 (

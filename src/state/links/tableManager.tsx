@@ -255,20 +255,33 @@ export class LinksTable extends VirtualTable {
       this.logDatabaseTimeEnd('saveAll(): sorted');
 
       this.logDatabaseTime('saveAll(): saved');
+      const progressMax = outputLinks.length;
       let progressCtr = 0;
-      let progressMax = outputLinks.length;
 
+      this.setDatabaseBusyInfo({
+        userText: `Preparing ${outputLinks.length.toLocaleString()} links for upload...`,
+        progressCtr,
+        progressMax,
+      });
+      for (const links of _.chunk(Array.from(outputLinks), UIInsertChunkSize)) {
+        await dbApi.removeIntersectingLinksByVerseId({
+          projectId: this.getSourceName(),
+          links
+        });
+        progressCtr += links.length;
+        this.setDatabaseBusyProgress(progressCtr, progressMax);
+        this.setDatabaseBusyText(
+          links.length === progressMax
+            ? `Finished preparing (${progressCtr.toLocaleString()} links)...`
+            : `Preparing (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} links)...`
+        );
+      }
+      progressCtr = 0;
       this.setDatabaseBusyInfo({
         userText: `Loading ${outputLinks.length.toLocaleString()} links...`,
         progressCtr,
         progressMax,
       });
-      for (const links of _.chunk(outputLinks, UIInsertChunkSize)) {
-        await dbApi.markIntersectingLinksForDeletion({
-          projectId: this.getSourceName(),
-          links
-        });
-      }
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
         await dbApi.insert({
           projectId: this.getSourceName(),
@@ -306,11 +319,6 @@ export class LinksTable extends VirtualTable {
       this.setDatabaseBusyText('Updating link text...');
       await dbApi.updateAllLinkText(this.getSourceName());
       this.logDatabaseTimeEnd('saveAll(): text');
-
-      this.logDatabaseTime('removeAll(): links marked for deletion');
-      this.setDatabaseBusyText('Removing previous links in modified verses...');
-      await dbApi.removeLinksMarkedToDelete(this.getSourceName());
-      this.logDatabaseTimeEnd('removeAll(): links marked for deletion');
 
       await this._onUpdate(suppressOnUpdate);
       return true;
