@@ -308,8 +308,7 @@ export class ProjectTable extends VirtualTable {
   };
 
   removeIntersectingLinksByVerseId = async (insertParams: { projectId: string; links: RepositoryLink[]; }) => {
-    // @ts-ignore
-    return await window.databaseApi
+    return await dbApi
       .removeIntersectingLinksByVerseId(insertParams)
       .catch(console.error);
   };
