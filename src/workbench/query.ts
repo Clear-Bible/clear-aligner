@@ -21,12 +21,25 @@ export enum InitializationStates {
   INITIALIZED,
 }
 
-let IsLoadingAnyCorpora = false;
+export interface localCorporaLoadingInfoInterface  {
+  isLoading? : boolean,
+  customLoadingMessage? : string;
+}
+
+const localCorporaLoadingInfo: localCorporaLoadingInfoInterface = {
+  isLoading: false,
+  customLoadingMessage: undefined
+}
+
+// let IsLoadingAnyCorpora = false;
 
 // @ts-ignore
 const dbApi = window.databaseApi as DatabaseApi;
 
-export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
+//export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
+export const corporaLoadingInfo = () => {
+  return {...localCorporaLoadingInfo}
+}
 
 /**
  * Helper function used to handle any input from the exclude or required columns in the tsv files
@@ -269,15 +282,17 @@ export const getAvailableCorporaContainers = async (
       targetContainer: undefined,
     };
   }
-
-  IsLoadingAnyCorpora = true;
+  localCorporaLoadingInfo.isLoading = true;
   try {
     console.log('*insideGetAvailableCorporaContainers')
 
     const needToUpgradeCorpora = await dbApi.checkCorporaUpgrade(appCtx.preferences.currentProject);
-    console.log('result of checkCorporaUpgrade:', needToUpgradeCorpora);
     if(needToUpgradeCorpora){
-      await dbApi.upgradeCorpora(appCtx.preferences.currentProject)
+      console.log('inside query.ts about to assign custom loading message., which is:  ', needToUpgradeCorpora)
+      localCorporaLoadingInfo.customLoadingMessage =  needToUpgradeCorpora;
+      await dbApi.upgradeCorpora(appCtx.preferences.currentProject);
+      console.log('inside query.ts about to assign custom loading message to undefined..... ')
+      localCorporaLoadingInfo.customLoadingMessage = undefined;
     }
 
     const inputCorpora: Corpus[] =
@@ -320,6 +335,7 @@ export const getAvailableCorporaContainers = async (
       targetContainer,
     };
   } finally {
-    IsLoadingAnyCorpora = false;
+    localCorporaLoadingInfo.isLoading = false;
+    localCorporaLoadingInfo.customLoadingMessage = undefined;
   }
 };

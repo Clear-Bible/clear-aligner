@@ -488,7 +488,8 @@ export class ProjectRepository extends BaseRepository {
                 where words_or_parts.lemma is not null and words_or_parts.lemma != '' `)
 
       const needToUpgradeCorpora = queryResult[0]['count(1) == 0'] == 1;
-      return needToUpgradeCorpora;
+      console.log('inside checkCorporaUpgrade, needToUpgradeCorpora is: ', needToUpgradeCorpora)
+      return needToUpgradeCorpora ? "One time project upgrade, please wait a few minutes." : undefined
     }
     catch(err){
       console.error('checkCorporaUpgrade()', err);
@@ -496,7 +497,8 @@ export class ProjectRepository extends BaseRepository {
   };
   upgradeCorpora = async(projectId: string) => {
     console.log('inside upgradeCorpora')
-    if(await this.checkCorporaUpgrade(projectId) === false){
+    if(await this.checkCorporaUpgrade(projectId) === undefined){
+      console.log('inside upgradeCorpora, about to do an early return')
       return;
     }
     const dataGreek = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_greek_SBLGNT+required.tsv', 'utf-8'));

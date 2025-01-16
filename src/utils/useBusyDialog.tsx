@@ -19,7 +19,7 @@ import { DatabaseStatus } from '../state/databaseManagement';
 import _ from 'lodash';
 import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
-import { isLoadingAnyCorpora } from '../workbench/query';
+import { corporaLoadingInfo, localCorporaLoadingInfoInterface } from '../workbench/query';
 import { Close } from '@mui/icons-material';
 import { BusyDialogContextProps } from './useBusyDialogContext';
 
@@ -52,7 +52,7 @@ const useBusyDialog = ({
     links: DatabaseStatus;
   }>();
   const [numProjects, setNumProjects] = useState<number>();
-  const [isLoadingCorpora, setIsLoadingCorpora] = useState<boolean>();
+  const [currCorporaLoadingInfo, setCurrCorporaLoadingInfo] = useState<localCorporaLoadingInfoInterface>({});
 
   const [busyCount, setBusyCount] = useState<{
     projects: number;
@@ -85,15 +85,19 @@ const useBusyDialog = ({
         setNumProjects(newProjects?.size);
       }
     });
-    const newIsLoadingCorpora = isLoadingAnyCorpora();
-    if (newIsLoadingCorpora !== isLoadingCorpora) {
-      setIsLoadingCorpora(newIsLoadingCorpora);
+    const nextCorporaLoadingInfo = corporaLoadingInfo();
+    console.log('nextCorporaLoadingInfo: ', nextCorporaLoadingInfo)
+    console.log('currCorporaLoadingInfo: ', currCorporaLoadingInfo)
+    if(!_.isEqual(nextCorporaLoadingInfo, currCorporaLoadingInfo)){
+      console.log('inside useBusyDialog.tsx, if check isEqual(nextCorporaLoadingInfo, currCorporaLoadingInfo)')
+      setCurrCorporaLoadingInfo(nextCorporaLoadingInfo)
     }
   }, [
     projectState?.projectTable,
     databaseStatus,
     numProjects,
-    isLoadingCorpora,
+    currCorporaLoadingInfo.customLoadingMessage,
+    currCorporaLoadingInfo.isLoading,
   ]);
 
   useInterval(refreshCounts, BusyRefreshTimeInMs);
@@ -136,11 +140,11 @@ const useBusyDialog = ({
         };
       }
     }
-    if (isLoadingCorpora || !numProjects) {
+    if (currCorporaLoadingInfo.isLoading || !numProjects) {
       return {
         isBusy: true,
-        text: isLoadingCorpora
-          ? 'Loading project & corpora...'
+        text: currCorporaLoadingInfo.isLoading
+          ? (currCorporaLoadingInfo.customLoadingMessage ?? 'Loading project & corpora...')
           : 'Starting up...',
         variant: 'indeterminate',
         value: undefined,
@@ -161,7 +165,8 @@ const useBusyDialog = ({
       value: undefined,
     };
   }, [
-    isLoadingCorpora,
+    currCorporaLoadingInfo.isLoading,
+    currCorporaLoadingInfo.customLoadingMessage,
     numProjects,
     customStatus,
     busyCountAtLeastTwo,

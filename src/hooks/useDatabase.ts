@@ -204,10 +204,10 @@ export interface DatabaseApi {
    * that can't be done effectively inside a TypeORM migration
    * @param projectId
    */
-  checkCorporaUpgrade: (projectId: string) => Promise<boolean>;
+  checkCorporaUpgrade: (projectId: string) => Promise<string | undefined>;
   /**
-   * Check if we need to upgrade the corpora
-   * this will be used for any long-running database migrations
+   * Upgrade the corpora
+   * this will be used for any long-running database migrations`
    * that can't be done effectively inside a TypeORM migration
    * @param projectId
    */
