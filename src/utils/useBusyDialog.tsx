@@ -97,8 +97,6 @@ const useBusyDialog = ({
     databaseStatus,
     numProjects,
     currCorporaLoadingInfo,
-    currCorporaLoadingInfo.customLoadingMessage,
-    currCorporaLoadingInfo.isLoading,
   ]);
 
   useInterval(refreshCounts, BusyRefreshTimeInMs);
