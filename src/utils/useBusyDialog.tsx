@@ -96,6 +96,7 @@ const useBusyDialog = ({
     projectState?.projectTable,
     databaseStatus,
     numProjects,
+    currCorporaLoadingInfo,
     currCorporaLoadingInfo.customLoadingMessage,
     currCorporaLoadingInfo.isLoading,
   ]);

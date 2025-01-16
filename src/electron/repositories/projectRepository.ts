@@ -487,7 +487,7 @@ export class ProjectRepository extends BaseRepository {
                 from words_or_parts
                 where words_or_parts.lemma is not null and words_or_parts.lemma != '' `)
 
-      const needToUpgradeCorpora = queryResult[0]['count(1) == 0'] == 1;
+      const needToUpgradeCorpora = queryResult[0]['count(1) == 0'] === 1;
       console.log('inside checkCorporaUpgrade, needToUpgradeCorpora is: ', needToUpgradeCorpora)
       return needToUpgradeCorpora ? "One time project upgrade, please wait a few minutes." : undefined
     }
@@ -513,7 +513,7 @@ export class ProjectRepository extends BaseRepository {
         return defaultValue;
       }
       const firstLetter = workingColumnInput[0];
-      if(firstLetter == 'n' || firstLetter == 'f'){
+      if(firstLetter === 'n' || firstLetter === 'f'){
         return 0;
       }
       return 1;
