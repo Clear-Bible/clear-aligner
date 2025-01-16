@@ -255,8 +255,30 @@ export class LinksTable extends VirtualTable {
       this.logDatabaseTimeEnd('saveAll(): sorted');
 
       this.logDatabaseTime('saveAll(): saved');
+      const progressMax = outputLinks.length;
       let progressCtr = 0;
-      let progressMax = outputLinks.length;
+
+      this.setDatabaseBusyInfo({
+        userText: `Preparing ${outputLinks.length.toLocaleString()} links for upload...`,
+        progressCtr,
+        progressMax,
+      });
+      for (const links of _.chunk(Array.from(outputLinks), UIInsertChunkSize)) {
+        await dbApi.removeIntersectingLinksByVerseId({
+          projectId: this.getSourceName(),
+          links
+        });
+        progressCtr += links.length;
+        this.setDatabaseBusyProgress(progressCtr, progressMax);
+        const fromLinkTitle = LinksTable.createLinkTitle(links[0]);
+        const toLinkTitle = LinksTable.createLinkTitle(links[links.length - 1]);
+        this.setDatabaseBusyText(
+          links.length === progressMax
+            ? `Preparing ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} links)...`
+            : `Preparing ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} links)...`
+        );
+      }
+      progressCtr = 0;
       this.setDatabaseBusyInfo({
         userText: `Loading ${outputLinks.length.toLocaleString()} links...`,
         progressCtr,

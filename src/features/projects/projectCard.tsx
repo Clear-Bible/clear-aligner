@@ -136,14 +136,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   } = useSyncProject();
 
   useImportAlignmentFile(
-    project?.id,
+    project.id,
     alignmentFileSaveState?.alignmentFile,
     alignmentFileSaveState?.saveKey,
     false,
     true,
     true,
     true,
-    true
+    false
   );
 
   useEffect(() => {

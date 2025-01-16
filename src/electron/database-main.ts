@@ -233,6 +233,12 @@ export const setUpIpcMain = (): void => {
         return await ProjectRepositoryInstance.hasBcvInSource(...args);
       }
     );
+    ipcMain.handle(
+      `${ChannelPrefix}:removeIntersectingLinksByVerseId`,
+      async (event, ...args) => {
+        return await ProjectRepositoryInstance.removeIntersectingLinksByVerseId(...args);
+      }
+    );
   } catch (ex) {
     console.error('ipcMain.handle()', ex);
   }
