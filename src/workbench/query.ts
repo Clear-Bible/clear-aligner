@@ -31,12 +31,9 @@ const localCorporaLoadingInfo: localCorporaLoadingInfoInterface = {
   customLoadingMessage: undefined
 }
 
-// let IsLoadingAnyCorpora = false;
-
 // @ts-ignore
 const dbApi = window.databaseApi as DatabaseApi;
 
-//export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 export const corporaLoadingInfo = () => {
   return {...localCorporaLoadingInfo}
 }

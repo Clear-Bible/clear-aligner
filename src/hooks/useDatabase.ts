@@ -207,7 +207,7 @@ export interface DatabaseApi {
   checkCorporaUpgrade: (projectId: string) => Promise<string | undefined>;
   /**
    * Upgrade the corpora
-   * this will be used for any long-running database migrations`
+   * this will be used for any long-running database migrations
    * that can't be done effectively inside a TypeORM migration
    * @param projectId
    */
