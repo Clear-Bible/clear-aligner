@@ -283,18 +283,13 @@ export const getAvailableCorporaContainers = async (
   }
   localCorporaLoadingInfo.isLoading = true;
   try {
-    console.log('*insideGetAvailableCorporaContainers')
-
     const needToUpgradeCorpora = await dbApi.checkCorporaUpgrade(appCtx.preferences.currentProject);
     if(needToUpgradeCorpora){
-      console.log('inside query.ts about to assign custom loading message., which is:  ', needToUpgradeCorpora)
       localCorporaLoadingInfo.customLoadingMessage =  needToUpgradeCorpora;
       let offset = 0;
       while((await dbApi.upgradeCorpora(appCtx.preferences.currentProject,CorporaUpdateBatchSize,offset))){
         offset += CorporaUpdateBatchSize;
       }
-
-      console.log('inside query.ts about to assign custom loading message to undefined..... ')
       localCorporaLoadingInfo.customLoadingMessage = undefined;
     }
 

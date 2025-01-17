@@ -470,7 +470,6 @@ export class ProjectRepository extends BaseRepository {
       .execute();
   };
   checkCorporaUpgrade = async(projectId: string) => {
-    console.log('inside checkCorporaUpgrade function, projectId is: ', projectId)
     try {
       const entityManager = (await this.getDataSource(projectId))!.manager;
       const queryResult = await entityManager.query(`
@@ -479,7 +478,6 @@ export class ProjectRepository extends BaseRepository {
                 where words_or_parts.lemma is not null and words_or_parts.lemma != '' `)
 
       const needToUpgradeCorpora = queryResult[0]['count(1) == 0'] === 1;
-      console.log('inside checkCorporaUpgrade, needToUpgradeCorpora is: ', needToUpgradeCorpora)
       return needToUpgradeCorpora ? "One time project upgrade (please wait a few minutes)..." : undefined
     }
     catch(err){
