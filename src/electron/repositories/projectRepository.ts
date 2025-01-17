@@ -14,16 +14,7 @@ import {
   SaveParams
 } from '../../structs';
 import { PivotWordFilter } from '../../features/concordanceView/concordanceView';
-import { Column, DataSource, Entity, EntityManager, EntitySchema, In, PrimaryColumn } from 'typeorm';
-import {
-  Column,
-  DataSource,
-  Entity,
-  EntityManager,
-  EntitySchema,
-  In,
-  PrimaryColumn, UpdateResult
-} from 'typeorm';
+import { Column, DataSource, Entity, EntityManager, EntitySchema, In, PrimaryColumn, UpdateResult } from 'typeorm';
 import { BaseRepository } from './baseRepository';
 import fs from 'fs';
 import path from 'path';
@@ -57,8 +48,6 @@ import {
 import {
   AddRequiredToWordsOrParts1734371090123
 } from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
-import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
-import { AddRequiredToWordsOrParts1734371090123 } from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
 import * as d3 from 'd3';
 import { DSVRowString } from 'd3';
 
