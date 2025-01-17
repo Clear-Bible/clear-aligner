@@ -24,9 +24,8 @@ const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({
 }) => {
   const { projectState, setPreferences } = React.useContext(AppContext);
   const initialUpdateTime = React.useMemo(
-    () =>
-      LinksTable.getLatestLastUpdateTime(),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => LinksTable.getLatestLastUpdateTime(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [alignment]
   );
 

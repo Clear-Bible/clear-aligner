@@ -31,6 +31,7 @@ import { ProjectTokenReport } from './useSyncWordsOrParts';
 import { mockSetStateAction } from '../../__tests__/mockModules/react';
 import { DatabaseApi } from '../../hooks/useDatabase';
 import { DeleteByIdParams } from '../../structs';
+import { SnackBarObjectInterface } from '../../features/snackbar';
 
 mockEnvironmentVarsOnWindow();
 mockDatabaseApiOnWindow();
@@ -94,7 +95,9 @@ test('useSyncProject:stepSyncingProject', async () => {
     project,
     undefined as any as React.MutableRefObject<AbortController | undefined>,
     (s: boolean) => undefined,
-    (s: boolean) => undefined,
+    ((s: boolean) => undefined) as any as React.Dispatch<
+      React.SetStateAction<SnackBarObjectInterface>
+    >,
     () => undefined
   );
   expect(progress).toBe(SyncProgress.SYNCING_CORPORA);

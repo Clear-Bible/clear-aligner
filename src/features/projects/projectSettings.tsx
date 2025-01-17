@@ -653,6 +653,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                 disableProjectButtons={false}
                 isCurrentProject={projectId === preferences?.currentProject}
                 isSignedIn={isSignedIn}
+                project={project}
               />
             )}
         </FormGroup>

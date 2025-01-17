@@ -56,8 +56,8 @@ import {
   projectCardWidth,
 } from './styleConstants';
 import { AlignmentFile } from '../../structs/alignmentFile';
-import { useImportAlignmentFile } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
+import { useImportAlignmentFile } from '../../state/links/useImportAlignmentFile';
 
 /**
  * props for the project card component
@@ -136,14 +136,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   } = useSyncProject();
 
   useImportAlignmentFile(
-    project?.id,
+    project.id,
     alignmentFileSaveState?.alignmentFile,
     alignmentFileSaveState?.saveKey,
     false,
     true,
     true,
     true,
-    true
+    false
   );
 
   useEffect(() => {

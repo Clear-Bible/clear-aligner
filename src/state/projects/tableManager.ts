@@ -2,7 +2,7 @@
  * This file contains the ProjectTable Class and supporting functions.
  */
 import { VirtualTable } from '../databaseManagement';
-import { Corpus, CorpusContainer, Word } from '../../structs';
+import { Corpus, CorpusContainer, RepositoryLink, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
@@ -117,7 +117,6 @@ export class ProjectTable extends VirtualTable {
     createDataSource?: boolean
   ): Promise<Project | undefined> => {
     try {
-      if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
 
       await this.sync(project).catch(console.error);
@@ -305,6 +304,12 @@ export class ProjectTable extends VirtualTable {
     // @ts-ignore
     return await window.databaseApi
       .hasBcvInSource(sourceName, bcvId.trim())
+      .catch(console.error);
+  };
+
+  removeIntersectingLinksByVerseId = async (insertParams: { projectId: string; links: RepositoryLink[]; }) => {
+    return await dbApi
+      .removeIntersectingLinksByVerseId(insertParams)
       .catch(console.error);
   };
 

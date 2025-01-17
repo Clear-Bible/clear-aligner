@@ -176,6 +176,7 @@ export interface DatabaseApi {
     side: AlignmentSide,
     referenceString: string
   ) => Promise<RepositoryLink[]>;
+  removeIntersectingLinksByVerseId: (insertParams: { projectId: string; links: RepositoryLink[]; }) => Promise<boolean>;
   languageGetAll: (sourceName: string) => Promise<LanguageInfo[]>;
   languageFindByIds: (
     sourceName: string,
