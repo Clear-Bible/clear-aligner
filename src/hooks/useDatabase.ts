@@ -211,7 +211,7 @@ export interface DatabaseApi {
    * that can't be done effectively inside a TypeORM migration.
    * @param projectId
    * @param batchSize
-   * @param offeset
+   * @param offset
    */
   upgradeCorpora: (projectId: string, batchSize: number, offset: number ) => Promise<boolean>;
 }
