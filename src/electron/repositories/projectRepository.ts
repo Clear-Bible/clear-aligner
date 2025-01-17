@@ -490,7 +490,7 @@ export class ProjectRepository extends BaseRepository {
 
       const needToUpgradeCorpora = queryResult[0]['count(1) == 0'] === 1;
       console.log('inside checkCorporaUpgrade, needToUpgradeCorpora is: ', needToUpgradeCorpora)
-      return needToUpgradeCorpora ? "One time project upgrade, please wait a few minutes." : undefined
+      return needToUpgradeCorpora ? "One time project upgrade (please wait a few minutes)..." : undefined
     }
     catch(err){
       console.error('checkCorporaUpgrade()', err);
