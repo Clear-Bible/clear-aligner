@@ -499,11 +499,6 @@ export class ProjectRepository extends BaseRepository {
 
   private sourceTokens?: DSVRowString<string>[] = undefined
   upgradeCorpora = async(projectId: string, batchSize: number, offset: number): Promise<boolean> => {
-    console.log('inside upgradeCorpora')
-    if(await this.checkCorporaUpgrade(projectId) === undefined){
-      console.log('inside upgradeCorpora, about to do an early return')
-      return false;
-    }
     if(!this.sourceTokens) {
       this.sourceTokens = [...d3.tsvParse(fs.readFileSync('src/tsv/source_macula_greek_SBLGNT+required.tsv', 'utf-8')),
         ...d3.tsvParse(fs.readFileSync('src/tsv/source_macula_hebrew+required.tsv', 'utf-8'))];
@@ -545,8 +540,6 @@ export class ProjectRepository extends BaseRepository {
     if (queryBuilderPromisesArray.length > 0) {
       await Promise.all(queryBuilderPromisesArray);
     }
-
-    console.log('leaving upgradeCorpora');
     return result;
   };
 
