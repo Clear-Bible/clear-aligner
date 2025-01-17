@@ -207,8 +207,8 @@ export const setUpIpcMain = (): void => {
     );
     ipcMain.handle(
       `${ChannelPrefix}:upgradeCorpora`,
-      async (event, projectId: string) =>
-        await ProjectRepositoryInstance.upgradeCorpora(projectId)
+      async (event, ...args) =>
+        await ProjectRepositoryInstance.upgradeCorpora(...args)
     );
     //@ts-ignore
     ipcMain.handle(

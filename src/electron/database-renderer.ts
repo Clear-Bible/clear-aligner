@@ -224,8 +224,8 @@ contextBridge.exposeInMainWorld('databaseApi', {
     ),
   checkCorporaUpgrade: (projectId) =>
     ipcRenderer.invoke(`${ChannelPrefix}:checkCorporaUpgrade`, projectId),
-  upgradeCorpora: (projectId) =>
-    ipcRenderer.invoke(`${ChannelPrefix}:upgradeCorpora`, projectId),
+  upgradeCorpora: (projectId, batchSize, offset) =>
+    ipcRenderer.invoke(`${ChannelPrefix}:upgradeCorpora`, projectId, batchSize, offset),
 } as DatabaseApi);
 
 contextBridge.exposeInMainWorld('environmentVariables', {
