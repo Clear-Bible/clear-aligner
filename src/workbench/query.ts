@@ -287,7 +287,11 @@ export const getAvailableCorporaContainers = async (
     if(needToUpgradeCorpora){
       console.log('inside query.ts about to assign custom loading message., which is:  ', needToUpgradeCorpora)
       localCorporaLoadingInfo.customLoadingMessage =  needToUpgradeCorpora;
-      await dbApi.upgradeCorpora(appCtx.preferences.currentProject);
+      let offset = 0;
+      while((await dbApi.upgradeCorpora(appCtx.preferences.currentProject,200_000,offset))){
+        offset += 200_000;
+      }
+
       console.log('inside query.ts about to assign custom loading message to undefined..... ')
       localCorporaLoadingInfo.customLoadingMessage = undefined;
     }

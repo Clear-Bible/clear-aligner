@@ -86,8 +86,6 @@ const useBusyDialog = ({
       }
     });
     const nextCorporaLoadingInfo = corporaLoadingInfo();
-    console.log('nextCorporaLoadingInfo: ', nextCorporaLoadingInfo)
-    console.log('currCorporaLoadingInfo: ', currCorporaLoadingInfo)
     if(!_.isEqual(nextCorporaLoadingInfo, currCorporaLoadingInfo)){
       console.log('inside useBusyDialog.tsx, if check isEqual(nextCorporaLoadingInfo, currCorporaLoadingInfo)')
       setCurrCorporaLoadingInfo(nextCorporaLoadingInfo)

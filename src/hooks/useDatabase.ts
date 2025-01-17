@@ -211,7 +211,7 @@ export interface DatabaseApi {
    * that can't be done effectively inside a TypeORM migration
    * @param projectId
    */
-  upgradeCorpora: (projectId: string) => Promise<void>;
+  upgradeCorpora: (projectId: string, batchSize: number, offset: number ) => Promise<boolean>;
 }
 
 export const useDatabase = (): DatabaseApi => {

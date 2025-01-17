@@ -59,6 +59,7 @@ import { LinkEntity } from '../../common/data/project/linkEntity';
 import { AddLemmaToWordsOrParts1734038034739 } from '../typeorm-migrations/project/1734038034739-add-lemma-exclude-to-tokens';
 import { AddRequiredToWordsOrParts1734371090123 } from '../typeorm-migrations/project/1734561207123-add-required-to-words-or-parts';
 import * as d3 from 'd3';
+import { DSVRowString } from 'd3';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -495,17 +496,24 @@ export class ProjectRepository extends BaseRepository {
       console.error('checkCorporaUpgrade()', err);
     }
   };
-  upgradeCorpora = async(projectId: string) => {
+
+  private sourceTokens?: DSVRowString<string>[] = undefined
+  upgradeCorpora = async(projectId: string, batchSize: number, offset: number): Promise<boolean> => {
     console.log('inside upgradeCorpora')
     if(await this.checkCorporaUpgrade(projectId) === undefined){
       console.log('inside upgradeCorpora, about to do an early return')
-      return;
+      return false;
     }
-    const dataGreek = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_greek_SBLGNT+required.tsv', 'utf-8'));
-    const dataHebrew = d3.tsvParse(fs.readFileSync('src/tsv/source_macula_hebrew+required.tsv', 'utf-8'));
-    const fullParsedData = [...dataHebrew, ...dataGreek];
+    if(!this.sourceTokens) {
+      this.sourceTokens = [...d3.tsvParse(fs.readFileSync('src/tsv/source_macula_greek_SBLGNT+required.tsv', 'utf-8')),
+        ...d3.tsvParse(fs.readFileSync('src/tsv/source_macula_hebrew+required.tsv', 'utf-8'))];
+    }
+
+    if(offset >= this.sourceTokens.length ){
+      return false
+    }
+
     const src = await this.getDataSource(projectId)!;
-    console.log('fullParsedData.length is: ', fullParsedData.length)
 
     function sanitizeColumnInput (columnInput: string, defaultValue: string){
       const workingColumnInput = columnInput.trim().toLowerCase();
@@ -520,20 +528,26 @@ export class ProjectRepository extends BaseRepository {
     }
 
     const queryBuilderPromisesArray: Promise<UpdateResult>[] = [];
+    let result = true;
+    const max = offset + batchSize
+    for (let i = offset; i < max; i++) {
+      if (i >= this.sourceTokens.length) {
+        result = false;
+        break;
+      }
+      const row = this.sourceTokens[i];
+      const workingRef = 'sources:' + row['xml:id'].slice(1);
+      const workingRequiredValue = sanitizeColumnInput(row.required, '1');
+      queryBuilderPromisesArray.push(src?.createQueryBuilder().update(WordsOrParts)
+        .set({ lemma: row.lemma, required: workingRequiredValue })
+        .where('id = :id', { id: workingRef }).execute()!);
+    }
+    if (queryBuilderPromisesArray.length > 0) {
+      await Promise.all(queryBuilderPromisesArray);
+    }
 
-    fullParsedData.forEach((row, index) => {
-        const workingRef = 'sources:' + row['xml:id'].slice(1);
-        const workingRequiredValue = sanitizeColumnInput(row.required, '1')
-        queryBuilderPromisesArray.push(src?.createQueryBuilder().update(WordsOrParts)
-          .set({ lemma: row.lemma, required: workingRequiredValue})
-          .where("id = :id", {id: workingRef}).execute()!);
-
-        index++
-    })
-
-    await Promise.all(queryBuilderPromisesArray);
-
-    console.log('leaving upgradeCorpora')
+    console.log('leaving upgradeCorpora');
+    return result;
   };
 
   removeTargetWordsOrParts = async (sourceName: string) => {
