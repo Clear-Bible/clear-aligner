@@ -169,11 +169,11 @@
       },
       {
         "from": "src/tsv/source_macula_greek_SBLGNT+required.tsv",
-        "to": "src/tsv/source_macula_greek_SBLGNT+required.tsv"
+        "to": "tsv/source_macula_greek_SBLGNT+required.tsv"
       },
       {
         "from": "src/tsv/source_macula_hebrew+required.tsv",
-        "to": "src/tsv/source_macula_hebrew+required.tsv"
+        "to": "tsv/source_macula_hebrew+required.tsv"
       }
     ]
   },

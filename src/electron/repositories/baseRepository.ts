@@ -80,16 +80,24 @@ export abstract class BaseRepository implements RepositoryWithMigrations {
     return isDev ? 'sql' : app.getPath('userData');
   };
 
-  getTemplatesDirectory = (): string => {
+  getExtraFilesDirectory = (basePath: string, devPath?: string): string => {
     if (isDev) {
-      return 'sql';
+      return devPath ?? basePath;
     }
     return path.join(
       isMac
         ? path.join(path.dirname(app.getPath('exe')), '..')
         : path.dirname(app.getPath('exe')),
-      'sql'
+      basePath
     );
+  };
+
+  getTemplatesDirectory = (): string => {
+    return this.getExtraFilesDirectory('sql');
+  };
+
+  getTsvDirectory = (): string => {
+    return this.getExtraFilesDirectory('tsv','src/tsv');
   };
 
   removeDataSource = async (sourceName: string) => {
