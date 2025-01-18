@@ -490,7 +490,7 @@ export class ProjectRepository extends BaseRepository {
     if (!this.sourceTokens) {
       this.sourceTokens = [
         ...d3.tsvParse(fs.readFileSync(path.join(this.getTsvDirectory(), 'source_macula_greek_SBLGNT+required.tsv'), 'utf-8')),
-        ...d3.tsvParse(fs.readFileSync(path.join(this.getTsvDirectory(), 'src/tsv/source_macula_hebrew+required.tsv'), 'utf-8'))
+        ...d3.tsvParse(fs.readFileSync(path.join(this.getTsvDirectory(), 'source_macula_hebrew+required.tsv'), 'utf-8'))
       ];
     }
 
