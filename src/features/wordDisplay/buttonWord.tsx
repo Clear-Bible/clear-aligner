@@ -730,6 +730,9 @@ export const ButtonToken = ({
   }, [wordPart, wordLength, languageInfo?.textDirection]);
 
   const marginLeft = useMemo<string>(() => {
+    if(!isTokenRequired){
+      return '3px'
+    }
     if (!wordPart || wordLength < 2) return defaultMargin;
     if (wordPart > 1)
       return languageInfo?.textDirection === TextDirection.LTR
@@ -738,9 +741,12 @@ export const ButtonToken = ({
     return languageInfo?.textDirection === TextDirection.LTR
       ? defaultMargin
       : noMargin;
-  }, [wordPart, wordLength, languageInfo?.textDirection]);
+  }, [wordPart, wordLength, languageInfo?.textDirection, isTokenRequired]);
 
   const marginRight = useMemo<string>(() => {
+    if(!isTokenRequired){
+      return '3px'
+    }
     if (!wordPart || wordLength < 2) return defaultMargin;
     if (wordPart > 1)
       return languageInfo?.textDirection === TextDirection.LTR
@@ -749,7 +755,7 @@ export const ButtonToken = ({
     return languageInfo?.textDirection === TextDirection.LTR
       ? noMargin
       : defaultMargin;
-  }, [languageInfo?.textDirection, wordPart, wordLength]);
+  }, [languageInfo?.textDirection, wordPart, wordLength, isTokenRequired]);
 
   const isSpecialMachineLearningCase = useMemo<boolean>(
     () =>
@@ -916,6 +922,9 @@ export const ButtonToken = ({
                 {sourceIndicator}
                 {upperRightHandCornerIndicator}
               </Box>
+              {/*
+                * Middle box that contains the actual text and/or gloss
+               `*/}
               <Box
                 sx={{
                   display: 'flex',
@@ -923,7 +932,7 @@ export const ButtonToken = ({
                   marginRight,
                   alignItems: 'center',
                   justifyContent: `${textJustification} !important`,
-                  minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
+                  minWidth: !isTokenRequired ? {} : `calc(32px - ${marginLeft} - ${marginRight}) !important`,
                   flexGrow: 1,
                 }}
               >
