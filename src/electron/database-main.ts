@@ -200,6 +200,16 @@ export const setUpIpcMain = (): void => {
       async (event, projectId: string) =>
         await ProjectRepositoryInstance.toggleCorporaUpdatedFlagOff(projectId)
     );
+    ipcMain.handle(
+      `${ChannelPrefix}:checkCorporaUpgrade`,
+      async (event, projectId: string) =>
+        await ProjectRepositoryInstance.checkCorporaUpgrade(projectId)
+    );
+    ipcMain.handle(
+      `${ChannelPrefix}:upgradeCorpora`,
+      async (event, ...args) =>
+        await ProjectRepositoryInstance.upgradeCorpora(...args)
+    );
     //@ts-ignore
     ipcMain.handle(
       `${ChannelPrefix}:getDataSources`,

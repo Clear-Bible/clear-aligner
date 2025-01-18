@@ -21,12 +21,24 @@ export enum InitializationStates {
   INITIALIZED,
 }
 
-let IsLoadingAnyCorpora = false;
+export interface localCorporaLoadingInfoInterface  {
+  isLoading? : boolean,
+  customLoadingMessage? : string;
+}
+
+const localCorporaLoadingInfo: localCorporaLoadingInfoInterface = {
+  isLoading: false,
+  customLoadingMessage: undefined
+}
+
+const CorporaUpdateBatchSize = 2_000;
 
 // @ts-ignore
 const dbApi = window.databaseApi as DatabaseApi;
 
-export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
+export const corporaLoadingInfo = () => {
+  return {...localCorporaLoadingInfo}
+}
 
 /**
  * Helper function used to handle any input from the exclude or required columns in the tsv files
@@ -261,6 +273,7 @@ export const getCorpusFromDatabase = async (
 export const getAvailableCorporaContainers = async (
   appCtx: AppContextProps
 ): Promise<Containers> => {
+
   if (!appCtx.preferences?.currentProject) {
     return {
       projectId: appCtx.preferences?.currentProject,
@@ -268,9 +281,18 @@ export const getAvailableCorporaContainers = async (
       targetContainer: undefined,
     };
   }
-
-  IsLoadingAnyCorpora = true;
+  localCorporaLoadingInfo.isLoading = true;
   try {
+    const needToUpgradeCorpora = await dbApi.checkCorporaUpgrade(appCtx.preferences.currentProject);
+    if(needToUpgradeCorpora){
+      localCorporaLoadingInfo.customLoadingMessage =  needToUpgradeCorpora;
+      let offset = 0;
+      while((await dbApi.upgradeCorpora(appCtx.preferences.currentProject,CorporaUpdateBatchSize,offset))){
+        offset += CorporaUpdateBatchSize;
+      }
+      localCorporaLoadingInfo.customLoadingMessage = undefined;
+    }
+
     const inputCorpora: Corpus[] =
       (await dbApi.getAllCorpora(appCtx.preferences?.currentProject)) ?? [];
     const corpusPromises: Promise<Corpus | undefined>[] = inputCorpora.map(
@@ -311,6 +333,7 @@ export const getAvailableCorporaContainers = async (
       targetContainer,
     };
   } finally {
-    IsLoadingAnyCorpora = false;
+    localCorporaLoadingInfo.isLoading = false;
+    localCorporaLoadingInfo.customLoadingMessage = undefined;
   }
 };

@@ -223,6 +223,10 @@ contextBridge.exposeInMainWorld('databaseApi', {
       `${ChannelPrefix}:toggleCorporaUpdatedFlagOff`,
       projectId
     ),
+  checkCorporaUpgrade: (projectId) =>
+    ipcRenderer.invoke(`${ChannelPrefix}:checkCorporaUpgrade`, projectId),
+  upgradeCorpora: (projectId, batchSize, offset) =>
+    ipcRenderer.invoke(`${ChannelPrefix}:upgradeCorpora`, projectId, batchSize, offset),
 } as DatabaseApi);
 
 contextBridge.exposeInMainWorld('environmentVariables', {

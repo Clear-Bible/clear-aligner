@@ -199,6 +199,21 @@ export interface DatabaseApi {
    * @param projectId
    */
   toggleCorporaUpdatedFlagOff: (projectId: string) => Promise<void>;
+  /**
+   * Check if we need to upgrade the corpora by examining if anything
+   * has been already added to the lemma column.
+   * @param projectId
+   */
+  checkCorporaUpgrade: (projectId: string) => Promise<string | undefined>;
+  /**
+   * Upgrade the corpora.
+   * This will be used for any long-running database migrations
+   * that can't be done effectively inside a TypeORM migration.
+   * @param projectId
+   * @param batchSize
+   * @param offset
+   */
+  upgradeCorpora: (projectId: string, batchSize: number, offset: number ) => Promise<boolean>;
 }
 
 export const useDatabase = (): DatabaseApi => {
