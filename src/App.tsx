@@ -14,18 +14,22 @@ import { Project } from './state/projects/tableManager';
 import useInitialization from './utils/useInitialization';
 import { Containers } from './hooks/useCorpusContainers';
 import { useMediaQuery } from '@mui/material';
-import { CustomSnackbar } from './features/snackbar';
+import { SnackBarObjectInterface } from './features/snackbar';
 import { NetworkState } from '@uidotdev/usehooks';
 import { setUpAmplify } from './server/amplifySetup';
 import { InitializationStates } from './workbench/query';
 import { FeaturePreferences } from './common/data/featurePreferences';
 
+export type THEME = 'night' | 'day';
+export type THEME_PREFERENCE = THEME | 'auto';
 
 export interface AppContextProps {
   projectState: ProjectState;
   setProjectState: React.Dispatch<React.SetStateAction<ProjectState>>;
   preferences: UserPreference | undefined;
-  setPreferences: React.Dispatch<React.SetStateAction<UserPreference | undefined>>;
+  setPreferences: React.Dispatch<
+    React.SetStateAction<UserPreference | undefined>
+  >;
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   containers: Containers;
@@ -34,19 +38,24 @@ export interface AppContextProps {
   setUserStatus: Function;
   isSnackBarOpen: boolean;
   setIsSnackBarOpen: Function;
-  snackBarMessage: string;
-  setSnackBarMessage: Function;
+  snackBarObject: SnackBarObjectInterface;
+  setSnackBarObject: React.Dispatch<
+    React.SetStateAction<SnackBarObjectInterface>
+  >;
   setContainers: React.Dispatch<React.SetStateAction<Containers>>;
   isProjectDialogOpen: boolean;
   setIsProjectDialogOpen: Function;
+  /**
+   * indicates whether the busy dialog is currently being shown
+   */
   isBusyDialogOpen: boolean;
+  /**
+   * only for use in {@link AppLayout} to indicate that the busy dialog is being shown
+   */
   setIsBusyDialogOpen: Function;
   features: FeaturePreferences;
   setFeatures: React.Dispatch<React.SetStateAction<FeaturePreferences>>;
 }
-
-export type THEME = 'night' | 'day';
-export type THEME_PREFERENCE = THEME | 'auto';
 export const AppContext = createContext({} as AppContextProps);
 
 setUpAmplify();
@@ -72,18 +81,24 @@ const App = () => {
   }, [themeDefault, preferredTheme]);
 
   useEffect(() => {
-    if (appContext.preferences?.initialized === InitializationStates.INITIALIZED) {
+    if (
+      appContext.preferences?.initialized === InitializationStates.INITIALIZED
+    ) {
       if (appContext.preferences?.onInitialized) {
         for (const callback of appContext.preferences.onInitialized) {
           callback();
         }
         appContext.setPreferences((p) => ({
-          ...(p ?? {}) as UserPreference,
-          onInitialized: undefined
+          ...((p ?? {}) as UserPreference),
+          onInitialized: undefined,
         }));
       }
     }
-  }, [appContext, appContext.preferences?.initialized, appContext.setPreferences]);
+  }, [
+    appContext,
+    appContext.preferences?.initialized,
+    appContext.setPreferences,
+  ]);
 
   const router = createHashRouter([
     {
@@ -92,27 +107,29 @@ const App = () => {
       children: [
         {
           index: true,
-          element: <Navigate to="/projects" replace />
+          element: <Navigate to="/projects" replace />,
         },
         {
           path: '/alignment',
-          element: <AlignmentEditor />
+          element: <AlignmentEditor />,
         },
         {
           path: '/concordance',
-          element: <ConcordanceView />
+          element: <ConcordanceView />,
         },
         {
           path: '/projects',
-          element: <ProjectsView
-            preferredTheme={preferredTheme}
-            setPreferredTheme={setPreferredTheme}
-            features={appContext.features}
-            setFeatures={appContext.setFeatures}
-          />
-        }
-      ]
-    }
+          element: (
+            <ProjectsView
+              preferredTheme={preferredTheme}
+              setPreferredTheme={setPreferredTheme}
+              features={appContext.features}
+              setFeatures={appContext.setFeatures}
+            />
+          ),
+        },
+      ],
+    },
   ]);
 
   return (
@@ -121,7 +138,6 @@ const App = () => {
         <Provider store={store}>
           <RouterProvider router={router} />
         </Provider>
-        <CustomSnackbar />
       </AppContext.Provider>
     </>
   );

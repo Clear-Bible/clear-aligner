@@ -1,19 +1,25 @@
 import { LinksTable } from '../state/links/tableManager';
-import { Link, LinkStatus, NamedContainers, Verse, Word } from '../structs';
+import {
+  RepositoryLink,
+  LinkStatus,
+  NamedContainers,
+  Verse,
+  Word,
+} from '../structs';
 import { AlignmentSide } from '../common/data/project/corpus';
 
 export interface LinkWords {
-  link: Link,
-  words: Word[]
+  link: RepositoryLink;
+  words: Word[];
 }
 
 /**
  * Packaging for interlinear mapping information for a particular verse.
  */
 export interface InterlinearMap {
-  sourceVerse: Verse,
-  containers: NamedContainers,
-  sourceMap: Map<string, LinkWords[]>
+  sourceVerse: Verse;
+  containers: NamedContainers;
+  sourceMap: Map<string, LinkWords[]>;
 }
 
 /**
@@ -35,19 +41,24 @@ export const createInterlinearMap = async (
   }
   const sourceMap = new Map<string, LinkWords[]>();
   const sourceBcvId = sourceVerse.bcvId;
-  const links = await linksTable.findByBCV(AlignmentSide.SOURCE, sourceBcvId.book!, sourceBcvId.chapter!, sourceBcvId.verse!); //database query
+  const links = await linksTable.findByBCV(
+    AlignmentSide.SOURCE,
+    sourceBcvId.book!,
+    sourceBcvId.chapter!,
+    sourceBcvId.verse!
+  ); //database query
   for (const link of links) {
-    if (!includeRejectedLinks
-      && link.metadata.status === LinkStatus.REJECTED) {
+    if (!includeRejectedLinks && link.metadata.status === LinkStatus.REJECTED) {
       continue;
     }
     for (const sourceWordId of link.sources) {
       const linkWord = {
         link,
-        words: []
+        words: [],
       } as LinkWords;
       for (const targetWordId of link.targets) {
-        const targetWord = containers.targets?.wordByReferenceString(targetWordId);
+        const targetWord =
+          containers.targets?.wordByReferenceString(targetWordId);
         if (targetWord) {
           linkWord.words.push(targetWord);
         }

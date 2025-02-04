@@ -4,7 +4,8 @@ import { RestApiOptionsBase } from '@aws-amplify/api-rest/src/types';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
-const environmentVariables = (((window as any).environmentVariables ?? {}) as EnvironmentVariables);
+const environmentVariables = ((window as any).environmentVariables ??
+  {}) as EnvironmentVariables;
 
 export const OverrideCaApiEndpoint = environmentVariables.caApiEndpoint;
 export const OverrideUserPoolId = environmentVariables.userPoolId;
@@ -21,8 +22,10 @@ export const DefaultCaApiEndpoint = CA_AWS_ENDPOINT;
 export const DefaultUserPoolId = CA_AWS_COGNITO_USER_POOL_ID;
 export const DefaultUserPoolClientId = CA_AWS_COGNITO_USER_POOL_CLIENT_ID;
 
-export const CaApiEndpointIsDev = (environmentVariables.caApiEndpointIsDev ?? 'false') === 'true';
-export const EffectiveCaApiEndpoint = OverrideCaApiEndpoint ?? DefaultCaApiEndpoint;
+export const CaApiEndpointIsDev =
+  (environmentVariables.caApiEndpointIsDev ?? 'false') === 'true';
+export const EffectiveCaApiEndpoint =
+  OverrideCaApiEndpoint ?? DefaultCaApiEndpoint;
 export const ClearAlignerApiName = 'ClearAlignerApi';
 
 /**
@@ -36,13 +39,13 @@ export const setUpAmplify = () => {
         userPoolClientId: OverrideUserPoolClientId ?? DefaultUserPoolClientId,
         identityPoolId: '',
         loginWith: {
-          email: true
+          email: true,
         },
         signUpVerificationMethod: 'code',
         userAttributes: {
           email: {
-            required: true
-          }
+            required: true,
+          },
         },
         allowGuestAccess: true,
         passwordFormat: {
@@ -50,10 +53,10 @@ export const setUpAmplify = () => {
           requireLowercase: true,
           requireUppercase: true,
           requireNumbers: true,
-          requireSpecialCharacters: true
-        }
-      }
-    }
+          requireSpecialCharacters: true,
+        },
+      },
+    },
   });
 
   const currConfig = Amplify.getConfig();
@@ -65,31 +68,34 @@ export const setUpAmplify = () => {
       REST: {
         ...currConfig.API?.REST,
         ClearAlignerApi: {
-          endpoint:
-          EffectiveCaApiEndpoint
-        }
-      }
-    }
+          endpoint: EffectiveCaApiEndpoint,
+        },
+      },
+    },
   });
 };
 
 /**
  * get groups user is a member of, undefined if the user is not logged in
  */
-export const getUserGroups = async (forceRefresh?: boolean): Promise<[]|undefined> => {
+export const getUserGroups = async (
+  forceRefresh?: boolean
+): Promise<[] | undefined> => {
   const authSession = await fetchAuthSession({ forceRefresh });
   const payload = authSession.tokens?.accessToken?.payload;
   if (!payload) return undefined;
   return (payload['cognito:groups'] ?? []) as [];
-}
+};
 
 /**
  * Retrieve key from local storage, if it exists and return it
  */
-export const getAuthorizationToken = (): string|undefined => {
+export const getAuthorizationToken = (): string | undefined => {
   for (const key in localStorage) {
-    if (key.startsWith('CognitoIdentityServiceProvider.')
-      && key.endsWith('.accessToken')) {
+    if (
+      key.startsWith('CognitoIdentityServiceProvider.') &&
+      key.endsWith('.accessToken')
+    ) {
       return localStorage[key];
     }
   }
@@ -113,7 +119,7 @@ export const getApiOptionsWithAuth = (inputBody?: any): RestApiOptionsBase => {
   return {
     body: getDocumentType(inputBody),
     headers: {
-      Authorization: cognitoKey ? `Bearer ${cognitoKey}` : ''
-    }
+      Authorization: cognitoKey ? `Bearer ${cognitoKey}` : '',
+    },
   };
 };

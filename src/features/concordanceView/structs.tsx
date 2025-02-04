@@ -2,14 +2,14 @@
  * This file contains a collection of interfaces to support the
  * ConcordanceView component
  */
-import { LanguageInfo, Link, Word } from '../../structs';
+import { LanguageInfo, RepositoryLink, Word } from '../../structs';
 import { AlignmentSide } from '../../common/data/project/corpus';
 
 /**
  * represents rows displayed in the pivot word table in the concordance view
  */
 export interface PivotWord {
-  normalizedText: string; // normalized text of the pivot word being representeda
+  word: string; // normalized text of the pivot word being represented
   side: AlignmentSide;
   frequency: number;
   languageInfo: LanguageInfo;
@@ -46,7 +46,7 @@ export interface ResolvedWordEntry {
  * a Link hydrated with enough information that no additional lookups should be required to display or otherwise work
  * with this Link in the code
  */
-export interface FullyResolvedLink extends Link {
+export interface FullyResolvedLink extends RepositoryLink {
   sourceResolvedWords: Set<ResolvedWordEntry>;
   targetResolvedWords: Set<ResolvedWordEntry>;
 }

@@ -3,12 +3,18 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
-import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
+import {
+  UserPreference,
+  UserPreferenceTable,
+} from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
-import { DefaultProjectId, LinksTable } from '../state/links/tableManager';
+import { LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
-import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
+import {
+  getAvailableCorporaContainers,
+  InitializationStates,
+} from '../workbench/query';
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { useInterval } from 'usehooks-ts';
 import { useNetworkState } from '@uidotdev/usehooks';
@@ -16,37 +22,62 @@ import { userState } from '../features/profileAvatar/profileAvatar';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 import { FeaturePreferences } from '../common/data/featurePreferences';
+import { pickDeFactoCurrentProject } from '../api/projects/pickDeFactoCurrentProject';
+import { SnackBarObjectInterface } from '../features/snackbar';
 
-const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
+const environmentVariables = (window as any)
+  .environmentVariables as EnvironmentVariables;
 
 const useInitialization = (): AppContextProps => {
   const isLoaded = React.useRef(false);
   const [projects, setProjects] = React.useState<Project[]>([]);
-  const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
+  const [preferences, setPreferences] = React.useState<
+    UserPreference | undefined
+  >();
   const [state, setState] = useState({} as ProjectState);
   const [containers, setContainers] = useState<Containers>({});
-  const [userStatus, setUserStatus] = React.useState<{color: string, label: string}>(userState.LoggedOut)
+  const [userStatus, setUserStatus] = React.useState<{
+    color: string;
+    label: string;
+  }>(userState.LoggedOut);
   const network = useNetworkState();
-  const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
-  const [snackBarMessage, setSnackBarMessage] = React.useState("")
+  const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false);
+  const [snackBarObject, setSnackBarObject] = React.useState(
+    {} as SnackBarObjectInterface
+  );
   const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
-  const [ isBusyDialogOpen, setIsBusyDialogOpen ] = useState<boolean>(false);
-  const [ features, setFeatures ] = useState<FeaturePreferences>({
-    enableTokenSuggestions: true // defaults to enabled
+  const [isBusyDialogOpen, setIsBusyDialogOpen] = useState<boolean>(false);
+  const [features, setFeatures] = useState<FeaturePreferences>({
+    enableTokenSuggestions: true, // defaults to enabled
   });
 
-  const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
-    updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
-  }, [state.userPreferenceTable]);
+  useEffect(() => {
+    if (!preferences?.isFirstLaunch) {
+      return;
+    }
+    window.location.reload();
+    setPreferences((oldPreferences) => ({
+      ...((oldPreferences ?? {}) as UserPreference),
+      isFirstLaunch: false,
+    }));
+  }, [preferences?.isFirstLaunch, setPreferences]);
+
+  const setUpdatedPreferences = useCallback(
+    (updatedPreferences?: UserPreference) => {
+      updatedPreferences &&
+        state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
+    },
+    [state.userPreferenceTable]
+  );
 
   useInterval(async () => {
     const currentProjects = await state.projectTable?.getProjects(false);
-    if(!currentProjects?.size) {
-      state.projectTable?.getProjects(true).then(res => {
-        res && setProjects(p => [...(res.values() ?? p)]);
+    if (!currentProjects?.size) {
+      state.projectTable?.getProjects(true).then((res) => {
+        res && setProjects((p) => [...(res.values() ?? p)]);
       });
     }
-  }, 1000);
+  }, 1_000);
 
   useEffect(() => {
     setUpdatedPreferences(preferences);
@@ -57,78 +88,111 @@ const useInitialization = (): AppContextProps => {
    */
   const checkIfBCVIsOkay = useCallback(() => {
     if (!containers?.targetContainer) return;
-    if (!preferences?.bcv
-      || !containers.targetContainer?.corpusAtReferenceString(preferences.bcv.toReferenceString())
-      || !containers.targetContainer?.corpusAtReferenceString(preferences.bcv.toReferenceString())?.wordsByVerse[preferences.bcv.toTruncatedReferenceString(BCVWPField.Verse)]) {
-      const targetWord = containers.targetContainer?.corpora.find(_ => true)?.words.find(_ => true);
+    if (
+      !preferences?.bcv ||
+      !containers.targetContainer?.corpusAtReferenceString(
+        preferences.bcv.toReferenceString()
+      ) ||
+      !containers.targetContainer?.corpusAtReferenceString(
+        preferences.bcv.toReferenceString()
+      )?.wordsByVerse[
+        preferences.bcv.toTruncatedReferenceString(BCVWPField.Verse)
+      ]
+    ) {
+      const targetWord = containers.targetContainer?.corpora
+        .find((_) => true)
+        ?.words.find((_) => true);
       if (targetWord) {
         const newPosition = BCVWP.parseFromString(targetWord.id);
-        setPreferences((oldPreferences): UserPreference => ({
-          ...oldPreferences as UserPreference,
-          bcv: newPosition
-        }));
+        setPreferences(
+          (oldPreferences): UserPreference => ({
+            ...(oldPreferences as UserPreference),
+            bcv: newPosition,
+          })
+        );
       }
     }
   }, [preferences?.bcv, containers.targetContainer, setPreferences]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => checkIfBCVIsOkay(), [containers.targetContainer, checkIfBCVIsOkay]);
+  useEffect(
+    () => checkIfBCVIsOkay(),
+    [containers.targetContainer, checkIfBCVIsOkay]
+  );
 
   useEffect(() => {
     const loadContainers = async () => {
       console.time('loading corpora');
-      const newContainers = (await getAvailableCorporaContainers({
+      const newContainers = await getAvailableCorporaContainers({
         projectState: state,
         setProjectState: setState,
         preferences,
         setPreferences,
         projects,
-        setProjects
-      } as AppContextProps));
+        setProjects,
+      } as AppContextProps);
       console.timeEnd('loading corpora');
       setContainers(newContainers);
       setPreferences((oldPreferences) => ({
-        ...(oldPreferences ?? {}) as UserPreference,
-        initialized: InitializationStates.INITIALIZED
+        ...((oldPreferences ?? {}) as UserPreference),
+        initialized: InitializationStates.INITIALIZED,
       }));
     };
-    if (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED) {
+    if (
+      !!preferences?.currentProject &&
+      (containers?.projectId !== preferences?.currentProject ||
+        !containers.sourceContainer ||
+        !containers.targetContainer ||
+        preferences?.initialized !== InitializationStates.INITIALIZED)
+    ) {
       void loadContainers();
     }
-  }, [preferences, preferences?.currentProject, projects, containers, setContainers, state]);
+  }, [
+    preferences,
+    preferences?.initialized,
+    preferences?.currentProject,
+    projects,
+    containers,
+    setContainers,
+    state,
+  ]);
 
   useEffect(() => {
     if (!isLoaded.current) {
       const currLinksTable = state.linksTable ?? new LinksTable();
       const currProjectTable = state.projectTable ?? new ProjectTable();
-      const currUserPreferenceTable = state.userPreferenceTable ?? new UserPreferenceTable();
+      const currUserPreferenceTable =
+        state.userPreferenceTable ?? new UserPreferenceTable();
 
       setState({
         ...state,
         linksTable: currLinksTable,
         projectTable: currProjectTable,
-        userPreferenceTable: currUserPreferenceTable
+        userPreferenceTable: currUserPreferenceTable,
       });
-      const initializeProject = () => new Promise((resolve) => {
+      const initializeProject = () =>
+        new Promise<Project[]>((resolve) => {
           let projects: Project[] = [];
-        currProjectTable.getProjects(true).then(res => {
-          projects = [...res!.values()];
-          setProjects(projects);
-          resolve(projects);
-        });
-      }).then(() => {
-        currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
-          setPreferences({
-            ...(res ?? {}) as UserPreference,
-            currentProject: res?.currentProject
-              ?? projects?.[0]?.id
-              ?? DefaultProjectId
+          currProjectTable.getProjects(true).then((res) => {
+            projects = [...res!.values()];
+            setProjects(projects);
+            resolve(projects);
           });
-          currLinksTable.setSourceName(res?.currentProject
-            ?? projects?.[0]?.id
-            ?? DefaultProjectId);
+        }).then((projectsList: Project[]) => {
+          currUserPreferenceTable
+            .getPreferences(true)
+            .then((res: UserPreference | undefined) => {
+              const currentProjectId = pickDeFactoCurrentProject(
+                projectsList,
+                res?.currentProject
+              );
+              setPreferences({
+                ...((res ?? {}) as UserPreference),
+                currentProject: currentProjectId,
+              });
+              currLinksTable.setSourceName(currentProjectId);
+            });
         });
-      });
       initializeProject().catch(console.error);
       isLoaded.current = true;
     }
@@ -136,40 +200,39 @@ const useInitialization = (): AppContextProps => {
   }, []);
 
   // Update UserStatus
-  useEffect( () => {
+  useEffect(() => {
     const getCurrentUserDetails = async () => {
       if (environmentVariables.caApiEndpoint && network.online) {
         setUserStatus(userState.CustomEndpoint);
         return;
       }
-      try{
+      try {
         await getCurrentUser();
-        setUserStatus(userState.LoggedIn)
+        setUserStatus(userState.LoggedIn);
+      } catch (error) {
+        setUserStatus(userState.LoggedOut);
       }
-      catch(error){
-        setUserStatus(userState.LoggedOut)
-      }
-    }
-    if(network.online){
+    };
+    if (network.online) {
       getCurrentUserDetails();
+    } else {
+      setUserStatus(userState.Offline);
     }
-    else{
-      setUserStatus(userState.Offline)
-    }
-  },[network])
+  }, [network]);
 
   // trigger snackbar messages indicating network status
-  useEffect( () => {
-    if(network && network.online){
-      setSnackBarMessage('Internet Connection Detected')
-      setIsSnackBarOpen(true)
+  useEffect(() => {
+    if (network && network.online) {
+      setSnackBarObject({
+        message: 'Internet Connection Detected.',
+        autoHide: true,
+      });
+      setIsSnackBarOpen(true);
+    } else {
+      setSnackBarObject({ message: 'No internet connection.', autoHide: true });
+      setIsSnackBarOpen(true);
     }
-    else{
-      setSnackBarMessage('No internet connection')
-      setIsSnackBarOpen(true)
-    }
-  },[network])
-
+  }, [network]);
 
   return {
     projectState: state,
@@ -185,14 +248,14 @@ const useInitialization = (): AppContextProps => {
     setUserStatus,
     isSnackBarOpen,
     setIsSnackBarOpen,
-    snackBarMessage,
-    setSnackBarMessage,
+    snackBarObject,
+    setSnackBarObject,
     isProjectDialogOpen,
     setIsProjectDialogOpen,
     isBusyDialogOpen,
     setIsBusyDialogOpen,
     features,
-    setFeatures
+    setFeatures,
   };
 };
 

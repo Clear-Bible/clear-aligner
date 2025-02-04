@@ -29,7 +29,10 @@ export interface ProjectTokenReport extends TokenReport {
  * hook return values used by {@link useSyncWordsOrParts}
  */
 export interface SyncState {
-  sync: (project: Project, side?: AlignmentSide) => Promise<ResponseObject<ProjectTokenReport> | undefined>;
+  sync: (
+    project: Project,
+    side?: AlignmentSide
+  ) => Promise<ResponseObject<ProjectTokenReport> | undefined>;
   progress: Progress;
 }
 
@@ -37,7 +40,6 @@ export interface SyncState {
  * hook to sync tokens for a specified project from the server.
  */
 export const useSyncWordsOrParts = (): SyncState => {
-
   const [progress, setProgress] = useState<Progress>(Progress.IDLE);
   const abortController = useRef<AbortController | undefined>();
 
@@ -50,20 +52,28 @@ export const useSyncWordsOrParts = (): SyncState => {
       setProgress(Progress.IN_PROGRESS);
       const tokensToUpload = [
         ...(project.sourceCorpora?.corpora ?? []),
-        ...(project.targetCorpora?.corpora ?? [])
-      ].filter((corpus: Corpus) => project.location === ProjectLocation.LOCAL || !!corpus.updatedSinceSync)
-        .flatMap(c => c.words)
+        ...(project.targetCorpora?.corpora ?? []),
+      ]
+        .filter(
+          (corpus: Corpus) =>
+            project.location === ProjectLocation.LOCAL ||
+            !!corpus.updatedSinceSync
+        )
+        .flatMap((c) => c.words)
         .map(mapWordOrPartToWordOrPartDTO);
 
       if (tokensToUpload.length > 0) {
-        const tokenResponse = await ApiUtils.generateRequest<ProjectTokenReport>({
-          requestPath: `/api/projects/${project.id}/tokens`,
-          requestType: ApiUtils.RequestType.POST,
-          signal: abortController.current?.signal,
-          payload: tokensToUpload
-        });
-        setProgress(tokenResponse.success ? Progress.SUCCESS : Progress.FAILED);
-        return tokenResponse;
+        const tokensResponse =
+          await ApiUtils.generateRequest<ProjectTokenReport>({
+            requestPath: `/api/projects/${project.id}/tokens`,
+            requestType: ApiUtils.RequestType.POST,
+            signal: abortController.current?.signal,
+            payload: tokensToUpload,
+          });
+        setProgress(
+          tokensResponse.success ? Progress.SUCCESS : Progress.FAILED
+        );
+        return tokensResponse;
       } else {
         setProgress(Progress.SUCCESS);
         return {
@@ -81,6 +91,6 @@ export const useSyncWordsOrParts = (): SyncState => {
   };
   return {
     sync: syncWordsOrParts,
-    progress
+    progress,
   };
 };

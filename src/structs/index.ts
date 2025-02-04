@@ -6,6 +6,7 @@ import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { ServerAlignmentLinkDTO } from '../common/data/serverAlignmentLinkDTO';
 import { AlignmentSide } from '../common/data/project/corpus';
 import { ResolvedLinkSuggestion } from '../common/data/project/linkSuggestion';
+import { LinkNote } from '../common/data/project/linkNote';
 
 /**
  * Parameters common to Project Repository functions
@@ -45,8 +46,7 @@ export interface SaveParams<T> extends MutatingOperationParams {
 /**
  * Parameters for the delete function of the Project Repository
  */
-export interface DeleteParams extends MutatingOperationParams {
-}
+export interface DeleteParams extends MutatingOperationParams {}
 
 /**
  * Parameters for the deleteById function of the Project Repository
@@ -86,7 +86,10 @@ export interface Word {
   position: number;
   gloss?: string;
   normalizedText: string;
+  lemma: string;
   sourceVerse?: string;
+  exclude?: number;
+  required?: number;
 }
 
 export interface CorpusViewport {
@@ -102,7 +105,7 @@ export interface Verse {
 
 export enum TextDirection {
   LTR = 'ltr',
-  RTL = 'rtl'
+  RTL = 'rtl',
 }
 
 /**
@@ -165,7 +168,9 @@ export class CorpusContainer {
 
   corpusAtReferenceString(refString: string): Corpus | undefined {
     const verseString = BCVWP.truncateTo(refString, BCVWPField.Verse);
-    const foundCorpus = this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
+    const foundCorpus = this.corpora.find(
+      (corpus) => !!corpus.wordsByVerse[verseString]
+    );
     if (foundCorpus) return foundCorpus;
     const ref = BCVWP.parseFromString(verseString);
     return this.corpora.find((corpus) => {
@@ -177,14 +182,20 @@ export class CorpusContainer {
             const verse: Verse = corpus.books[ref.book][ref.chapter][ref.verse];
             if (!verse) return false;
             if (ref.word && ref.part) {
-              if (!verse.words.some((word) => {
-                const wordRef = BCVWP.parseFromString(word.id);
-                return wordRef.word === ref.word && wordRef.part === ref.part;
-              })) return false;
+              if (
+                !verse.words.some((word) => {
+                  const wordRef = BCVWP.parseFromString(word.id);
+                  return wordRef.word === ref.word && wordRef.part === ref.part;
+                })
+              )
+                return false;
             } else if (ref.word) {
-              if (!verse.words.some((word) =>
-                BCVWP.parseFromString(word.id).word === ref.word)
-              ) return false;
+              if (
+                !verse.words.some(
+                  (word) => BCVWP.parseFromString(word.id).word === ref.word
+                )
+              )
+                return false;
             }
           }
         }
@@ -210,7 +221,7 @@ export class CorpusContainer {
     const corpus = this.corpusAtReferenceString(reference.toReferenceString());
     return corpus?.books[reference.book!]?.[reference.chapter!]?.[
       reference.verse!
-      ];
+    ];
   }
 
   wordByReference(reference: BCVWP): Word | undefined {
@@ -226,7 +237,8 @@ export class CorpusContainer {
     }
     const corpus = this.corpusAtReferenceString(reference.toReferenceString());
     return corpus?.books[reference.book!]?.[reference.chapter!]?.[
-      reference.verse!]?.words?.find(word => word.id === reference.toReferenceString());
+      reference.verse!
+    ]?.words?.find((word) => word.id === reference.toReferenceString());
   }
 
   verseByReferenceString(refString: string): Verse | undefined {
@@ -247,7 +259,9 @@ export class CorpusContainer {
     return !!this.corpusAtReferenceString(ref.toReferenceString());
   }
 
-  private mapCorpusBookToRef(book: { [key: number]: { [key: number]: Verse } }): BCVWP {
+  private mapCorpusBookToRef(book: {
+    [key: number]: { [key: number]: Verse };
+  }): BCVWP {
     const ref = Object.values(book)
       .map((chapter) => Object.values(chapter).find((verse) => !!verse.bcvId))
       .map((verse) => verse?.bcvId.toTruncatedReferenceString(BCVWPField.Book))
@@ -274,7 +288,11 @@ export class CorpusContainer {
           .filter((bookRef) => bookRef.book! > ref.book!);
         if (matchingBooks.length > 0) return matchingBooks.at(0);
         // otherwise, look at all corpora
-        const nextCorpus = this.corpora.find((corpus) => Object.values(corpus.books).some((book) => this.mapCorpusBookToRef(book).book! > ref.book!));
+        const nextCorpus = this.corpora.find((corpus) =>
+          Object.values(corpus.books).some(
+            (book) => this.mapCorpusBookToRef(book).book! > ref.book!
+          )
+        );
         if (!nextCorpus) return undefined;
         return Object.values(nextCorpus?.books)
           .map(this.mapCorpusBookToRef)
@@ -289,24 +307,31 @@ export class CorpusContainer {
         // otherwise, grab first available chapter in next book
         const nextBookRef = this.findNext(ref, BCVWPField.Book);
         if (!nextBookRef) return undefined;
-        const nextBook = this.corpusAtReferenceString(nextBookRef.toReferenceString())!
-          .books[nextBookRef.book!];
+        const nextBook = this.corpusAtReferenceString(
+          nextBookRef.toReferenceString()
+        )!.books[nextBookRef.book!];
         return Object.values(nextBook)
           .map(this.mapCorpusChapterToRef)
           .sort((a, b) => a.chapter! - b.chapter!)
           .at(0);
       case BCVWPField.Verse:
         // try to find next verse in current chapter
-        const matchingVerses = Object.values(corpus.books[ref.book!][ref.chapter!])
+        const matchingVerses = Object.values(
+          corpus.books[ref.book!][ref.chapter!]
+        )
           .map((verse) => verse.bcvId)
           .filter((verseRef) => verseRef.verse! > ref.verse!);
         if (matchingVerses.length > 0) return matchingVerses.at(0); // first matching
         // otherwise, grab first available verse in next chapter
         const nextChapterRef = this.findNext(ref, BCVWPField.Chapter);
         if (!nextChapterRef) return undefined;
-        const nextChapterCorpus = this.corpusAtReferenceString(nextChapterRef.toReferenceString());
-        const nextChapter = nextChapterCorpus!
-          .books[nextChapterRef.book!][nextChapterRef.chapter!];
+        const nextChapterCorpus = this.corpusAtReferenceString(
+          nextChapterRef.toReferenceString()
+        );
+        const nextChapter =
+          nextChapterCorpus!.books[nextChapterRef.book!][
+            nextChapterRef.chapter!
+          ];
         return Object.values(nextChapter)
           .sort((a, b) => a.bcvId.chapter! - b.bcvId.chapter!)
           .map((v) => v.bcvId)
@@ -314,8 +339,7 @@ export class CorpusContainer {
       case BCVWPField.Word:
         // try to find next word in current verse
         const matchingWords = this.verseByReference(ref)!
-          .words
-          .map((word) => BCVWP.parseFromString(word.id))
+          .words.map((word) => BCVWP.parseFromString(word.id))
           .filter((wordRef) => wordRef.word! > ref.word!);
         if (matchingWords.length > 0) return matchingWords.at(0); // first matching
         // otherwise, grab first available word in next verse
@@ -329,10 +353,10 @@ export class CorpusContainer {
       case BCVWPField.Part:
         // try to find next part in word
         const matchingWordParts = this.verseByReference(ref)!
-          .words
-          .map((word) => BCVWP.parseFromString(word.id))
-          .filter((wordRef) =>
-            wordRef.word === ref.word && wordRef.part! > ref.part!);
+          .words.map((word) => BCVWP.parseFromString(word.id))
+          .filter(
+            (wordRef) => wordRef.word === ref.word && wordRef.part! > ref.part!
+          );
         if (matchingWordParts.length > 0) return matchingWordParts.at(0); // first matching
         // otherwise, grab first available part in next word
         const nextWordRef = this.findNext(ref, BCVWPField.Word);
@@ -381,8 +405,7 @@ export class Project extends DatabaseRecord {
   bookStats: BookStats[];
 }
 
-export class User extends DatabaseRecord {
-}
+export class User extends DatabaseRecord {}
 
 /**
  * The default origin for links created by ClearAligner
@@ -406,15 +429,21 @@ export enum LinkStatus {
 export interface LinkMetadata {
   origin: LinkOrigin;
   status: LinkStatus;
+  note: LinkNote[];
 }
 
-// An instance of alignment
-export class Link extends DatabaseRecord {
+/**
+ * Link returned from and sent to the {@link ProjectRepository}
+ * This is an instance of a link which is assembled from several tables and is closest to the Link
+ * that is inserted directly into the database
+ */
+export class RepositoryLink extends DatabaseRecord {
   constructor() {
     super();
     this.metadata = {
       origin: 'manual',
-      status: LinkStatus.CREATED
+      status: LinkStatus.CREATED,
+      note: [],
     };
     this.sources = [];
     this.targets = [];
@@ -428,7 +457,7 @@ export class Link extends DatabaseRecord {
 /**
  * alignment link for edited states
  */
-export class EditedLink extends Link {
+export class EditedLink extends RepositoryLink {
   constructor() {
     super();
     this.suggestedSources = [];
@@ -442,14 +471,14 @@ export class EditedLink extends Link {
    * generate an edited link from an input link
    * @param link link to generate the edited variation from
    */
-  public static fromLink(link?: Link): EditedLink|undefined|null {
+  public static fromLink(link?: RepositoryLink): EditedLink | undefined | null {
     if (!link) return link;
     const l = new EditedLink();
     l.id = link.id;
-    l.sources = [ ...link.sources ];
-    l.targets = [ ...link.targets ];
+    l.sources = [...link.sources];
+    l.targets = [...link.targets];
     l.metadata = {
-      ...link.metadata
+      ...link.metadata,
     };
     return l;
   }
@@ -458,14 +487,16 @@ export class EditedLink extends Link {
    * converts the given link to a database-ready one
    * @param link
    */
-  public static toLink(link?: EditedLink|null): Link|undefined|null {
+  public static toLink(
+    link?: EditedLink | null
+  ): RepositoryLink | undefined | null {
     if (!link) return link;
-    const l = new Link();
+    const l = new RepositoryLink();
     l.id = link.id;
-    l.sources = [ ...link.sources ];
-    l.targets = [ ...link.targets ];
+    l.sources = [...link.sources];
+    l.targets = [...link.targets];
     l.metadata = {
-      ...link.metadata
+      ...link.metadata,
     };
     return l;
   }
@@ -493,7 +524,7 @@ export type AlignmentPolarity =
 
 export interface Alignment {
   polarity: AlignmentPolarity;
-  links: Link[];
+  links: RepositoryLink[];
 }
 
 export interface SyntaxContent {
@@ -543,8 +574,8 @@ export class NamedContainers {
   all: CorpusContainer[];
 
   constructor(inputContainers: CorpusContainer[]) {
-    this.sources = inputContainers.find(c => c.id === AlignmentSide.SOURCE);
-    this.targets = inputContainers.find(c => c.id === AlignmentSide.TARGET);
+    this.sources = inputContainers.find((c) => c.id === AlignmentSide.SOURCE);
+    this.targets = inputContainers.find((c) => c.id === AlignmentSide.TARGET);
     this.all = inputContainers;
   }
 

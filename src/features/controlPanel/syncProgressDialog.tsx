@@ -11,28 +11,32 @@ export interface SyncProgressDialogProps {
  * @param showDialog whether the dialog is shown
  * @param onCancel callback for canceling a sync operation
  */
-export const SyncProgressDialog = ({ showDialog, onCancel }: SyncProgressDialogProps) => {
-  return ( <Dialog
-      fullWidth
-      scroll={'paper'}
-      open={!!showDialog}
-    >
+export const SyncProgressDialog = ({
+  showDialog,
+  onCancel,
+}: SyncProgressDialogProps) => {
+  return (
+    <Dialog fullWidth scroll={'paper'} open={!!showDialog}>
       <Box padding={'2em'}>
-        <Stack direction={'row'} height={'fit-content'} alignItems={'center'} spacing={'.8em'}>
-          <CircularProgress sx={{
+        <Stack
+          direction={'row'}
+          height={'fit-content'}
+          alignItems={'center'}
+          spacing={'.8em'}
+        >
+          <CircularProgress
+            sx={{
               marginTop: 'auto',
               marginBottom: 'auto',
-              flexDirection: 'row'
-            }} />
-          <span>
-            Alignment Sync in progress
-          </span>
+              flexDirection: 'row',
+            }}
+          />
+          <span>Alignment Sync in progress</span>
         </Stack>
-        <Box
-          textAlign={'right'}
-        >
+        <Box textAlign={'right'}>
           <Button onClick={onCancel}>Cancel</Button>
         </Box>
       </Box>
-    </Dialog>);
-}
+    </Dialog>
+  );
+};

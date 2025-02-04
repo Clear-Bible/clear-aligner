@@ -1,4 +1,4 @@
-import { Link, Word } from '../structs';
+import { RepositoryLink, Word } from '../structs';
 import { ZERO_BCVWP } from '../features/bcvwp/BCVWPSupport';
 
 /**
@@ -8,7 +8,7 @@ export enum WordType {
   NoWord,
   Ellipsis,
   ContextWord,
-  AlignedWord
+  AlignedWord,
 }
 
 /**
@@ -48,43 +48,47 @@ const ELLIPSIS_CHAR = '\u2026';
  */
 export const compressAlignedWords = (
   inputWords: Word[][],
-  linkMap: Map<string, Link[]>
+  linkMap: Map<string, RepositoryLink[]>
 ): CompressedWord[][] => {
   // compute 0-based indexes, to simplify implementation
   const workInputWords = inputWords.flat();
   const alignedWordIdxs = workInputWords
-    .map((inputWord, inputIdx) => linkMap.has(inputWord.id) ? inputIdx : -1)
-    .filter(inputIdx => inputIdx >= 0);
+    .map((inputWord, inputIdx) => (linkMap.has(inputWord.id) ? inputIdx : -1))
+    .filter((inputIdx) => inputIdx >= 0);
   if (alignedWordIdxs.length === 0) {
-    return workInputWords.map(inputWord => {
-      return {
-        ...inputWord,
-        wordType: WordType.ContextWord
-      } as CompressedWord;
-    }).map(outputWord => [outputWord]);
+    return workInputWords
+      .map((inputWord) => {
+        return {
+          ...inputWord,
+          wordType: WordType.ContextWord,
+        } as CompressedWord;
+      })
+      .map((outputWord) => [outputWord]);
   }
   const maxWordIdx = workInputWords.length - 1;
   // output is a fixed-sized array as large as the input, to simplify implementation
-  const workWords: (CompressedWord | undefined)[] = new Array(workInputWords.length).fill(undefined);
+  const workWords: (CompressedWord | undefined)[] = new Array(
+    workInputWords.length
+  ).fill(undefined);
   // iterate supplied words
-  alignedWordIdxs.forEach(alignedWordIdx => {
+  alignedWordIdxs.forEach((alignedWordIdx) => {
     // always place aligned words in output (take priority over everything else)
     workWords[alignedWordIdx] = {
       ...workInputWords[alignedWordIdx],
-      wordType: WordType.AlignedWord
+      wordType: WordType.AlignedWord,
     };
     // build context words and ellipses
     for (let ctr = 1; ctr <= MaxContextWords + 1; ctr++) {
       // iterate outward from aligned word index, before and after
       const nextCtrs = [
         Math.min(maxWordIdx, alignedWordIdx + ctr),
-        Math.max(0, alignedWordIdx - ctr)
+        Math.max(0, alignedWordIdx - ctr),
       ];
-      nextCtrs.forEach(nextCtr => {
+      nextCtrs.forEach((nextCtr) => {
         const outputWord = workWords[nextCtr];
         // figure out if we're placing a context word or are far enough for an ellipsis
-        const targetType = ctr <= MaxContextWords
-          ? WordType.ContextWord : WordType.Ellipsis;
+        const targetType =
+          ctr <= MaxContextWords ? WordType.ContextWord : WordType.Ellipsis;
         // only place words in the output when there's nothing or a lower-priority word type
         // at the given position (e.g., aligned > context, context > ellipsis, aligned > ellipsis)
         if ((outputWord?.wordType ?? WordType.NoWord) < targetType) {
@@ -92,12 +96,14 @@ export const compressAlignedWords = (
           workWords[nextCtr] = {
             ...inputWord,
             wordType: targetType,
-            ...(targetType === WordType.Ellipsis ? {
-              id: ZERO_BCVWP,
-              text: ELLIPSIS_CHAR,
-              normalizedText: ELLIPSIS_CHAR,
-              after: undefined
-            } : {})
+            ...(targetType === WordType.Ellipsis
+              ? {
+                  id: ZERO_BCVWP,
+                  text: ELLIPSIS_CHAR,
+                  normalizedText: ELLIPSIS_CHAR,
+                  after: undefined,
+                }
+              : {}),
           };
         }
       });
@@ -108,16 +114,20 @@ export const compressAlignedWords = (
   // filter out consecutive ellipses
   const outputWords2 = outputWords1.filter(
     (outputWord, outputIdx) =>
-      outputIdx === 0
-      || outputWord.wordType !== WordType.Ellipsis
-      || outputWords1[outputIdx - 1].wordType !== WordType.Ellipsis);
+      outputIdx === 0 ||
+      outputWord.wordType !== WordType.Ellipsis ||
+      outputWords1[outputIdx - 1].wordType !== WordType.Ellipsis
+  );
   // create array-of-arrays of words with integral ellipses
   let tempOutputWords3: CompressedWord[] = [];
   const outputWords3: CompressedWord[][] = [];
-  outputWords2.forEach(outputWord => {
-    if (tempOutputWords3.length === 0
-      || outputWord.wordType === WordType.Ellipsis
-      || tempOutputWords3[tempOutputWords3.length - 1].wordType === WordType.Ellipsis) {
+  outputWords2.forEach((outputWord) => {
+    if (
+      tempOutputWords3.length === 0 ||
+      outputWord.wordType === WordType.Ellipsis ||
+      tempOutputWords3[tempOutputWords3.length - 1].wordType ===
+        WordType.Ellipsis
+    ) {
       tempOutputWords3.push(outputWord);
     } else {
       outputWords3.push(tempOutputWords3);

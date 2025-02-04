@@ -30,27 +30,29 @@ export interface ToggleButtonProps {
  * @param children button children
  */
 export const ToggleButton = ({
-                               disabled,
-                               tooltipText,
-                               isOn,
-                               onStateChanged,
-                               sx,
-                               children
-                             }: ToggleButtonProps) => {
+  disabled,
+  tooltipText,
+  isOn,
+  onStateChanged,
+  sx,
+  children,
+}: ToggleButtonProps) => {
   return (
     <RemovableTooltip
       removed={disabled || !tooltipText}
       title={tooltipText}
       arrow
-      describeChild>
+      describeChild
+    >
       <Button
         variant={isOn ? 'contained' : 'outlined'}
         disabled={disabled}
         onClick={() => onStateChanged?.(!isOn)}
         sx={{
           maxWidth: '40px',
-          ...(sx ?? {})
-        }}>
+          ...(sx ?? {}),
+        }}
+      >
         {children}
       </Button>
     </RemovableTooltip>

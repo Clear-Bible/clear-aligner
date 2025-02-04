@@ -3,7 +3,7 @@
  * in the AlignmentTable
  */
 import { GridRenderCellParams, useGridApiContext } from '@mui/x-data-grid';
-import { Link, Verse } from '../../../structs';
+import { RepositoryLink, Verse } from '../../../structs';
 import { useContext } from 'react';
 import _ from 'lodash';
 import BCVWP, { BCVWPField } from '../../bcvwp/BCVWPSupport';
@@ -19,7 +19,7 @@ import { WordDisplayVariant } from '../../wordDisplay';
  * @param row rendering params for this Link entry
  */
 export const VerseCell = (
-  row: GridRenderCellParams<Link, any, any>
+  row: GridRenderCellParams<RepositoryLink, any, any>
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
@@ -29,7 +29,10 @@ export const VerseCell = (
       ? sourceContainer
       : targetContainer;
   const verses: Verse[] = _.uniqWith(
-    (tableCtx.wordSource === AlignmentSide.SOURCE ? row.row?.sources : row.row?.targets)
+    (tableCtx.wordSource === AlignmentSide.SOURCE
+      ? row.row?.sources
+      : row.row?.targets
+    )
       ?.filter(BCVWP.isValidString)
       .map((ref) => BCVWP.truncateTo(ref, BCVWPField.Verse)),
     _.isEqual
@@ -41,7 +44,9 @@ export const VerseCell = (
     .sort((a, b) => BCVWP.compare(a!.bcvId, b!.bcvId)) as Verse[];
 
   const anyVerse = verses.find((v) => !!v.bcvId);
-  const languageInfo = container?.languageAtReferenceString(anyVerse?.bcvId!.toReferenceString()!);
+  const languageInfo = container?.languageAtReferenceString(
+    anyVerse?.bcvId!.toReferenceString()!
+  );
 
   const apiRef = useGridApiContext();
   const theme = useTheme();
@@ -61,7 +66,7 @@ export const VerseCell = (
     >
       {verses.map((verse: Verse) => (
         <span
-          style = {{color: theme.typography.linked.color}}
+          style={{ color: theme.typography.linked.color }}
           key={verse?.bcvId?.toReferenceString() ?? ''}
         >
           <VerseDisplay
@@ -70,7 +75,9 @@ export const VerseCell = (
             onlyLinkIds={row.row.id ? [row.row.id] : []}
             readonly
             verse={verse}
-            corpus={container?.corpusAtReferenceString(verse?.bcvId?.toReferenceString())}
+            corpus={container?.corpusAtReferenceString(
+              verse?.bcvId?.toReferenceString()
+            )}
             apiRef={apiRef}
           />
         </span>

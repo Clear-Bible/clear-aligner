@@ -23,7 +23,7 @@ else
     -sf "create-template-db.sql"
   python3 ./create-db.py \
     -of "${templateDbPath}" \
-    -cf '../../src/tsv/source_macula_hebrew.tsv' \
+    -cf '../../src/tsv/source_macula_hebrew+required.tsv' \
     -ci 'wlc-hebot' \
     -cn 'WLC' \
     -cfn 'Macula Hebrew Old Testament' \
@@ -33,7 +33,7 @@ else
     -cff 'sbl-hebrew'
   python3 ./create-db.py \
     -of "${templateDbPath}" \
-    -cf '../../src/tsv/source_macula_greek_SBLGNT.tsv' \
+    -cf '../../src/tsv/source_macula_greek_SBLGNT+required.tsv' \
     -ci 'sbl-gnt' \
     -cn 'SBLGNT' \
     -cfn 'SBL Greek New Testament' \
@@ -51,7 +51,7 @@ else
   echo "...Template database created: '${templateDbPath}'."
 fi
 
-defaultDbPath="../projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite"
+defaultDbPath="../projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite"
 
 if [[ -f "${defaultDbPath}" && "$*" == *'--no-remove'* ]]; then
   echo "Default database already exists: '${defaultDbPath}' (not recreating)."
@@ -67,10 +67,10 @@ else
     "${defaultDbPath}"
   python3 ./create-db.py \
     -of "${defaultDbPath}" \
-    -cf '../../src/tsv/ylt-new.tsv' \
-    -ci 'ylt-new' \
-    -cn 'YLT' \
-    -cfn "Young's Literal Translation" \
+    -cf '../../src/tsv/target_BSB_20240904.tsv' \
+    -ci 'target_BSB' \
+    -cn 'BSB' \
+    -cfn "Berean Standard Bible" \
     -cs 'targets' \
     -cl 'eng' \
     -ctd 'ltr'\

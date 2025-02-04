@@ -1,4 +1,4 @@
-import { LinkMetadata } from '../../structs';
+import { LinkMetadata, RepositoryLink } from '../../structs';
 
 export const LINKS_TABLE_NAME = 'links';
 
@@ -21,30 +21,29 @@ export interface ServerAlignmentLinkDTO {
  * @param l link entity representation
  * @return {@link ServerAlignmentLink}
  */
-export const mapLinkEntityToServerAlignmentLink = (l: {
-  id?: string,
-  sources: string[],
-  targets: string[],
-  metadata: LinkMetadata
-}): ServerAlignmentLinkDTO => ({
+export const mapLinkEntityToServerAlignmentLink = (
+  l: RepositoryLink
+): ServerAlignmentLinkDTO => ({
   id: l.id,
   sources: l.sources,
   targets: l.targets,
-  meta: l.metadata
+  meta: l.metadata,
 });
 
 /**
  * converts a {@link ServerAlignmentLinkDTO} to a link entity
  * @param l {@link ServerAlignmentLink}
  */
-export const mapServerAlignmentLinkToLinkEntity = (l: ServerAlignmentLinkDTO): {
-  id?: string,
-  sources: string[],
-  targets: string[],
-  metadata: LinkMetadata
+export const mapServerAlignmentLinkToLinkEntity = (
+  l: ServerAlignmentLinkDTO
+): {
+  id?: string;
+  sources: string[];
+  targets: string[];
+  metadata: LinkMetadata;
 } => ({
   id: l.id,
   sources: l.sources,
   targets: l.targets,
-  metadata: l.meta
+  metadata: l.meta,
 });

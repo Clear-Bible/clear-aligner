@@ -2,7 +2,13 @@
  * This file contains the AlignedWordTable component which is the second table
  * in the concordanceView component
  */
-import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
+import {
+  DataGrid,
+  GridColDef,
+  GridRenderCellParams,
+  GridRowParams,
+  GridSortItem,
+} from '@mui/x-data-grid';
 import { AlignedWord, LocalizedWordEntry, PivotWord } from './structs';
 import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
@@ -11,13 +17,12 @@ import {
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
   DataGridSetMinRowHeightToDefault,
-  DataGridTripleIconMarginFix
+  DataGridTripleIconMarginFix,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { TextDirection } from '../../structs';
 import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
 import { Box } from '@mui/system';
-
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
@@ -33,7 +38,7 @@ const renderWords = (words: LocalizedWordEntry) => {
           : {}),
         width: '100%',
         overflow: 'hidden',
-        textOverflow: 'ellipsis'
+        textOverflow: 'ellipsis',
       }}
     >
       <React.Fragment>
@@ -50,7 +55,7 @@ const columns: GridColDef[] = [
     field: 'frequency',
     headerName: 'Freq.',
     flex: 1,
-    maxWidth: 90
+    maxWidth: 90,
   },
   {
     field: 'sourceWordTexts',
@@ -58,7 +63,7 @@ const columns: GridColDef[] = [
     sortable: false,
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
-      renderWords(row.sourceWordTexts)
+      renderWords(row.sourceWordTexts),
   },
   {
     field: 'targetWordTexts',
@@ -66,8 +71,8 @@ const columns: GridColDef[] = [
     sortable: false,
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
-      renderWords(row.targetWordTexts)
-  }
+      renderWords(row.targetWordTexts),
+  },
 ];
 
 const columnsWithGloss: GridColDef[] = [
@@ -75,8 +80,8 @@ const columnsWithGloss: GridColDef[] = [
   {
     field: 'gloss',
     headerName: 'Gloss',
-    flex: 1
-  }
+    flex: 1,
+  },
 ];
 
 /**
@@ -88,6 +93,7 @@ export interface AlignedWordTableProps {
   chosenAlignedWord?: AlignedWord | null;
   onChooseAlignedWord: (alignedWord: AlignedWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
+  lemmaToggled: boolean;
 }
 
 /**
@@ -99,18 +105,24 @@ export interface AlignedWordTableProps {
  * @param onChangeSort callback for when the user changes the sort model
  */
 export const AlignedWordTable = ({
-                                   sort,
-                                   pivotWord,
-                                   chosenAlignedWord,
-                                   onChooseAlignedWord,
-                                   onChangeSort
-                                 }: AlignedWordTableProps) => {
-  const alignedWords = useAlignedWordsFromPivotWord(pivotWord, sort);
+  sort,
+  pivotWord,
+  chosenAlignedWord,
+  onChooseAlignedWord,
+  onChangeSort,
+  lemmaToggled,
+}: AlignedWordTableProps) => {
+  const alignedWords = useAlignedWordsFromPivotWord(
+    pivotWord,
+    sort,
+    lemmaToggled
+  );
 
   const loading: boolean = useMemo(
     () => !!pivotWord && !alignedWords,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pivotWord, alignedWords, alignedWords?.length]);
+    [pivotWord, alignedWords, alignedWords?.length]
+  );
 
   const hasGlossData = useMemo(
     () => {
@@ -133,12 +145,14 @@ export const AlignedWordTable = ({
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
-        <CircularProgress sx={{
-          display: 'flex',
-          '.MuiLinearProgress-bar': {
-            transition: 'none'
-          }
-        }} />
+        <CircularProgress
+          sx={{
+            display: 'flex',
+            '.MuiLinearProgress-bar': {
+              transition: 'none',
+            },
+          }}
+        />
       </Box>
     );
   }
@@ -148,8 +162,8 @@ export const AlignedWordTable = ({
         width: '100%',
         height: '100%',
         '.MuiTableContainer-root::-webkit-scrollbar': {
-          width: 0
-        }
+          width: 0,
+        },
       }}
     >
       {loading ? (
@@ -164,7 +178,7 @@ export const AlignedWordTable = ({
             ...DataGridScrollbarDisplayFix,
             ...DataGridResizeAnimationFixes,
             ...DataGridTripleIconMarginFix,
-            ...DataGridOutlineFix
+            ...DataGridOutlineFix,
           }}
           rowSelection={true}
           rowSelectionModel={
@@ -182,15 +196,16 @@ export const AlignedWordTable = ({
           }}
           initialState={{
             pagination: {
-              paginationModel: { page: initialPage, pageSize: 20 }
-            }
+              paginationModel: { page: initialPage, pageSize: 20 },
+            },
           }}
           pageSizeOptions={[20]}
-          onRowClick={(clickEvent: GridRowParams<AlignedWord>) => onChooseAlignedWord?.(clickEvent.row)}
+          onRowClick={(clickEvent: GridRowParams<AlignedWord>) =>
+            onChooseAlignedWord?.(clickEvent.row)
+          }
           isRowSelectable={(_: GridRowParams<AlignedWord>) => true}
           getRowHeight={() => 'auto'}
           hideFooterSelectedRowCount={true}
-
         />
       )}
     </TableContainer>

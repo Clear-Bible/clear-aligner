@@ -1,4 +1,4 @@
-import { TextDirection } from "structs";
+import { TextDirection } from 'structs';
 
 export interface LanguageDTO {
   code: string;

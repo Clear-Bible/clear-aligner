@@ -1,12 +1,16 @@
 /**
  * This file contains the LinksTable Class and supporting functions.
  */
-import { Link, LinkOriginManual, LinkStatus } from '../../structs';
+import { LinkOriginManual, LinkStatus, RepositoryLink } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
-import { DatabaseStatus, InitialDatabaseStatus, VirtualTable } from '../databaseManagement';
+import {
+  DatabaseStatus,
+  InitialDatabaseStatus,
+  VirtualTable,
+} from '../databaseManagement';
 import uuid from 'uuid-random';
 import _ from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AlignmentFile } from '../../structs/alignmentFile';
 import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
@@ -16,7 +20,6 @@ import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlig
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import { Project } from '../projects/tableManager';
 
 const DatabaseInsertChunkSize = 5_000;
 const UIInsertChunkSize = 10_000;
@@ -25,7 +28,7 @@ const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
 export const EmptyWordId = '00000000000';
-export const DefaultProjectId = '00000000-0000-4000-8000-000000000000';
+export const DefaultProjectId = '00000000-0000-4000-9000-000000000000';
 export const LinkTableName = 'links';
 export const JournalEntryTableName = 'journal_entries';
 const LogDatabaseHooks = true;
@@ -33,22 +36,32 @@ const PreloadVerseRange = 3;
 
 const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
-
 export class LinksTable extends VirtualTable {
   private static latestLastUpdateTime?: number;
-  private static latestDatabaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
-  private static readonly linksByWordIdCache: MemoryCache = createCache(memoryStore(), {
-    ttl: DatabaseCacheTTLMs,
-    max: DatabaseCacheMaxSize
-  });
-  private static readonly linksByBCVCache: MemoryCache = createCache(memoryStore(), {
-    ttl: DatabaseCacheTTLMs,
-    max: DatabaseCacheMaxSize
-  });
-  private static readonly linksByLinkIdCache: MemoryCache = createCache(memoryStore(), {
-    ttl: DatabaseCacheTTLMs,
-    max: DatabaseCacheMaxSize
-  });
+  private static latestDatabaseStatus = {
+    ..._.cloneDeep(InitialDatabaseStatus),
+  };
+  private static readonly linksByWordIdCache: MemoryCache = createCache(
+    memoryStore(),
+    {
+      ttl: DatabaseCacheTTLMs,
+      max: DatabaseCacheMaxSize,
+    }
+  );
+  private static readonly linksByBCVCache: MemoryCache = createCache(
+    memoryStore(),
+    {
+      ttl: DatabaseCacheTTLMs,
+      max: DatabaseCacheMaxSize,
+    }
+  );
+  private static readonly linksByLinkIdCache: MemoryCache = createCache(
+    memoryStore(),
+    {
+      ttl: DatabaseCacheTTLMs,
+      max: DatabaseCacheMaxSize,
+    }
+  );
   private sourceName?: string;
 
   constructor(sourceName?: string) {
@@ -62,9 +75,11 @@ export class LinksTable extends VirtualTable {
 
   getSourceName = () => this.sourceName ?? DefaultProjectId;
 
-  save = async (linkOrLinks: Link | Link[],
-                suppressOnUpdate = false,
-                isForced = false): Promise<boolean> => {
+  save = async (
+    linkOrLinks: RepositoryLink | RepositoryLink[],
+    suppressOnUpdate = false,
+    isForced = false
+  ): Promise<boolean> => {
     if (!isForced && this.isDatabaseBusy()) {
       return false;
     }
@@ -72,7 +87,10 @@ export class LinksTable extends VirtualTable {
     this.logDatabaseTime('save()');
     try {
       const links = Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks];
-      const [linksToPersist, linksToUpdate]: Link[][] = _.partition(links, (l) => !l.id || l.id.trim().length < 1);
+      const [linksToPersist, linksToUpdate]: RepositoryLink[][] = _.partition(
+        links,
+        (l) => !l.id || l.id.trim().length < 1
+      );
       let allResult = false;
       const linkIds = linksToUpdate.map(({ id }) => id!);
       await this.checkDatabase();
@@ -83,14 +101,14 @@ export class LinksTable extends VirtualTable {
           itemOrItems: linksToPersist.map((link) => {
             const id = uuid();
             linkIds.push(id);
-            return ({
+            return {
               id,
               metadata: link.metadata,
               sources: (link.sources ?? []).map(BCVWP.sanitize),
-              targets: (link.targets ?? []).map(BCVWP.sanitize)
-            });
+              targets: (link.targets ?? []).map(BCVWP.sanitize),
+            };
           }),
-          disableJournaling: suppressOnUpdate
+          disableJournaling: suppressOnUpdate,
         });
         allResult ||= insertResult;
       }
@@ -102,9 +120,9 @@ export class LinksTable extends VirtualTable {
             id: link.id,
             metadata: link.metadata,
             sources: (link.sources ?? []).map(BCVWP.sanitize),
-            targets: (link.targets ?? []).map(BCVWP.sanitize)
+            targets: (link.targets ?? []).map(BCVWP.sanitize),
           })),
-          disableJournaling: suppressOnUpdate
+          disableJournaling: suppressOnUpdate,
         });
         allResult ||= saveResult;
       }
@@ -120,12 +138,18 @@ export class LinksTable extends VirtualTable {
   exists = async (linkId?: string): Promise<boolean> => {
     if (!linkId) return false;
     // @ts-ignore
-    return !!(await window.databaseApi.existsById(this.getSourceName(), LinkTableName, linkId));
+    return !!(await window.databaseApi.existsById(
+      this.getSourceName(),
+      LinkTableName,
+      linkId
+    ));
   };
 
-  removeAll = async (suppressOnUpdate = false,
-                     isForced = false,
-                     disableJournaling = false) => {
+  removeAll = async (
+    suppressOnUpdate = false,
+    isForced = false,
+    disableJournaling = false
+  ) => {
     if (!isForced && this.isDatabaseBusy()) {
       return false;
     }
@@ -139,14 +163,14 @@ export class LinksTable extends VirtualTable {
         this.logDatabaseTime('removeAll(): deleted journal');
         await dbApi.deleteAll({
           projectId: this.getSourceName(),
-          table: JournalEntryTableName
+          table: JournalEntryTableName,
         });
         this.logDatabaseTimeEnd('removeAll(): deleted journal');
       }
       const result = await dbApi.deleteAll({
         projectId: this.getSourceName(),
         table: LinkTableName,
-        disableJournaling: true
+        disableJournaling: true,
       });
       await this._onUpdate(suppressOnUpdate);
       return result;
@@ -159,31 +183,42 @@ export class LinksTable extends VirtualTable {
     }
   };
 
-  saveAlignmentFile = async (alignmentFile: AlignmentFile,
-                             suppressOnUpdate = false,
-                             isForced = false,
-                             disableJournaling = false,
-                             removeAllFirst = false,
-                             preserveFileIds = false) => {
-    await this.saveAll(alignmentFile.records.map(
-      (record) =>
-        ({
-          id: preserveFileIds ? record.meta?.id : uuid(),
-          metadata: {
-            origin: record.meta.origin,
-            status: record.meta.status
-          },
-          sources: record.source,
-          targets: record.target
-        } as Link)
-    ), suppressOnUpdate, isForced, disableJournaling, removeAllFirst);
+  saveAlignmentFile = async (
+    alignmentFile: AlignmentFile,
+    suppressOnUpdate = false,
+    isForced = false,
+    disableJournaling = false,
+    removeAllFirst = false,
+    preserveFileIds = false
+  ) => {
+    await this.saveAll(
+      alignmentFile.records.map(
+        (record) =>
+          ({
+            id: preserveFileIds ? record.meta?.id : uuid(),
+            metadata: {
+              origin: record.meta.origin,
+              status: record.meta.status,
+              note: record.meta.note,
+            },
+            sources: record.source,
+            targets: record.target,
+          } as RepositoryLink)
+      ),
+      suppressOnUpdate,
+      isForced,
+      disableJournaling,
+      removeAllFirst
+    );
   };
 
-  saveAll = async (inputLinks: Link[],
-                   suppressOnUpdate = false,
-                   isForced = false,
-                   disableJournaling = false,
-                   removeAllFirst = false) => {
+  saveAll = async (
+    inputLinks: RepositoryLink[],
+    suppressOnUpdate = false,
+    isForced = false,
+    disableJournaling = false,
+    removeAllFirst = false
+  ) => {
     // reentry is possible because everything is
     // done in chunks with promises
     if (!isForced && this.isDatabaseBusy()) {
@@ -192,34 +227,62 @@ export class LinksTable extends VirtualTable {
 
     this.logDatabaseTime('saveAll(): complete');
     this.incrDatabaseBusyCtr();
-    this.setDatabaseBusyText(`Loading ${inputLinks.length.toLocaleString()} links...`);
+    this.setDatabaseBusyText(
+      `Loading ${inputLinks.length.toLocaleString()} links...`
+    );
     try {
       if (removeAllFirst) {
         await this.removeAll(true, true, disableJournaling);
       }
       await this.checkDatabase();
 
-      this.setDatabaseBusyText(`Sorting ${inputLinks.length.toLocaleString()} links...`);
+      this.setDatabaseBusyText(
+        `Sorting ${inputLinks.length.toLocaleString()} links...`
+      );
       this.logDatabaseTime('saveAll(): sorted');
-      const outputLinks = inputLinks.map(link =>
-        ({
-          id: link.id ?? LinksTable.createLinkId(link),
-          metadata: link.metadata,
-          sources: (link.sources ?? []).map(BCVWP.sanitize),
-          targets: (link.targets ?? []).map(BCVWP.sanitize)
-        } as Link));
+      const outputLinks = inputLinks.map(
+        (link) =>
+          ({
+            id: link.id ?? LinksTable.createLinkId(link),
+            metadata: link.metadata,
+            sources: (link.sources ?? []).map(BCVWP.sanitize),
+            targets: (link.targets ?? []).map(BCVWP.sanitize),
+          } as RepositoryLink)
+      );
       outputLinks.sort((l1, l2) =>
-        (l1.id ?? EmptyWordId)
-          .localeCompare(l2.id ?? EmptyWordId));
+        (l1.id ?? EmptyWordId).localeCompare(l2.id ?? EmptyWordId)
+      );
       this.logDatabaseTimeEnd('saveAll(): sorted');
 
       this.logDatabaseTime('saveAll(): saved');
+      const progressMax = outputLinks.length;
       let progressCtr = 0;
-      let progressMax = outputLinks.length;
+
+      this.setDatabaseBusyInfo({
+        userText: `Preparing ${outputLinks.length.toLocaleString()} links for upload...`,
+        progressCtr,
+        progressMax,
+      });
+      for (const links of _.chunk(Array.from(outputLinks), UIInsertChunkSize)) {
+        await dbApi.removeIntersectingLinksByVerseId({
+          projectId: this.getSourceName(),
+          links
+        });
+        progressCtr += links.length;
+        this.setDatabaseBusyProgress(progressCtr, progressMax);
+        const fromLinkTitle = LinksTable.createLinkTitle(links[0]);
+        const toLinkTitle = LinksTable.createLinkTitle(links[links.length - 1]);
+        this.setDatabaseBusyText(
+          links.length === progressMax
+            ? `Preparing ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} links)...`
+            : `Preparing ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} links)...`
+        );
+      }
+      progressCtr = 0;
       this.setDatabaseBusyInfo({
         userText: `Loading ${outputLinks.length.toLocaleString()} links...`,
         progressCtr,
-        progressMax
+        progressMax,
       });
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
         await dbApi.insert({
@@ -227,7 +290,7 @@ export class LinksTable extends VirtualTable {
           table: LinkTableName,
           itemOrItems: chunk,
           chunkSize: DatabaseInsertChunkSize,
-          disableJournaling: true
+          disableJournaling: true,
         });
         progressCtr += chunk.length;
         if (!disableJournaling) {
@@ -236,7 +299,7 @@ export class LinksTable extends VirtualTable {
            */
           await dbApi.createBulkInsertJournalEntry({
             projectId: this.getSourceName(),
-            links: chunk.map(mapLinkEntityToServerAlignmentLink)
+            links: chunk.map(mapLinkEntityToServerAlignmentLink),
           });
         }
 
@@ -244,9 +307,11 @@ export class LinksTable extends VirtualTable {
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
         const toLinkTitle = LinksTable.createLinkTitle(chunk[chunk.length - 1]);
-        this.setDatabaseBusyText(chunk.length === progressMax
-          ? `Loading ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} links)...`
-          : `Loading ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} links)...`);
+        this.setDatabaseBusyText(
+          chunk.length === progressMax
+            ? `Loading ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} links)...`
+            : `Loading ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} links)...`
+        );
 
         this.logDatabaseTimeLog('saveAll(): saved', progressCtr, progressMax);
       }
@@ -273,35 +338,81 @@ export class LinksTable extends VirtualTable {
    * @param side
    * @param wordId
    */
-  hasLinkByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<boolean> => (await this.findLinkIdsByWordId(side, wordId)).length > 0;
+  hasLinkByWord = async (
+    side: AlignmentSide,
+    wordId: BCVWP
+  ): Promise<boolean> =>
+    (await this.findLinkIdsByWordId(side, wordId)).length > 0;
 
-  findLinkIdsByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<string[]> =>
-    ((await this.findByWordId(side, wordId))
-      .map(link => link.id)
-      .filter(Boolean) as string[]);
+  findLinkIdsByWordId = async (
+    side: AlignmentSide,
+    wordId: BCVWP
+  ): Promise<string[]> =>
+    (await this.findByWordId(side, wordId))
+      .map((link) => link.id)
+      .filter(Boolean) as string[];
 
-  findByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
+  findByWordId = async (
+    side: AlignmentSide,
+    wordId: BCVWP
+  ): Promise<RepositoryLink[]> => {
     const referenceString = wordId.toReferenceString();
-    const cacheKey = [side, referenceString, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
+    const cacheKey = [
+      side,
+      referenceString,
+      this.getSourceName(),
+      LinksTable.getLatestLastUpdateTime(),
+    ].join('|');
     return LinksTable.linksByWordIdCache.wrap(cacheKey, async () => {
-      return dbApi.findLinksByWordId(this.getSourceName(), side, referenceString);
+      return dbApi.findLinksByWordId(
+        this.getSourceName(),
+        side,
+        referenceString
+      );
     });
   };
 
-  findByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
-    const cacheKey = [side, bookNum, chapterNum, verseNum, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
+  findByBCV = async (
+    side: AlignmentSide,
+    bookNum: number,
+    chapterNum: number,
+    verseNum: number
+  ): Promise<RepositoryLink[]> => {
+    const cacheKey = [
+      side,
+      bookNum,
+      chapterNum,
+      verseNum,
+      this.getSourceName(),
+      LinksTable.getLatestLastUpdateTime(),
+    ].join('|');
     return LinksTable.linksByBCVCache.wrap(cacheKey, async () => {
-      return dbApi.findLinksByBCV(this.getSourceName(), side, bookNum, chapterNum, verseNum);
+      return dbApi.findLinksByBCV(
+        this.getSourceName(),
+        side,
+        bookNum,
+        chapterNum,
+        verseNum
+      );
     });
   };
 
-  preloadByBCV = (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
-    for (const verseCtr of this._createVersePreloadRange(verseNum, skipVerseNum)) {
+  preloadByBCV = (
+    side: AlignmentSide,
+    bookNum: number,
+    chapterNum: number,
+    verseNum: number,
+    skipVerseNum: boolean
+  ) => {
+    for (const verseCtr of this._createVersePreloadRange(
+      verseNum,
+      skipVerseNum
+    )) {
       void this.findByBCV(side, bookNum, chapterNum, verseCtr);
     }
   };
 
-  getAll = async (isForced = false): Promise<Link[]> => {
+  getAll = async (isForced = false): Promise<RepositoryLink[]> => {
     if (!isForced && this.isDatabaseBusy()) {
       return [];
     }
@@ -310,19 +421,31 @@ export class LinksTable extends VirtualTable {
     this.incrDatabaseBusyCtr();
     this.setDatabaseBusyText('Saving links...');
     try {
-      const results: Link[] = [];
+      const results: RepositoryLink[] = [];
       let offset = 0;
       while (true) {
-        const links = ((await dbApi.getAll<Link>(this.getSourceName(), LinkTableName, DatabaseSelectChunkSize, offset)) ?? []);
-        this.logDatabaseTimeLog('getAll()', DatabaseSelectChunkSize, offset, links?.length ?? 0);
-        if (!links
-          || links.length < 1) {
+        const links =
+          (await dbApi.getAll<RepositoryLink>(
+            this.getSourceName(),
+            LinkTableName,
+            DatabaseSelectChunkSize,
+            offset
+          )) ?? [];
+        this.logDatabaseTimeLog(
+          'getAll()',
+          DatabaseSelectChunkSize,
+          offset,
+          links?.length ?? 0
+        );
+        if (!links || links.length < 1) {
           break;
         }
         for (const link of links) {
           results.push(link);
         }
-        this.setDatabaseBusyText(`Saving ${results.length.toLocaleString()} links...`);
+        this.setDatabaseBusyText(
+          `Saving ${results.length.toLocaleString()} links...`
+        );
         offset += links.length;
         if (links.length < DatabaseSelectChunkSize) {
           break;
@@ -338,17 +461,28 @@ export class LinksTable extends VirtualTable {
     }
   };
 
-  get = async (id?: string): Promise<Link | undefined> => {
+  get = async (id?: string): Promise<RepositoryLink | undefined> => {
     if (!id) return undefined;
-    const cacheKey = [id, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
+    const cacheKey = [
+      id,
+      this.getSourceName(),
+      LinksTable.getLatestLastUpdateTime(),
+    ].join('|');
     return LinksTable.linksByLinkIdCache.wrap(cacheKey, async () => {
       // @ts-ignore
-      return window.databaseApi
-        .findOneById(this.getSourceName(), LinkTableName, id);
+      return window.databaseApi.findOneById(
+        this.getSourceName(),
+        LinkTableName,
+        id
+      );
     });
   };
 
-  remove = async (itemIdOrIds?: string | string [], suppressOnUpdate = false, isForced = false) => {
+  remove = async (
+    itemIdOrIds?: string | string[],
+    suppressOnUpdate = false,
+    isForced = false
+  ) => {
     if (!isForced && this.isDatabaseBusy()) {
       return;
     }
@@ -359,7 +493,7 @@ export class LinksTable extends VirtualTable {
       const result = await dbApi.deleteByIds({
         projectId: this.getSourceName(),
         table: LinkTableName,
-        itemIdOrIds: itemIdOrIds ?? ''
+        itemIdOrIds: itemIdOrIds ?? '',
       });
       await this._onUpdate(suppressOnUpdate);
       return result;
@@ -390,14 +524,16 @@ export class LinksTable extends VirtualTable {
   override _onUpdateImpl = async () => {
     this.databaseStatus.lastUpdateTime = this.lastUpdateTime;
     LinksTable.latestLastUpdateTime = Math.max(
-      (LinksTable.latestLastUpdateTime ?? 0),
-      (this.lastUpdateTime ?? 0));
+      LinksTable.latestLastUpdateTime ?? 0,
+      this.lastUpdateTime ?? 0
+    );
   };
 
-  static getLatestDatabaseStatus = () => ({ ..._.cloneDeep(LinksTable.latestDatabaseStatus) });
+  static getLatestDatabaseStatus = () => ({
+    ..._.cloneDeep(LinksTable.latestDatabaseStatus),
+  });
 
   static getLatestLastUpdateTime = () => LinksTable.latestLastUpdateTime;
-
 
   /**
    * Checks to see if the database and all tables are loaded and
@@ -418,30 +554,34 @@ export class LinksTable extends VirtualTable {
   _createVersePreloadRange(verseNum: number, skipVerseNum: boolean) {
     const minVerse = Math.max(verseNum - PreloadVerseRange, 1);
     const maxVerse = verseNum + PreloadVerseRange;
-    const verseNumbers: number[] = _.range(minVerse, maxVerse)
-      .filter(verseCtr => !skipVerseNum || verseCtr !== verseNum);
-    verseNumbers.sort((v1, v2) =>
-      Math.abs(verseNum - v1) -
-      Math.abs(verseNum - v2));
+    const verseNumbers: number[] = _.range(minVerse, maxVerse).filter(
+      (verseCtr) => !skipVerseNum || verseCtr !== verseNum
+    );
+    verseNumbers.sort(
+      (v1, v2) => Math.abs(verseNum - v1) - Math.abs(verseNum - v2)
+    );
     return verseNumbers;
   }
 
-  static createLinkTitle = (link: Link): string => {
+  static createLinkTitle = (link: RepositoryLink): string => {
     const bcvwp = BCVWP.parseFromString(link?.targets?.[0] ?? EmptyWordId);
-    return `${bcvwp?.getBookInfo()?.ParaText ?? '???'} ${bcvwp.chapter ?? 1}:${bcvwp.verse ?? 1}`;
+    return `${bcvwp?.getBookInfo()?.ParaText ?? '???'} ${bcvwp.chapter ?? 1}:${
+      bcvwp.verse ?? 1
+    }`;
   };
 
-  static createIdFromWordId = (wordId: string): string => `${BCVWP.sanitize(wordId)}-${uuid()}`;
+  static createIdFromWordId = (wordId: string): string =>
+    `${BCVWP.sanitize(wordId)}-${uuid()}`;
 
   /**
    * Creates a prefixed link ID that allows for prefix-based searches.
    * @param link Input link (required).
    */
-  static createLinkId = (link: Link): string =>
+  static createLinkId = (link: RepositoryLink): string =>
     LinksTable.createIdFromWordId(link?.targets?.[0] ?? EmptyWordId);
 }
 
-const databaseHookDebug = (text: string, ...args: any[]) => {
+export const databaseHookDebug = (text: string, ...args: any[]) => {
   if (LogDatabaseHooks) {
     console.debug(text, ...args);
   }
@@ -463,139 +603,74 @@ export const useSaveLink = (updateNonManualLinksToApproveOnSave?: boolean) => {
     result?: boolean | undefined;
   }>({});
 
-  const saveLink = React.useCallback((linkOrLinks?: Link | Link[]) => {
-    if (!linkOrLinks) {
-      return;
-    }
-    const linksToSave = (() => {
-      if (!!linkOrLinks && updateNonManualLinksToApproveOnSave) {
-        return (Array.isArray(linkOrLinks) ? linkOrLinks : [ linkOrLinks ])
-          .map((link) => {
-            if (link.metadata.origin !== LinkOriginManual) {
-              return {
-                ...link,
-                metadata: {
-                  ...link.metadata,
-                  status: LinkStatus.APPROVED
-                }
-              };
-            }
-            return link;
-          });
+  const saveLink = React.useCallback(
+    (linkOrLinks?: RepositoryLink | RepositoryLink[]) => {
+      if (!linkOrLinks) {
+        return;
       }
-      return linkOrLinks;
-    })();
-    databaseHookDebug('useSaveLink(): status', status);
-    projectState?.linksTable.save(linksToSave)
-      .then(result => {
-        const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
-        if (currentProject) {
-          if (currentProject.updatedAt === currentProject.lastSyncTime) {
-            setProgress(Progress.IN_PROGRESS);
-          }
-          currentProject.updatedAt = DateTime.now().toMillis();
-          projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
+      const linksToSave = (() => {
+        if (!!linkOrLinks && updateNonManualLinksToApproveOnSave) {
+          return (Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks])
+            .map((link): RepositoryLink => {
+              if (!link.metadata.note) link.metadata.note = [];
+              return link;
+            })
+            .map((link) => {
+              if (link.metadata.origin !== LinkOriginManual) {
+                return {
+                  ...link,
+                  metadata: {
+                    ...link.metadata,
+                    status: LinkStatus.APPROVED,
+                  },
+                };
+              }
+              return link;
+            });
         }
-        const endStatus = {
-          ...status,
-          result
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useSaveLink(): endStatus', endStatus);
-        setTimeout(() => setProgress(Progress.IDLE), 1000);
-      }).catch(() => {
-      setProgress(Progress.FAILED);
-      setTimeout(() => setProgress(Progress.IDLE), 5000);
-    });
-  }, [projects, status, updateNonManualLinksToApproveOnSave, setProgress, projectState?.linksTable, preferences?.currentProject, projectState?.projectTable]);
+        return linkOrLinks;
+      })();
+      databaseHookDebug('useSaveLink(): status', status);
+      projectState?.linksTable
+        .save(linksToSave)
+        .then((result) => {
+          const currentProject = projects.find(
+            (p) => p.id === preferences?.currentProject && !!p.id
+          );
+          if (currentProject) {
+            if (currentProject.updatedAt === currentProject.lastSyncTime) {
+              setProgress(Progress.IN_PROGRESS);
+            }
+            currentProject.updatedAt = DateTime.now().toMillis();
+            projectState?.projectTable
+              ?.update?.(currentProject, false)
+              ?.catch?.(console.error);
+          }
+          const endStatus = {
+            ...status,
+            result,
+          };
+          setStatus(endStatus);
+          databaseHookDebug('useSaveLink(): endStatus', endStatus);
+          setTimeout(() => setProgress(Progress.IDLE), 1000);
+        })
+        .catch(() => {
+          setProgress(Progress.FAILED);
+          setTimeout(() => setProgress(Progress.IDLE), 5000);
+        });
+    },
+    [
+      projects,
+      status,
+      updateNonManualLinksToApproveOnSave,
+      setProgress,
+      projectState?.linksTable,
+      preferences?.currentProject,
+      projectState?.projectTable,
+    ]
+  );
 
   return { status, saveLink, progress };
-};
-
-/**
- * Import alignment file hook.
- *<p>
- * Key parameters are used to control operations that may be destructive or time-consuming
- * on re-render. A constant value will ensure an operation only happens once, and a UUID
- * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
- * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
- *<p>
- * @param projectId project id of the alignment file to save
- * @param alignmentFile Alignment file to save (optional; undefined = no save).
- * @param saveKey Unique key to control save operation (optional; undefined = no save).
- * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
- * @param suppressJournaling Suppress journaling
- * @param removeAllFirst Remove all records first, before adding new ones.
- * @param preserveFileIds whether id's of links in imported file should be preserved
- * @param fromServer whether to treat the imported file as if they're from a server
- */
-export const useImportAlignmentFile = (projectId?: string,
-                                       alignmentFile?: AlignmentFile,
-                                       saveKey?: string,
-                                       suppressOnUpdate = false,
-                                       suppressJournaling = false,
-                                       removeAllFirst = false,
-                                       preserveFileIds = false,
-                                       fromServer = false) => {
-  const { projectState, preferences, projects, setProjects } = React.useContext(AppContext);
-  const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [projects, projectId]);
-  const [status, setStatus] = useState<{
-    isPending: boolean;
-  }>({ isPending: false });
-  const prevSaveKey = useRef<string | undefined>();
-  const linksTable = useMemo(() => {
-    if (!projectId) {
-      return projectState.linksTable;
-    }
-    return new LinksTable(projectId);
-  }, [projectId, projectState.linksTable]);
-
-  useEffect(() => {
-    if (!alignmentFile
-      || !saveKey
-      || prevSaveKey.current === saveKey) {
-      return;
-    }
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    prevSaveKey.current = saveKey;
-    databaseHookDebug('useImportAlignmentFile(): startStatus', startStatus);
-    linksTable.saveAlignmentFile(
-      alignmentFile, suppressOnUpdate,
-      false, suppressJournaling,
-      removeAllFirst, preserveFileIds)
-      .then(() => {
-        const endStatus = {
-          ...startStatus,
-          isPending: false
-        };
-        setStatus(endStatus);
-        if (!fromServer) {
-          project && projectState?.projectTable?.updateLastUpdated?.(project)
-            ?.then((result) => {
-              if (result) {
-                setProjects((projects) => projects.map((p) => {
-                  if (p.id !== result.id) return p;
-                  return {
-                    ...p,
-                    updatedAt: result.updatedAt
-                  };
-                }));
-              }
-            })
-            ?.catch?.(console.error);
-        }
-        databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
-      });
-  }, [preserveFileIds, project, linksTable, prevSaveKey,
-    alignmentFile, saveKey, status, suppressOnUpdate,
-    projects, setProjects, preferences?.currentProject, projectState?.projectTable, suppressJournaling,
-    removeAllFirst, fromServer]);
-
-  return { ...status };
 };
 
 /**
@@ -606,7 +681,7 @@ export const useImportAlignmentFile = (projectId?: string,
  * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
  * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
  *<p>
- * @param linkId Link id to check (optional; undefined = no check).
+ * @/param linkId Link id to check (optional; undefined = no check).
  * @param existsKey Unique key to control check operation (optional; undefined = will check).
  */
 export const useLinkExists = (linkId?: string, existsKey?: string) => {
@@ -618,21 +693,19 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
 
   useEffect(() => {
     const workExistsKey = existsKey ?? uuid();
-    if (!linkId
-      || prevExistsKey.current === workExistsKey) {
+    if (!linkId || prevExistsKey.current === workExistsKey) {
       return;
     }
     prevExistsKey.current = existsKey;
     databaseHookDebug('useLinkExists(): status', status);
-    projectState?.linksTable.exists(linkId)
-      .then(result => {
-        const endStatus = {
-          ...status,
-          result
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useLinkExists(): endStatus', endStatus);
-      });
+    projectState?.linksTable.exists(linkId).then((result) => {
+      const endStatus = {
+        ...status,
+        result,
+      };
+      setStatus(endStatus);
+      databaseHookDebug('useLinkExists(): endStatus', endStatus);
+    });
   }, [projectState?.linksTable, prevExistsKey, existsKey, linkId, status]);
 
   return { ...status };
@@ -649,7 +722,10 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
  * @param removeKey Unique key to control remove operation (optional; undefined = no remove).
  * @param suppressOnUpdate Suppress table update notifications (optional; undefined = true).
  */
-export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean = true) => {
+export const useRemoveAllLinks = (
+  removeKey?: string,
+  suppressOnUpdate: boolean = true
+) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
@@ -657,27 +733,31 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
   const prevRemoveKey = useRef<string | undefined>();
 
   useEffect(() => {
-    if (!removeKey
-      || prevRemoveKey.current === removeKey) {
+    if (!removeKey || prevRemoveKey.current === removeKey) {
       return;
     }
     const startStatus = {
       ...status,
-      isPending: true
+      isPending: true,
     };
     setStatus(startStatus);
     prevRemoveKey.current = removeKey;
     databaseHookDebug('useRemoveAllLinks(): startStatus', startStatus);
-    projectState?.linksTable.removeAll(suppressOnUpdate)
-      .then(() => {
-        const endStatus = {
-          ...startStatus,
-          isPending: false
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useRemoveAllLinks(): endStatus', endStatus);
-      });
-  }, [projectState?.linksTable, prevRemoveKey, removeKey, status, suppressOnUpdate]);
+    projectState?.linksTable.removeAll(suppressOnUpdate).then(() => {
+      const endStatus = {
+        ...startStatus,
+        isPending: false,
+      };
+      setStatus(endStatus);
+      databaseHookDebug('useRemoveAllLinks(): endStatus', endStatus);
+    });
+  }, [
+    projectState?.linksTable,
+    prevRemoveKey,
+    removeKey,
+    status,
+    suppressOnUpdate,
+  ]);
 
   return { ...status };
 };
@@ -694,38 +774,51 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
  * @param wordId Word ID to find (optional; undefined = no find).
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
-export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoPreload = false, findKey?: string) => {
+export const useFindLinksByWordId = (
+  side?: AlignmentSide,
+  wordId?: BCVWP,
+  isNoPreload = false,
+  findKey?: string
+) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
-    result?: Link[];
+    result?: RepositoryLink[];
   }>({});
   const prevFindKey = useRef<string | undefined>();
 
   useEffect(() => {
     const workFindKey = findKey ?? uuid();
-    if (!side
-      || !wordId
-      || prevFindKey.current === workFindKey) {
+    if (!side || !wordId || prevFindKey.current === workFindKey) {
       return;
     }
     prevFindKey.current = findKey;
     databaseHookDebug('useFindLinksByWordId(): status', status);
-    projectState?.linksTable.findByWordId(side, wordId)
-      .then(result => {
-        const endStatus = {
-          ...status,
-          result
-        };
-        setStatus(endStatus);
-        if (!isNoPreload
-          && wordId.book
-          && wordId.chapter
-          && wordId.verse) {
-          projectState?.linksTable.preloadByBCV(side, wordId.book, wordId.chapter, wordId.verse, true);
-        }
-        databaseHookDebug('useFindLinksByWordId(): endStatus', endStatus);
-      });
-  }, [projectState?.linksTable, isNoPreload, prevFindKey, findKey, side, status, wordId]);
+    projectState?.linksTable.findByWordId(side, wordId).then((result) => {
+      const endStatus = {
+        ...status,
+        result,
+      };
+      setStatus(endStatus);
+      if (!isNoPreload && wordId.book && wordId.chapter && wordId.verse) {
+        projectState?.linksTable.preloadByBCV(
+          side,
+          wordId.book,
+          wordId.chapter,
+          wordId.verse,
+          true
+        );
+      }
+      databaseHookDebug('useFindLinksByWordId(): endStatus', endStatus);
+    });
+  }, [
+    projectState?.linksTable,
+    isNoPreload,
+    prevFindKey,
+    findKey,
+    side,
+    status,
+    wordId,
+  ]);
 
   return { ...status };
 };
@@ -744,82 +837,63 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
  * @param verseNum Verse number  (optional; undefined = no find).
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
-export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
+export const useFindLinksByBCV = (
+  side?: AlignmentSide,
+  bookNum?: number,
+  chapterNum?: number,
+  verseNum?: number,
+  isNoPreload = false,
+  findKey?: string
+) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
-    result?: Link[];
+    result?: RepositoryLink[];
   }>({});
   const prevFindKey = useRef<string | undefined>();
 
   useEffect(() => {
     const workFindKey = findKey ?? uuid();
-    if (!side
-      || !bookNum
-      || !chapterNum
-      || !verseNum
-      || prevFindKey.current === workFindKey) {
+    if (
+      !side ||
+      !bookNum ||
+      !chapterNum ||
+      !verseNum ||
+      prevFindKey.current === workFindKey
+    ) {
       return;
     }
     prevFindKey.current = findKey;
     databaseHookDebug('useFindLinksByBCV(): status', status);
-    projectState?.linksTable.findByBCV(side, bookNum, chapterNum, verseNum)
-      .then(result => {
+    projectState?.linksTable
+      .findByBCV(side, bookNum, chapterNum, verseNum)
+      .then((result) => {
         const endStatus = {
           ...status,
-          result
+          result,
         };
         setStatus(endStatus);
         if (!isNoPreload) {
-          projectState?.linksTable.preloadByBCV(side, bookNum, chapterNum, verseNum, true);
+          projectState?.linksTable.preloadByBCV(
+            side,
+            bookNum,
+            chapterNum,
+            verseNum,
+            true
+          );
         }
         databaseHookDebug('useFindLinksByBCV(): endStatus', endStatus);
       });
-  }, [projectState?.linksTable, isNoPreload, prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
-
-  return { ...status };
-};
-
-/**
- * Get all links hook.
- *<p>
- * Key parameters are used to control operations that may be destructive or time-consuming
- * on re-render. A constant value will ensure an operation only happens once, and a UUID
- * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
- * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
- *<p>
- * @param projectId optional project name to specify
- * @param getKey Unique key to control get operation (optional; undefined = no get).
- */
-export const useGetAllLinks = (projectId?: string, getKey?: string) => {
-  const { projectState } = React.useContext(AppContext);
-  const [status, setStatus] = useState<{
-    result?: Link[];
-  }>({});
-  const prevGetKey = useRef<string | undefined>();
-  const linksTable = useMemo(() => {
-    if (!projectId) {
-      return projectState.linksTable;
-    }
-    return new LinksTable(projectId);
-  }, [projectId, projectState.linksTable]);
-
-  useEffect(() => {
-    if (!getKey
-      || prevGetKey.current === getKey) {
-      return;
-    }
-    prevGetKey.current = getKey;
-    databaseHookDebug('useGetAllLinks(): status', status);
-    linksTable.getAll()
-      .then(result => {
-        const endStatus = {
-          ...status,
-          result
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
-      });
-  }, [linksTable, prevGetKey, getKey, status]);
+  }, [
+    projectState?.linksTable,
+    isNoPreload,
+    prevFindKey,
+    findKey,
+    side,
+    bookNum,
+    chapterNum,
+    verseNum,
+    status,
+  ]);
 
   return { ...status };
 };
@@ -838,27 +912,25 @@ export const useGetAllLinks = (projectId?: string, getKey?: string) => {
 export const useGetLink = (linkId?: string, getKey?: string) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
-    result?: Link | undefined;
+    result?: RepositoryLink | undefined;
   }>({});
   const prevGetKey = useRef<string | undefined>();
 
   useEffect(() => {
     const workGetKey = getKey ?? uuid();
-    if (!linkId
-      || prevGetKey.current === workGetKey) {
+    if (!linkId || prevGetKey.current === workGetKey) {
       return;
     }
     prevGetKey.current = getKey;
     databaseHookDebug('useGetLink(): status', status);
-    projectState?.linksTable.get(linkId)
-      .then(result => {
-        const endStatus = {
-          ...status,
-          result
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useGetLink(): endStatus', endStatus);
-      });
+    projectState?.linksTable.get(linkId).then((result) => {
+      const endStatus = {
+        ...status,
+        result,
+      };
+      setStatus(endStatus);
+      databaseHookDebug('useGetLink(): endStatus', endStatus);
+    });
   }, [projectState?.linksTable, prevGetKey, getKey, linkId, status]);
 
   return { ...status };
@@ -876,7 +948,11 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
  * @param removeKey Unique key to control remove operation (optional; undefined = no remove).
  * @param suppressOnUpdate Suppress table update notifications (optional; undefined = false).
  */
-export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpdate: boolean = false) => {
+export const useRemoveLink = (
+  linkId?: string,
+  removeKey?: string,
+  suppressOnUpdate: boolean = false
+) => {
   const { projectState, projects, preferences } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean;
@@ -884,25 +960,36 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
   const prevRemoveKey = useRef<string | undefined>();
 
   useEffect(() => {
-    if (!linkId
-      || !removeKey
-      || prevRemoveKey.current === removeKey) {
+    if (!linkId || !removeKey || prevRemoveKey.current === removeKey) {
       return;
     }
     prevRemoveKey.current = removeKey;
     databaseHookDebug('useRemoveLink(): status', status);
-    projectState?.linksTable.remove(linkId, suppressOnUpdate)
-      .then(result => {
-        const endStatus = {
-          ...status,
-          result
-        };
-        const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
-        currentProject && projectState?.projectTable?.updateLastUpdated?.(currentProject)?.catch?.(console.error);
-        setStatus(endStatus);
-        databaseHookDebug('useRemoveLink(): endStatus', endStatus);
-      });
-  }, [projectState, projects, prevRemoveKey, linkId, removeKey, status, suppressOnUpdate, preferences]);
+    projectState?.linksTable.remove(linkId, suppressOnUpdate).then((result) => {
+      const endStatus = {
+        ...status,
+        result,
+      };
+      const currentProject = projects.find(
+        (p) => p.id === preferences?.currentProject && !!p.id
+      );
+      currentProject &&
+        projectState?.projectTable
+          ?.updateLastUpdated?.(currentProject)
+          ?.catch?.(console.error);
+      setStatus(endStatus);
+      databaseHookDebug('useRemoveLink(): endStatus', endStatus);
+    });
+  }, [
+    projectState,
+    projects,
+    prevRemoveKey,
+    linkId,
+    removeKey,
+    status,
+    suppressOnUpdate,
+    preferences,
+  ]);
 
   return { ...status };
 };
@@ -912,27 +999,26 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
  */
 export const useDatabaseStatus = (checkKey?: string) => {
   const { projectState } = React.useContext(AppContext);
-  const [status, setStatus] =
-    useState<{
-      result: DatabaseStatus
-    }>({ result: _.cloneDeep(InitialDatabaseStatus) });
+  const [status, setStatus] = useState<{
+    result: DatabaseStatus;
+  }>({ result: _.cloneDeep(InitialDatabaseStatus) });
   const prevCheckKey = useRef<string | undefined>();
 
   useEffect(() => {
     const workCheckKey = checkKey ?? uuid();
-    if (!checkKey
-      || prevCheckKey.current === workCheckKey) {
+    if (!checkKey || prevCheckKey.current === workCheckKey) {
       return;
     }
     prevCheckKey.current = workCheckKey;
     const prevStatus = status.result;
     const currStatus = LinksTable.getLatestDatabaseStatus();
-    if (currStatus?.busyInfo
-      && (currStatus.busyInfo.isBusy
-        || !_.isEqual(prevStatus, currStatus))) {
+    if (
+      currStatus?.busyInfo &&
+      (currStatus.busyInfo.isBusy || !_.isEqual(prevStatus, currStatus))
+    ) {
       const endStatus = {
         ...status,
-        result: currStatus
+        result: currStatus,
       };
       setStatus(endStatus);
       databaseHookDebug('useDatabaseStatus(): endStatus', endStatus);
@@ -953,4 +1039,3 @@ export const useDataLastUpdated = () => {
 
   return lastUpdate;
 };
-

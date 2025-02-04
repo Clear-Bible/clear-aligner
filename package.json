@@ -13,11 +13,13 @@
     "@mui/x-data-grid": "^6.18.2",
     "@reduxjs/toolkit": "^1.8.1",
     "@rgrove/parse-xml": "^3.0.0",
+    "@types/d3": "6.7.0",
     "@types/luxon": "^3.4.2",
     "@uidotdev/usehooks": "^2.4.1",
     "aws-amplify": "^6.3.8",
     "better-sqlite3": "^9.4.3",
     "cache-manager": "^5.4.0",
+    "d3": "6.7.0",
     "electron-is-dev": "^2.0.0",
     "luxon": "^3.4.2",
     "queue-promise": "^2.2.1",
@@ -26,11 +28,11 @@
     "react-router-dom": "^6.20.0",
     "react-scripts": "5.0.0",
     "redux-undo": "^1.0.1",
-    "reflect-metadata": "^0.2.1",
     "rfc6902": "^5.1.1",
     "sanitize-filename": "^1.6.3",
     "stream-browserify": "^3.0.0",
     "ts-node": "^10.9.2",
+    "typeface-roboto": "^1.1.13",
     "typeorm": "^0.3.20",
     "typescript": "^5.3.3",
     "usehooks-ts": "^2.16.0",
@@ -44,15 +46,15 @@
   "scripts": {
     "start": "craco start",
     "clean": "rm -rf build app dist ui",
-    "build": "BUILD_PATH=ui craco build && tsc && electron-builder -p never",
+    "build": "BUILD_PATH=ui craco build && tsc && bash -c 'mkdir -p ./cache/electron{-builder,}-cache' && export ELECTRON_SKIP_BINARY_DOWNLOAD=true; export ELECTRON_CACHE=./cache/electron-cache; export ELECTRON_BUILDER_CACHE=./cache/electron-builder-cache; electron-builder -p never",
     "build:mac": "sql/scripts/create-db.sh && yarn build -m",
     "build:linux": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
-    "build:win": "sql/scripts/create-db.sh && docker run --rm -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
+    "build:win": "sql/scripts/create-db.sh && docker run --rm -v $(pwd):/project electronuserland/builder:20-wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
     "build:mac:fast": "sql/scripts/create-db.sh --no-remove && yarn build -m",
     "build:linux:fast": "sql/scripts/create-db.sh --no-remove && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
-    "build:win:fast": "sql/scripts/create-db.sh --no-remove && docker run --rm -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
+    "build:win:fast": "sql/scripts/create-db.sh --no-remove && docker run --rm -v $(pwd):/project electronuserland/builder:20-wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
     "test-ui": "craco test",
-    "test-electron": "tsc && export NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" && jest --config jest.config.ts",
+    "test-electron": "tsc && export NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" && jest --passWithNoTests --config jest.config.ts",
     "lint": "eslint --max-warnings 0 src",
     "eject": "craco eject",
     "prettier": "prettier --write .",
@@ -82,6 +84,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/preset-env": "^7.23.3",
     "@babel/preset-react": "^7.23.3",
     "@babel/preset-typescript": "^7.23.3",
@@ -99,8 +102,7 @@
     "@storybook/react-webpack5": "^7.5.3",
     "@storybook/testing-library": "^0.2.2",
     "@testing-library/jest-dom": "^5.16.3",
-    "@testing-library/react": "^13.0.1",
-    "@testing-library/react-hooks": "^8.0.1",
+    "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^13.5.0",
     "@types/electron": "^1.6.10",
     "@types/jest": "^29.5.13",
@@ -146,8 +148,8 @@
     },
     "extraFiles": [
       {
-        "from": "sql/projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite",
-        "to": "sql/projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite"
+        "from": "sql/projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite",
+        "to": "sql/projects/clear-aligner-00000000-0000-4000-9000-000000000000.sqlite"
       },
       {
         "from": "sql/clear-aligner-template.sqlite",
@@ -164,6 +166,14 @@
       {
         "from": "schemas/AlignmentFileSchema.json",
         "to": "schemas/AlignmentFileSchema.json"
+      },
+      {
+        "from": "src/tsv/source_macula_greek_SBLGNT+required.tsv",
+        "to": "tsv/source_macula_greek_SBLGNT+required.tsv"
+      },
+      {
+        "from": "src/tsv/source_macula_hebrew+required.tsv",
+        "to": "tsv/source_macula_hebrew+required.tsv"
       }
     ]
   },
