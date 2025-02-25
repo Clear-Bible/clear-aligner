@@ -4,21 +4,21 @@ description: ClearAligner's TSV file format.
 
 # Target Text
 
-ClearAligner uses a simple `TSV` file format to describe tokenized texts. As of version `0.0.27`, you can import and text modeled as tabular data. The required columns are `id`, `text`, and `source_verse`. UTF-8 encoding is expected. There is currently no way to model punctuation in these files (see Open Issues).
+ClearAligner uses a simple `TSV` file format to describe tokenized texts. Starting a project is as easy as importing a TSV file representing the text. The required columns are `id`, `text`, and `source_verse`. UTF-8 encoding is expected.&#x20;
 
-During pilot testing, the Clear team will provide target TSVs to users working with alignment data.
+## How do I generate a TSV for my project?
+
+We have created [a toolkit called Kathairo for generating TSVs from USFM](https://github.com/Clear-Bible/kathairo.py). We also have a [public repository that contains checked TSVs for openly-licensed texts](https://github.com/Clear-Bible/Open-Bible-TSVs). If find a problem with an existing TSV or need help generating a new one, [create an issue here](https://github.com/Clear-Bible/Open-Bible-TSVs/issues).&#x20;
+
+## What does ClearAligner's TSV format look like?
 
 ## Example
 
-| id          | source\_verse | text      |
-| ----------- | ------------- | --------- |
-| 01001001001 | 01001001      | In        |
-| 01001001002 | 01001001      | the       |
-| 01001001003 | 01001001      | beginning |
+<table><thead><tr><th>id</th><th width="132">source_verse</th><th width="121">text</th><th width="194">skip_space_after</th><th>exclude</th></tr></thead><tbody><tr><td>01001001001</td><td>01001001</td><td>Hapo</td><td></td><td></td></tr><tr><td>01001001002</td><td>01001001</td><td>mwanzo</td><td></td><td></td></tr><tr><td>01001001003</td><td>01001001</td><td>Mungu</td><td></td><td></td></tr><tr><td>01001001004</td><td>01001001</td><td>aliumba</td><td></td><td></td></tr><tr><td>01001001005</td><td>01001001</td><td>mbingu</td><td></td><td></td></tr><tr><td>01001001006</td><td>01001001</td><td>na</td><td></td><td></td></tr><tr><td>01001001007</td><td>01001001</td><td>dunia</td><td>y</td><td></td></tr><tr><td>01001001008</td><td>01001001</td><td>.</td><td></td><td>y</td></tr></tbody></table>
 
 ## Details
 
-### \`id\` Column
+### Column:  \`id\`&#x20;
 
 The `id` column should contain BCVW values correlating to the target text's native versification:
 
@@ -27,7 +27,7 @@ The `id` column should contain BCVW values correlating to the target text's nati
 * **Verse**: 3 characters
 * **Word**: 3 characters
 
-### \`source\_verse\` Column
+### Column: \`source\_verse\`
 
 The `source_verse` column should contain BCV correlating to the source text versification (often referred to as `org`).&#x20;
 
@@ -37,6 +37,14 @@ Bible editions may use different approaches to identify the same verse content. 
 
 ClearAligner allows users to navigate scripture via a versification scheme that is native to the target text. The `source_verse` column maps targets tokens in to source (aka `org`) versification scheme.
 
-### \`text\` Column
+### Column: \`text\`
 
 The `text` column should contain UTF-8 tokens representing the text to be aligned.
+
+### Column: \`skip\_space\_after\`
+
+The `skip_space_after`column is used to correctly render spaces between tokens when displaying the text. If empty, ClearAligner assumes a falsy value. If value `y`is present, the result is truthy.
+
+### Column: \`exclude\`
+
+The`exclude`column is used to mark tokens that should be displayed (for correct rendering of the text) but cannot be aligned. If empty, ClearAligner assumes a falsy value. If value `y`is present, the token will be displayed but cannot be aligned. It is common to exclude punctuation tokens from alignment.

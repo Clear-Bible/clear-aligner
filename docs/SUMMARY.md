@@ -4,7 +4,6 @@
 * [Getting Started](getting-started.md)
 * [Features](features.md)
 * [Roadmap](roadmap.md)
-* [Open Issues](open-issues.md)
 
 ## File Formats
 
@@ -13,6 +12,7 @@
 
 ## Releases
 
+* [1.0.0](releases/1.0.0.md)
 * [0.0.33](releases/0.0.33.md)
 * [0.0.31](releases/0.0.31.md)
 * [0.0.29](releases/0.0.28.md)

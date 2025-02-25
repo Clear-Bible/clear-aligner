@@ -4,7 +4,7 @@ description: Brief summary of current and future states.
 
 # Roadmap
 
-_ClearAligner is developed iteratively. The roadmap plans are subject to change._
+The initial development phase of ClearAligner is completed. [Version 1.0.0 is released](releases/1.0.0.md) and is ready for production usage. If you encounter issues, [please create an issue](https://github.com/Clear-Bible/clear-aligner).
 
 ### Current Features
 
@@ -22,18 +22,14 @@ _ClearAligner is developed iteratively. The roadmap plans are subject to change.
 * Multi-User Project Collaboration (aka ClearAligner Sync)
 * Alignment Suggestions
 * Live Interlinear
+* Navigate concordance by Lemma (for source tokens)
+* Create and edit notes for alignment records.
 
-### Current Focus
-
-1. Guided Alignment
-2. Additional Concordance Features
-
-### Potential Upcoming Features
+### Potential Future Features
 
 _To be prioritized based on user feedback_
 
-* Project progress tracking
+* Project progress tracking + reporting
 * Sub-word target text tokenization
 * Target text punctuation display
-* Guided alignment
 * Customizable font size

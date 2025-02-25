@@ -4,7 +4,7 @@ description: How to try ClearAligner for yourself.
 
 # Getting Started
 
-1. Download and install the [latest build](releases/0.0.33.md) for your operating system.
+1. Download and install the [latest build](releases/1.0.0.md) for your operating system.
 2. Follow and OS-specific installation notes on the build page.
 3. Start ClearAligner.
 
@@ -21,7 +21,5 @@ To test ClearAligner using this default project, navigate to the **Alignment Edi
 3. Enter name, abbreviation, language, and text direction for the project.
 4. Select **Upload File** and provide a [target text](file-formats/target-text.md) file. Samples are available [here](https://drive.google.com/drive/u/1/folders/14vVKUGHc05SQxVXMyQ5E813lv4qQeTeA).
 
-<figure><img src=".gitbook/assets/2024-03-20 11.05.11.gif" alt=""><figcaption></figcaption></figure>
-
-
+<figure><img src=".gitbook/assets/2025-02-24 10.50.57.gif" alt="Creating a project with ClearAligner v1.0.0"><figcaption><p>Creating a project with ClearAligner v1.0.0</p></figcaption></figure>
 
