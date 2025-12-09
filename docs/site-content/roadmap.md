@@ -1,8 +1,6 @@
----
-description: Brief summary of current and future states.
----
-
 # Roadmap
+
+Brief summary of current and future states.
 
 The initial development phase of ClearAligner is completed. [Version 1.0.0 is released](releases/1.0.0.md) and is ready for production usage. If you encounter issues, [please create an issue](https://github.com/Clear-Bible/clear-aligner).
 
@@ -13,7 +11,7 @@ The initial development phase of ClearAligner is completed. [Version 1.0.0 is re
 * Navigate text by target versification
 * Gloss display for source texts
 * Flexible workflows via alignment statuses
-* Alignment Concordance&#x20;
+* Alignment Concordance
   * Browse aligned words and instances for a project
   * Edit alignment record status individually or in batch
 * Create local projects

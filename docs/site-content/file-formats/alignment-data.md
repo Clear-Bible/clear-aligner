@@ -1,8 +1,6 @@
----
-description: What is alignment data?
----
-
 # Alignment Data
+
+What is alignment data?
 
 Alignment data describes the relationship between two bodies of text in terms of words, groups of words, or parts of words. ClearAligner defines a `json` format for alignment data. Alignment `json` files can be imported and exported.
 
@@ -70,7 +68,7 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
         "40001001008",
         "40001001009"
       ]
-    },
+    }
   ]
 }
 ```
@@ -79,7 +77,7 @@ The `json` alignment format allows for many tokens on either the `source` or `ta
 
 * The `id` field on alignment records is a GUID used for internal change tracking.
 * Values for `source` arrays match the IDs in the canonical source text TSVs used by ClearAligner.
-* Values for `target` arrays match the IDs provided in [target text](target-text.md) files.&#x20;
-* The `origin` field describes the type of process the alignment record originated from. `manual` is used for human-created records. A variety of other strings can describe automated processes. Values other than `manual` will be displayed with a :sparkles:icon.
-* The `status` field describes the status of an alignment record. Supported statuses are `created`, `approved`, `rejected`, and `needsReview`. &#x20;
+* Values for `target` arrays match the IDs provided in [target text](target-text.md) files.
+* The `origin` field describes the type of process the alignment record originated from. `manual` is used for human-created records. A variety of other strings can describe automated processes. Values other than `manual` will be displayed with a sparkles icon.
+* The `status` field describes the status of an alignment record. Supported statuses are `created`, `approved`, `rejected`, and `needsReview`.
 * While many records can be stored in the `note` array, ClearAligner currently on supports a single note per alignment record.
