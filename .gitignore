@@ -33,3 +33,6 @@ yarn-error.log*
 /storybook-static
 docs/site
 
+
+# Local Netlify folder
+.netlify
