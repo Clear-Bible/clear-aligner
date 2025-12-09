@@ -1,10 +1,11 @@
 site_name: ClearAligner
 site_description: ClearAligner is a cross-platform tool for working with alignment data.
-site_url: https://biblica.gitbook.io/clear-aligner
 docs_dir: site-content
 
 theme:
   name: shadcn
+  icon: assets/logo-icon-large-light.png
+  favicon: assets/logo-icon-small-light.png
   palette:
     primary: blue
   features:
