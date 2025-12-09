@@ -31,3 +31,5 @@ yarn-error.log*
 .idea
 
 /storybook-static
+docs/site
+
