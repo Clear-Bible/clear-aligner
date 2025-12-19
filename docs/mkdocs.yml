@@ -1,5 +1,6 @@
 site_name: ClearAligner
 site_description: ClearAligner is a cross-platform tool for working with alignment data.
+site_url: https://clear-aligner-docs.netlify.app/
 docs_dir: site-content
 repo_url: https://github.com/Clear-Bible/clear-aligner
 
