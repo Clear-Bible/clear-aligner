@@ -1,3 +1,7 @@
+/**
+ * This file contains the logic to use the LocalizedTextDisplay component
+ * in Storybook.
+ */
 import { Meta } from '@storybook/react';
 import { LocalizedTextDisplay, LocalizedTextDisplayProps } from './index';
 import { TextDirection } from '../../structs';

@@ -4,6 +4,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 
 import cssVar from 'styles/cssVar';
+import { grey } from '@mui/material/colors';
 
 interface TextProps {
   anteText: string;
@@ -43,7 +44,7 @@ export const Context = (props: TextProps): ReactElement => {
         <span> </span>
         <span
           style={{
-            backgroundColor: 'darkgrey',
+            backgroundColor: grey['600'],
             color: cssVar('font-color', theme),
           }}
         >

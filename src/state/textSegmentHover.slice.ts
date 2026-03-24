@@ -1,3 +1,7 @@
+/**
+ * This file creates the textSegmentHoverSlice for use with Redux state
+ * management.
+ */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Word } from 'structs';
 

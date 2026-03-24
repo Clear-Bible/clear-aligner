@@ -1,3 +1,6 @@
+/**
+ * This file contains the copySyntaxData function which is not currently used.
+ */
 import { Corpus } from 'structs';
 
 const copySyntaxData = (corpora: Corpus[]) => {

@@ -1,110 +1,553 @@
-import { AlignmentSide, Link } from '../../structs';
-import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { IconButton, TableContainer } from '@mui/material';
-import { Launch } from '@mui/icons-material';
-import { createContext, useContext, useMemo, useState } from 'react';
+/**
+ * This file contains the AlignmentTable component which is the third table
+ * in the ConcordanceView component
+ */
+import { RepositoryLink, LinkStatus } from '../../structs';
+import {
+  DataGrid,
+  GridColDef,
+  GridEventListener,
+  GridInputRowSelectionModel,
+  GridRenderCellParams,
+  GridRowParams,
+  GridRowSelectionModel,
+  GridSortItem,
+  useGridApiContext,
+  useGridApiEventHandler,
+} from '@mui/x-data-grid';
+import {
+  CircularProgress,
+  IconButton,
+  Menu,
+  MenuItem,
+  TableContainer,
+  useTheme,
+} from '@mui/material';
+import {
+  Cancel,
+  CancelOutlined,
+  CheckCircle,
+  CheckCircleOutlined,
+  Flag,
+  FlagOutlined,
+  Link as LinkIcon,
+} from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CircleIcon from '@mui/icons-material/Circle';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
-import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../../styles/dataGridFixes';
+import {
+  DataGridOutlineFix,
+  DataGridResizeAnimationFixes,
+  DataGridScrollbarDisplayFix,
+  DataGridSvgFix,
+  DataGridTripleIconMarginFix,
+} from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
+import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
+import { Box } from '@mui/system';
+import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
+import { AlignmentSide } from '../../common/data/project/corpus';
+import { grey } from '@mui/material/colors';
+import { PerRowLinkStateSelector } from './perRowLinkStateSelector';
+import { useLinkNotes } from '../linkNotes/useLinkNotes';
 
+/**
+ * Interface for the AlignmentTableContext Component
+ */
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
   pivotWord?: PivotWord | null;
   alignedWord?: AlignedWord | null;
 }
 
-export const AlignmentTableContext = createContext({} as AlignmentTableContextProps);
+/**
+ * AlignmentTableContext, Context wrapper used in the AlignmentTable component
+ */
+export const AlignmentTableContext = createContext(
+  {} as AlignmentTableContextProps
+);
 
-export const RefCell = (
-  row: GridRenderCellParams<Link, any, any>
-) => {
+/**
+ * Custom cell component to display book, chapter, and verse in the AlignmentTable
+ * or display the PerRowLinkStateSelector component (depending on hover state).
+ * @param row rendering params for this RefCell entry
+ */
+export const RefCell = ({
+  row,
+}: {
+  row: GridRenderCellParams<RepositoryLink, any, any>;
+}) => {
   const tableCtx = useContext(AlignmentTableContext);
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
-  return (
-    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
+  const apiRef = useGridApiContext();
+
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  const handleRowEnter: GridEventListener<'rowMouseEnter'> = ({ id }) => {
+    if (id === row.id) {
+      setIsHovered(true);
+    }
+  };
+  const handleRowLeave: GridEventListener<'rowMouseLeave'> = ({ id }) => {
+    setIsHovered(false);
+  };
+  useGridApiEventHandler(apiRef, 'rowMouseEnter', handleRowEnter);
+  useGridApiEventHandler(apiRef, 'rowMouseLeave', handleRowLeave);
+
+  return isHovered ? (
+    <PerRowLinkStateSelector
+      items={[
+        {
+          value: 'created',
+          label: <LinkIcon />,
+          color: 'primary',
+        },
+        {
+          value: 'rejected',
+          label: <Cancel />,
+          color: 'error',
+        },
+        {
+          value: 'approved',
+          label: <CheckCircle />,
+          color: 'success',
+        },
+        {
+          value: 'needsReview',
+          label: <Flag />,
+          color: 'warning',
+        },
+      ]}
+      currentLink={row.row}
+    />
+  ) : (
+    <BCVDisplay
+      currentPosition={refString ? BCVWP.parseFromString(refString) : null}
+      useParaText={true}
+    />
   );
-}
+};
 
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
  * @param row rendering params for this Link entry
  * @param onClick Callback on button click
  */
-export const LinkCell = ({row, onClick}: {
-  row: GridRenderCellParams<Link, any, any>,
-  onClick: (tableCtx: AlignmentTableContextProps, link: Link) => void;
+export const LinkCell = ({
+  row,
+  onClick,
+}: {
+  row: GridRenderCellParams<RepositoryLink, any, any>;
+  onClick: (tableCtx: AlignmentTableContextProps, link: RepositoryLink) => void;
 }) => {
   const tableCtx = useContext(AlignmentTableContext);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const handleLinkClick = () => {
+    onClick(tableCtx, row.row);
+    handleClose();
+  };
+
+  const handleMoreVertIconClick = (
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    setAnchorEl(event.currentTarget);
+    setIsMenuOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsMenuOpen(false);
+    setAnchorEl(null);
+  };
+
+  const { hasNote, editorDialog, onOpenEditor } = useLinkNotes({
+    memberOfLink: row.row,
+  });
+
   return (
-    <IconButton onClick={() => onClick(tableCtx, row.row)}>
-      <Launch />
-    </IconButton>
+    <Box
+      sx={(theme) =>
+        hasNote
+          ? {
+              background: `linear-gradient(45deg, rgba(0,0,0,0) 42px, ${theme.palette.info.dark} 0)`,
+            }
+          : {}
+      }
+    >
+      <IconButton onClick={(event) => handleMoreVertIconClick(event)}>
+        <MoreVertIcon />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={isMenuOpen}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={() => handleLinkClick()}>Verse Editor</MenuItem>
+        <MenuItem
+          onClick={() => {
+            onOpenEditor();
+            handleClose();
+          }}
+        >
+          Note Editor
+        </MenuItem>
+      </Menu>
+      {editorDialog}
+    </Box>
   );
 };
 
+/**
+ * Props for the StateCellIcon Component
+ */
+export interface StateCellIconProps {
+  state: RepositoryLink;
+}
+/**
+ * Render the cell with its corresponding state icon
+ * @param state the current Link object
+ */
+export const StateCellIcon = ({ state }: StateCellIconProps) => {
+  const theme = useTheme();
 
+  if (state.metadata.status === 'created') {
+    return (
+      <LinkIcon
+        sx={{
+          color: theme.palette.primary.main,
+        }}
+      />
+    );
+  } else if (state.metadata.status === 'approved') {
+    return (
+      <CheckCircle
+        sx={{
+          color: theme.palette.success.main,
+        }}
+      />
+    );
+  } else if (state.metadata.status === 'needsReview') {
+    return (
+      <Flag
+        sx={{
+          color: theme.palette.warning.main,
+        }}
+      />
+    );
+  }
+};
+
+/**
+ * Props for the StateCell Component
+ */
+export interface StateCellProps {
+  setSaveButtonDisabled: Function;
+  state: RepositoryLink;
+  setLinksPendingUpdate: Function;
+  linksPendingUpdate: Map<string, RepositoryLink>;
+  isRowSelected: boolean;
+  alignmentTableControlPanelLinkState: LinkStatus | null;
+}
+
+/**
+ * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
+ * @param setSaveButtonDisabled callback to control the state of the Save Button
+ * @param state the current Link object
+ * @param setLinksPendingUpdate callback to update what links need to be updated
+ * @param linksPendingUpdate Map of what links are pending update
+ * @param isRowSelected flag to indicate if the row is currently selected
+ * @param alignmentTableControlPanelLinkState indicates what state the global link state selector is currently set to
+ */
+export const StateCell = ({
+  setSaveButtonDisabled,
+  state,
+  setLinksPendingUpdate,
+  linksPendingUpdate,
+  isRowSelected,
+  alignmentTableControlPanelLinkState,
+}: StateCellProps) => {
+  /**
+   * calcInitialLink State is needed because MUI DataGrid re-renders the rows
+   * often, and we need to be sure we are setting the correct state in the UI,
+   * especially after things like the user scrolls changes rows out of view
+   * and back into view
+   */
+  const calcInitialCellState = useCallback((): LinkStatus => {
+    // case 1 - user has globally set link status
+    if (isRowSelected && alignmentTableControlPanelLinkState) {
+      return alignmentTableControlPanelLinkState;
+    }
+    // case 2 - user has manually set link status in the row
+    else if (state.id && linksPendingUpdate.get(state.id)) {
+      return linksPendingUpdate.get(state.id)?.metadata.status as LinkStatus;
+    }
+    // case 3 - user has not manually changed link status
+    else {
+      return state.metadata.status;
+    }
+  }, [
+    alignmentTableControlPanelLinkState,
+    isRowSelected,
+    linksPendingUpdate,
+    state.id,
+    state.metadata,
+  ]);
+
+  const [alignmentTableLinkState, setAlignmentTableLinkState] =
+    React.useState<LinkStatus>(calcInitialCellState());
+
+  function handleSelect(value: string) {
+    const updatedLink = structuredClone(state);
+    const linkStatus = value as LinkStatus;
+    updatedLink.metadata.status = linkStatus;
+    // add updatedLink to the linksPendingUpdate Map
+    setLinksPendingUpdate(
+      new Map(linksPendingUpdate).set(updatedLink.id || '', updatedLink)
+    );
+    setAlignmentTableLinkState(linkStatus);
+    setSaveButtonDisabled(false);
+  }
+
+  // if the state is updated via the AlignmentTableControl Panel, then update
+  // the state here
+  useEffect(() => {
+    if (isRowSelected && alignmentTableControlPanelLinkState) {
+      setAlignmentTableLinkState(alignmentTableControlPanelLinkState);
+    }
+  }, [alignmentTableControlPanelLinkState, isRowSelected]);
+
+  return (
+    <SingleSelectButtonGroup
+      value={alignmentTableLinkState}
+      sx={{ size: 'small' }}
+      items={[
+        {
+          value: 'created',
+          label: <LinkIcon />,
+          tooltip: 'Created',
+        },
+        {
+          value: 'rejected',
+          label: <CancelOutlined />,
+          tooltip: 'Rejected',
+        },
+        {
+          value: 'approved',
+          label: <CheckCircleOutlined />,
+          tooltip: 'Approved',
+        },
+        {
+          value: 'needsReview',
+          label: <FlagOutlined />,
+          tooltip: 'Needs Review',
+        },
+      ]}
+      onSelect={handleSelect}
+      customDisabled={isRowSelected}
+    />
+  );
+};
+
+/**
+ * Props for the AlignmentTable Component
+ */
 export interface AlignmentTableProps {
-  sort: GridSortItem | null;
   wordSource: AlignmentSide;
   pivotWord?: PivotWord | null;
-  alignedWord?: AlignedWord | null;
-  alignments: Link[];
-  onChangeSort: (sortData: GridSortItem | null) => void;
-  chosenAlignmentLink: Link | null;
-  onChooseAlignmentLink: (alignmentLink: Link) => void;
+  alignedWord?: AlignedWord;
+  chosenAlignmentLink: RepositoryLink | null;
+  onChooseAlignmentLink: (alignmentLink: RepositoryLink) => void;
   updateAlignments: (resetState: boolean) => void;
+  setSelectedRowsCount: Function;
+  setSaveButtonDisabled: Function;
+  setLinksPendingUpdate: Function;
+  linksPendingUpdate: Map<string, RepositoryLink>;
+  setSelectedRows: Function;
+  rowSelectionModel: GridInputRowSelectionModel;
+  setRowSelectionModel: Function;
+  alignmentTableControlPanelLinkState: LinkStatus | null;
+  setUpdatedSelectedRows: Function;
 }
 
 /**
  * The AlignmentTable displays a list of alignment Links and allows the user to navigate to that alignment link in the
  * alignment editor
- * @param sort current sort model for Material UI DataGrid
  * @param wordSource current word source
  * @param pivotWord the pivot word that's currently selected, corresponds to the alignment rows being displayed and the
  * currently selected aligned word
  * @param alignedWord the currently selected aligned word, corresponds to the alignment rows being displayed
- * @param alignments alignment links to be displayed in the table
- * @param onChangeSort callback for when the user changes the sort model
  * @param chosenAlignmentLink currently selected alignment link
  * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
+ * @param updateAlignments callback used when closing the WorkBenchDialog Dialog
+ * @param setSelectedRowsCount callback to update the count of currently selected rows in the table
+ * @param setSaveButtonDisabled callback to control the status of the Save button
+ * @param setLinksPendingUpdate callback to add an updated Link to the array of Links pending an update
+ * @param linksPendingUpdate Array of Links pending an update
+ * @param setSelectedRows callback to update the state with what rows are currently selected
+ * @param rowSelectionModel prop that reflects what rows in the table are currently selected
+ * @param setRowSelectionModel callback to update what rows are currently selected
+ * @param alignmentTableControlPanelLinkState prop passed down to update selected links in bulk
+ * @param setUpdatedSelectedRows callback to update the updatedSelectedRows
  */
 export const AlignmentTable = ({
-  sort,
   wordSource,
   pivotWord,
   alignedWord,
-  alignments,
-  onChangeSort,
   chosenAlignmentLink,
   onChooseAlignmentLink,
-  updateAlignments
+  updateAlignments,
+  setSelectedRowsCount,
+  setSelectedRows,
+  setSaveButtonDisabled,
+  setLinksPendingUpdate,
+  linksPendingUpdate,
+  rowSelectionModel,
+  setRowSelectionModel,
+  alignmentTableControlPanelLinkState,
+  setUpdatedSelectedRows,
 }: AlignmentTableProps) => {
-  const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
+  const [selectedAlignment, setSelectedAlignment] = useState<BCVWP | null>(
+    null
+  );
+  const [sort, onChangeSort] = useState<GridSortItem | null>({
+    field: 'id',
+    sort: 'desc',
+  } as GridSortItem);
+
+  const alignments = useLinksFromAlignedWord(alignedWord, sort);
+
+  const loading: boolean = useMemo(
+    () => !!alignedWord && !alignments,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [alignedWord, alignments, alignments?.length]
+  );
+
   const initialPage = useMemo(() => {
-    if (chosenAlignmentLink) {
+    if (chosenAlignmentLink && alignments) {
       return (
-        alignments.findIndex(
-          (link) => link.id === chosenAlignmentLink.id
-        ) / 20
+        alignments.findIndex((link) => link.id === chosenAlignmentLink.id) / 20
       );
     }
     return 0;
   }, [chosenAlignmentLink, alignments]);
 
+  const onRowSelectionModelChange = useCallback(
+    (rowSelectionModel: GridRowSelectionModel) => {
+      setRowSelectionModel(rowSelectionModel);
+      setSelectedRowsCount(rowSelectionModel.length);
+      const selectedIDs = new Set(rowSelectionModel);
+      const selectedRows = alignments?.filter((row) =>
+        selectedIDs.has(row?.id || '')
+      );
+      setSelectedRows(selectedRows);
+
+      // update the state of all the currently selected rows in bulk
+      if (alignmentTableControlPanelLinkState) {
+        setUpdatedSelectedRows(
+          selectedRows?.map((row) => ({
+            ...row,
+            metadata: {
+              ...row.metadata,
+              status: alignmentTableControlPanelLinkState,
+            },
+          }))
+        );
+      }
+    },
+    [
+      alignmentTableControlPanelLinkState,
+      alignments,
+      setRowSelectionModel,
+      setSelectedRows,
+      setSelectedRowsCount,
+      setUpdatedSelectedRows,
+    ]
+  );
+
+  const onRowClick = useCallback(
+    (clickEvent: GridRowParams<RepositoryLink>) => {
+      if (onChooseAlignmentLink) {
+        onChooseAlignmentLink(clickEvent.row);
+      }
+    },
+    [onChooseAlignmentLink]
+  );
+
+  const onSortModelChange = useCallback(
+    (newSort: string | any[]) => {
+      if (!newSort || newSort.length < 1) {
+        onChangeSort(sort);
+      }
+      onChangeSort(newSort[0] /*only single sort is supported*/);
+    },
+    [sort]
+  );
+
+  const rowCount = useMemo(() => alignments?.length ?? 0, [alignments?.length]);
+
+  const rows = useMemo(() => alignments ?? [], [alignments]);
+
+  const getRowId = useMemo(() => (row: any) => row.id, []);
+
+  const sortModel = useMemo(() => (sort ? [sort] : []), [sort]);
+
   const columns: GridColDef[] = [
+    {
+      field: '__check__',
+      type: 'checkboxSelection',
+      disableColumnMenu: true,
+      resizable: false,
+      disableReorder: true,
+      disableExport: true,
+      filterable: false,
+      sortable: false,
+      width: 10,
+      align: 'center',
+    },
     {
       field: 'state',
       headerName: 'State',
+      renderHeader: () => (
+        <CircleIcon
+          sx={{
+            color: grey[400],
+            fontSize: '16px',
+          }}
+        />
+      ),
+      sortable: false,
+      width: 10,
+      disableColumnMenu: true,
+      renderCell: (row) => {
+        return <StateCellIcon state={row.row} />;
+      },
     },
     {
-      field: 'sources',
-      headerName: 'Ref',
-      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-        <RefCell {...row} />
+      field: 'ref',
+      headerName: 'Bible Ref',
+      renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
+        <RefCell row={row} />
       ),
     },
     {
@@ -112,21 +555,62 @@ export const AlignmentTable = ({
       headerName: 'Verse Text',
       flex: 1,
       sortable: false,
-      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+      renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
         <VerseCell {...row} />
       ),
     },
     {
       field: 'id',
-      headerName: 'Link',
+      headerName: '',
+      disableColumnMenu: true,
+      width: 1,
       sortable: false,
-      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-        <LinkCell row={row} onClick={() => {
-          setSelectedAlignment(BCVWP.parseFromString(findFirstRefFromLink(row.row, AlignmentSide.TARGET) ?? ""))
-        }} />
+      renderCell: (row: GridRenderCellParams<RepositoryLink, any, any>) => (
+        <LinkCell
+          row={row}
+          onClick={() => {
+            setSelectedAlignment(
+              BCVWP.parseFromString(
+                findFirstRefFromLink(row.row, AlignmentSide.TARGET) ?? ''
+              )
+            );
+          }}
+        />
       ),
     },
   ];
+
+  const initialState = {
+    pagination: {
+      paginationModel: { page: initialPage, pageSize: 20 },
+    },
+  };
+
+  const pageSizeOptions = [20];
+
+  const sx = {
+    width: '100%',
+    ...DataGridScrollbarDisplayFix,
+    ...DataGridResizeAnimationFixes,
+    ...DataGridTripleIconMarginFix,
+    ...DataGridOutlineFix,
+    ...DataGridSvgFix,
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', margin: 'auto' }}>
+        <CircularProgress
+          sx={{
+            display: 'flex',
+            '.MuiLinearProgress-bar': {
+              transition: 'none',
+            },
+          }}
+        />
+      </Box>
+    );
+  }
 
   return (
     <AlignmentTableContext.Provider
@@ -145,43 +629,36 @@ export const AlignmentTable = ({
           },
         }}
       >
-        <DataGrid
-          sx={{
-            width: '100%',
-            ...DataGridScrollbarDisplayFix,
-            ...DataGridResizeAnimationFixes,
-          }}
-          rowSelection={true}
-          rowCount={alignments.length}
-          rowSelectionModel={
-            chosenAlignmentLink?.id ? [chosenAlignmentLink.id] : undefined
-          }
-          rows={alignments}
-          columns={columns}
-          getRowId={(row) => row.id}
-          getRowHeight={(_) => 'auto'}
-          sortModel={sort ? [sort] : []}
-          onSortModelChange={(newSort) => {
-            if (!newSort || newSort.length < 1) {
-              onChangeSort(sort);
-            }
-            onChangeSort(newSort[0] /*only single sort is supported*/);
-          }}
-          initialState={{
-            pagination: {
-              paginationModel: { page: initialPage, pageSize: 20 },
-            },
-          }}
-          pageSizeOptions={[20, 50]}
-          onRowClick={(clickEvent: GridRowParams<Link>) => {
-            if (onChooseAlignmentLink) {
-              onChooseAlignmentLink(clickEvent.row);
-            }
-          }}
-        />
+        {loading ? (
+          <Box sx={{ display: 'flex', margin: 'auto' }}>
+            <CircularProgress sx={{ margin: 'auto' }} />
+          </Box>
+        ) : (
+          <>
+            <DataGrid
+              sx={sx}
+              rowSelection={true}
+              rowCount={rowCount}
+              rows={rows}
+              columns={columns}
+              getRowId={getRowId}
+              sortModel={sortModel}
+              onSortModelChange={onSortModelChange}
+              initialState={initialState}
+              pageSizeOptions={pageSizeOptions}
+              onRowClick={onRowClick}
+              checkboxSelection={true}
+              rowSelectionModel={rowSelectionModel}
+              onRowSelectionModelChange={onRowSelectionModelChange}
+              hideFooterSelectedRowCount
+              disableRowSelectionOnClick
+              rowHeight={35}
+            />
+          </>
+        )}
       </TableContainer>
       <WorkbenchDialog
-        alignment={selectedAligment}
+        alignment={selectedAlignment}
         setAlignment={setSelectedAlignment}
         updateAlignments={updateAlignments}
       />

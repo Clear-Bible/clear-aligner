@@ -1,3 +1,6 @@
+/**
+ * This file creates the appSplice for use with Redux state management.
+ */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { CorpusViewport } from 'structs';
 

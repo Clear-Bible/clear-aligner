@@ -1,3 +1,6 @@
+/**
+ * This file contains the styling for the Polyglot component.
+ */
 .corpus-container::-webkit-scrollbar {
   width: 0;
 }

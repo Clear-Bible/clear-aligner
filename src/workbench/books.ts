@@ -1,3 +1,7 @@
+/**
+ * This file contains a list of books in the BookInfo array and methods for
+ * looking up books.
+ */
 export interface BookInfo {
   BookNumber: number;
   ParaText: string;

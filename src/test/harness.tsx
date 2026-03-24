@@ -1,3 +1,6 @@
+/**
+ * This file initializes the testing harness with React Testing Library
+ */
 import { ReactElement } from 'react';
 import { configureStore } from '@reduxjs/toolkit';
 import { render, screen } from '@testing-library/react';

@@ -1,38 +1,43 @@
-import { ReactElement, useCallback, useContext, useMemo, useState } from 'react';
-import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
-import {
-  AddLink,
-  LinkOff,
-  RestartAlt,
-  SwapHoriz,
-  SwapVert,
-  Translate
-} from '@mui/icons-material';
+/**
+ * This file contains the ControlPanel component which contains buttons like
+ * create link, delete link, toggle glosses, swap to vertical mode, etc.
+ */
+import React, { ReactElement, useMemo, useState } from 'react';
+import { Button, Stack, SxProps, Theme } from '@mui/material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { resetTextSegments } from 'state/alignment.slice';
-import { AlignmentSide, CorpusContainer } from '../../structs';
-import { AppContext } from '../../App';
-import BCVWP from '../bcvwp/BCVWPSupport';
-import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
+import { EditedLink } from '../../structs';
+import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 
-import { usePivotWords } from '../concordanceView/usePivotWords';
-import UploadAlignmentGroup from './uploadAlignmentGroup';
+import uuid from 'uuid-random';
+import { resetTextSegments } from '../../state/alignment.slice';
+import { useHotkeys } from 'react-hotkeys-hook';
+
+const ControlPanelButtonSx: Partial<SxProps<Theme>> = {
+  borderRadius: 16,
+  width: '150px',
+  marginX: 0,
+  boxShadow: 0,
+  height: '42px',
+  fontSize: '15px',
+  font: 'Roboto',
+  fontWeight: 500,
+};
 
 interface ControlPanelProps {
-  containers: CorpusContainer[];
-  position: BCVWP;
+  style?: Partial<React.CSSProperties>;
 }
 
-export const ControlPanel = (props: ControlPanelProps): ReactElement => {
+export const ControlPanel: React.FC<ControlPanelProps> = ({
+  style,
+}): ReactElement => {
   useDebug('ControlPanel');
+
   const dispatch = useAppDispatch();
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _initializeTargetPivotWords = usePivotWords(AlignmentSide.TARGET);
-
-  const {appState, preferences, setPreferences} = useContext(AppContext);
-
+  const [linkRemoveState, setLinkRemoveState] = useState<{
+    linkId?: string;
+    removeKey?: string;
+  }>();
   const [formats, setFormats] = useState([] as string[]);
 
   const inProgressLink = useAppSelector(
@@ -40,162 +45,135 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
+  const { saveLink } = useSaveLink(true);
+  useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
-
   const linkHasBothSides = useMemo(
     () => {
       return (
-        Number(inProgressLink?.sources.length) > 0 &&
-        Number(inProgressLink?.targets.length) > 0
+        (Number(inProgressLink?.sources.length) > 0 ||
+          Number(inProgressLink?.suggestedSources.length) > 0) &&
+        (Number(inProgressLink?.targets.length) > 0 ||
+          Number(inProgressLink?.suggestedTargets.length) > 0)
       );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      inProgressLink,
       inProgressLink?.sources.length,
       inProgressLink?.targets.length,
+      inProgressLink?.suggestedSources.length,
+      inProgressLink?.suggestedTargets.length,
     ]
   );
-
-  const saveControlPanelFormat = useCallback(() => {
-    const updatedUserPreference = appState.userPreferences?.save({
-      name: PreferenceKey.CONTROL_PANEL_FORMAT,
-      value: (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
-        ? ControlPanelFormat.VERTICAL
-        : ControlPanelFormat.HORIZONTAL
-    });
-    if(updatedUserPreference) {
-      setPreferences(p => ({
-        ...p,
-        [updatedUserPreference.name]: updatedUserPreference
-      }));
-    }
-  }, [preferences, appState.userPreferences, setPreferences]);
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
   }
 
-  const controlPanelFormat = useMemo(() => (
-    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
-  )?.value, [preferences]);
-
-
-  const createLink = useCallback(() => {
-    if (!appState.currentProject?.linksTable || !inProgressLink) {
-      return;
+  const deleteLink = () => {
+    if (inProgressLink?.id) {
+      setLinkRemoveState({
+        linkId: inProgressLink.id,
+        removeKey: uuid(),
+      });
+      dispatch(resetTextSegments());
     }
+  };
 
-    appState.currentProject?.linksTable.save(inProgressLink);
-
-    dispatch(resetTextSegments());
-  }, [appState.currentProject, inProgressLink, dispatch]);
-
-
-  const enableToggle = useMemo(() => {
-    const positions = props.containers.map(viewCorpora => {
-      let bcvwp = props.position;
-      if (viewCorpora.id !== 'target') {
-        const target = props.containers.find(c => c.id === "target");
-        if (!props.position || !target) return null;
-        const verseString = target.verseByReference(props.position)?.sourceVerse;
-        if (verseString) {
-          bcvwp = BCVWP.parseFromString(verseString);
-        }
+  const createLink = () => {
+    if (inProgressLink) {
+      const newLink = EditedLink.toLink(inProgressLink)!;
+      if (
+        Number(inProgressLink.suggestedSources.length) > 0 &&
+        inProgressLink.sources.length < 1
+      ) {
+        newLink.sources.push(inProgressLink.suggestedSources?.at(0)!.tokenRef);
+      } else if (
+        Number(inProgressLink.suggestedTargets.length) > 0 &&
+        inProgressLink.targets.length < 1
+      ) {
+        newLink.targets.push(inProgressLink.suggestedTargets?.at(0)!.tokenRef);
       }
-      return viewCorpora.corpusAtReferenceString(bcvwp.toReferenceString())?.hasGloss
-    });
-    return positions.some(p => p);
-  }, [props]);
+      saveLink(newLink);
+    }
+    dispatch(resetTextSegments());
+  };
+
+  // keyboard shortcuts
+  useHotkeys('space', () => createLink(), { enabled: linkHasBothSides });
+  useHotkeys('backspace', () => deleteLink(), {
+    enabled: !!inProgressLink?.id,
+  });
+  useHotkeys('shift+esc', () => dispatch(resetTextSegments()), {
+    enabled: anySegmentsSelected,
+  });
 
   return (
-    <Stack
-      direction="row"
-      spacing={2}
-      justifyContent="center"
-      alignItems="baseline"
-      style={{marginTop: '16px', marginBottom: '16px'}}
-    >
-      <ButtonGroup>
-        <Tooltip title="Toggle Glosses" arrow describeChild>
-          <span>
-            <Button
-              variant={preferences.showGloss ? 'contained' : 'outlined'}
-              disabled={!enableToggle}
-              onClick={() => setPreferences(p => ({
-                ...p,
-                showGloss: !p.showGloss
-              }))}
-            >
-              <Translate/>
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title={`Swap to ${controlPanelFormat === ControlPanelFormat.VERTICAL ? 'horizontal' : 'vertical'} view mode`} arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              onClick={saveControlPanelFormat}
-            >
-              {
-                controlPanelFormat === ControlPanelFormat.HORIZONTAL
-                  ? <SwapVert/>
-                  : <SwapHoriz/>
-              }
-            </Button>
-          </span>
-        </Tooltip>
-      </ButtonGroup>
-
-      <ButtonGroup>
-        <Tooltip title="Create Link" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={!linkHasBothSides}
-              onClick={() => createLink()}
-            >
-              <AddLink/>
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title="Delete Link" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={!inProgressLink?.id}
-              onClick={() => {
-                if (!appState.currentProject?.linksTable || !inProgressLink) {
-                  return;
-                }
-                if (inProgressLink?.id) {
-                  const linksTable = appState.currentProject?.linksTable;
-                  linksTable.remove(inProgressLink.id);
-                  dispatch(resetTextSegments());
-                }
-              }}
-            >
-              <LinkOff/>
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title="Reset" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={!anySegmentsSelected}
-              onClick={() => {
-                dispatch(resetTextSegments());
-              }}
-            >
-              <RestartAlt/>
-            </Button>
-          </span>
-        </Tooltip>
-      </ButtonGroup>
-      <UploadAlignmentGroup containers={props.containers} />
-    </Stack>
+    <>
+      <Stack
+        direction="row"
+        spacing={0.5}
+        justifyContent="center"
+        alignItems="baseline"
+        style={{
+          marginTop: '6px',
+          marginBottom: '6px',
+          flexGrow: 0,
+          flexShrink: 0,
+          ...(style ?? {}),
+        }}
+      >
+        <span>
+          <Button
+            variant="contained"
+            disabled={!linkHasBothSides}
+            onClick={() => createLink()}
+            sx={(theme) => ({
+              ...ControlPanelButtonSx,
+              backgroundColor: theme.palette.primary.main,
+            })}
+          >
+            Save
+          </Button>
+        </span>
+        <span>
+          <Button
+            variant="contained"
+            disabled={!anySegmentsSelected}
+            onClick={() => {
+              dispatch(resetTextSegments());
+            }}
+            sx={(theme) => ({
+              ...ControlPanelButtonSx,
+              backgroundColor: theme.palette.controlPanel.cancel.main,
+              color: '#000000',
+              '&:hover': {
+                backgroundColor: theme.palette.controlPanel.cancel.main,
+              },
+            })}
+          >
+            Cancel
+          </Button>
+        </span>
+        <span>
+          <Button
+            variant="contained"
+            disabled={!inProgressLink?.id}
+            onClick={() => deleteLink()}
+            sx={(theme) => ({
+              ...ControlPanelButtonSx,
+              backgroundColor: theme.palette.error.light,
+              '&:hover': {
+                backgroundColor: theme.palette.error.light,
+              },
+            })}
+          >
+            Delete
+          </Button>
+        </span>
+      </Stack>
+    </>
   );
 };
 

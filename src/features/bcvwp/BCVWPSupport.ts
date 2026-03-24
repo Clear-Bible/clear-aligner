@@ -1,3 +1,7 @@
+/**
+ * This file contains the BCVWP support class that gets instantiated throughout
+ * the application
+ */
 import { BookInfo, findBookByNumber } from '../../workbench/books';
 
 /**
@@ -10,6 +14,19 @@ export enum BCVWPField {
   Word = 11,
   Part = 12,
 }
+
+export interface BCVWPOverrides {
+  book?: number;
+  chapter?: number;
+  verse?: number;
+  word?: number;
+  part?: number;
+}
+
+/**
+ * Zeroed-out BCVWP, for when we need a reference that doesn't link with anything.
+ */
+export const ZERO_BCVWP = '000000000000';
 
 export default class BCVWP {
   /**
@@ -52,7 +69,7 @@ export default class BCVWP {
   toHumanReadableString(): string {
     return `${this.getBookInfo()?.EnglishBookName ?? ''} ${
       this.chapter ?? 'NA'
-    }:${this.verse ?? 'NA'} ${this.word ?? ''}${
+    }:${this.verse ?? 'NA'} ${this.word ? `w${this.word}` : ''}${
       this.word && this.part ? `/${this.part}` : ''
     }`.trim();
   }
@@ -81,6 +98,10 @@ export default class BCVWP {
     return this.book ? findBookByNumber(this.book) : undefined;
   }
 
+  equals(other: BCVWP): boolean {
+    return this.toReferenceString() === other.toReferenceString();
+  }
+
   /**
    * checks whether the given BCVWP match at the given level of truncation
    * @param other BCVWP to check for a match
@@ -90,6 +111,16 @@ export default class BCVWP {
     return (
       this.toTruncatedReferenceString(truncation) ===
       other.toTruncatedReferenceString(truncation)
+    );
+  }
+
+  clone({ book, chapter, verse, word, part }: BCVWPOverrides): BCVWP {
+    return new BCVWP(
+      book ?? this.book,
+      chapter ?? this.chapter,
+      verse ?? this.verse,
+      word ?? this.word,
+      part ?? this.part
     );
   }
 
@@ -111,15 +142,39 @@ export default class BCVWP {
       }
     });
   }
+
+  hasUpToField(field: BCVWPField): boolean {
+    const fields = [];
+    switch (field) {
+      case BCVWPField.Part:
+        fields.push(BCVWPField.Part);
+      // falls through
+      case BCVWPField.Word:
+        fields.push(BCVWPField.Word);
+      // falls through
+      case BCVWPField.Verse:
+        fields.push(BCVWPField.Verse);
+      // falls through
+      case BCVWPField.Chapter:
+        fields.push(BCVWPField.Chapter);
+      // falls through
+      case BCVWPField.Book:
+        fields.push(BCVWPField.Book);
+        return this.hasFields(...fields);
+      default:
+        return false;
+    }
+  }
+
   static isValidString(reference: string): boolean {
     return (
       !!reference && !!reference.match(/^[onON]?\d/) && reference.length > 1
     );
   }
 
-  static sanitize(reference: string): string {
-    const trimmed = reference.trim();
-    return !!trimmed.match(/^[onON]\d/) ? trimmed.substring(1) : trimmed;
+  static sanitize(wordId: string): string {
+    const wordId1 = wordId.trim();
+    return !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
   }
 
   static truncateTo(reference: string, field: BCVWPField): string {
@@ -167,5 +222,12 @@ export default class BCVWP {
       return (a?.part ?? 0) - (b?.part ?? 0);
     }
     return 0;
+  }
+
+  static compareString(a?: string, b?: string): number {
+    return BCVWP.compare(
+      BCVWP.parseFromString(a ?? ''),
+      BCVWP.parseFromString(b ?? '')
+    );
   }
 }

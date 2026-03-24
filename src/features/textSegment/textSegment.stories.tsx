@@ -1,3 +1,7 @@
+/**
+ * This file contains the logic to use the TextSegment component
+ * in Storybook.
+ */
 import { Meta } from '@storybook/react';
 import TextSegment, { TextSegmentProps } from './index';
 import { Corpus, Word } from '../../structs';

@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Secrets
+.env
+
 # dependencies
 /node_modules
 /.pnp
@@ -10,8 +13,11 @@
 
 # production
 /build
+/app
+/ui
+/cache
 
-# We use yarn, prevent the npm package lock file
+# Prevent the npm package lock files
 package-lock.json
 
 # misc
@@ -36,3 +42,10 @@ docs/site
 
 # Local Netlify folder
 .netlify
+*.sqlite
+**/*.sqlite-shm
+**/*.sqlite-wal
+**/*.sqlite-journal
+
+#cache folder
+/cache

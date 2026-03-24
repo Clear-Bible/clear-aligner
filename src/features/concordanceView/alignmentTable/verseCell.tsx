@@ -1,32 +1,38 @@
-import { GridRenderCellParams } from '@mui/x-data-grid';
-import { AlignmentSide, Link, Verse } from '../../../structs';
+/**
+ * This file contains the VerseCell component which renders verse text for use
+ * in the AlignmentTable
+ */
+import { GridRenderCellParams, useGridApiContext } from '@mui/x-data-grid';
+import { RepositoryLink, Verse } from '../../../structs';
 import { useContext } from 'react';
 import _ from 'lodash';
 import BCVWP, { BCVWPField } from '../../bcvwp/BCVWPSupport';
 import { VerseDisplay } from '../../corpus/verseDisplay';
 import { AlignmentTableContext } from '../alignmentTable';
-import { AppContext } from '../../../App';
+import { useCorpusContainers } from '../../../hooks/useCorpusContainers';
+import { AlignmentSide } from '../../../common/data/project/corpus';
+import { useTheme } from '@mui/material';
+import { WordDisplayVariant } from '../../wordDisplay';
 
 /**
  * Render cells with verse text in the appropriate font and text orientation for the verse
  * @param row rendering params for this Link entry
  */
 export const VerseCell = (
-  row: GridRenderCellParams<Link, any, any>
+  row: GridRenderCellParams<RepositoryLink, any, any>
 ) => {
-  const {appState}= useContext(AppContext);
   const tableCtx = useContext(AlignmentTableContext);
-  const { sourceContainer, targetContainer } = {
-    sourceContainer: appState.sourceCorpora,
-    targetContainer: appState.currentProject?.targetCorpora
-  }
+  const { sourceContainer, targetContainer } = useCorpusContainers();
 
   const container =
     tableCtx.wordSource === AlignmentSide.SOURCE
       ? sourceContainer
       : targetContainer;
   const verses: Verse[] = _.uniqWith(
-    (tableCtx.wordSource === AlignmentSide.SOURCE ? row.row?.sources : row.row?.targets)
+    (tableCtx.wordSource === AlignmentSide.SOURCE
+      ? row.row?.sources
+      : row.row?.targets
+    )
       ?.filter(BCVWP.isValidString)
       .map((ref) => BCVWP.truncateTo(ref, BCVWPField.Verse)),
     _.isEqual
@@ -38,7 +44,12 @@ export const VerseCell = (
     .sort((a, b) => BCVWP.compare(a!.bcvId, b!.bcvId)) as Verse[];
 
   const anyVerse = verses.find((v) => !!v.bcvId);
-  const languageInfo = container?.languageAtReferenceString(anyVerse?.bcvId!.toReferenceString()!);
+  const languageInfo = container?.languageAtReferenceString(
+    anyVerse?.bcvId!.toReferenceString()!
+  );
+
+  const apiRef = useGridApiContext();
+  const theme = useTheme();
 
   return (
     <div
@@ -47,17 +58,29 @@ export const VerseCell = (
         ...(languageInfo?.textDirection
           ? { direction: languageInfo.textDirection }
           : {}),
-        width: '100%'
+        width: '100%',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        color: theme.typography.unlinked.color,
       }}
     >
       {verses.map((verse: Verse) => (
-        <VerseDisplay
+        <span
+          style={{ color: theme.typography.linked.color }}
           key={verse?.bcvId?.toReferenceString() ?? ''}
-          onlyLinkIds={row.row.id ? [row.row.id] : []}
-          readonly
-          verse={verse}
-          corpus={container?.corpusAtReferenceString(verse?.bcvId?.toReferenceString())}
-        />
+        >
+          <VerseDisplay
+            variant={WordDisplayVariant.TEXT}
+            key={verse?.bcvId?.toReferenceString() ?? ''}
+            onlyLinkIds={row.row.id ? [row.row.id] : []}
+            readonly
+            verse={verse}
+            corpus={container?.corpusAtReferenceString(
+              verse?.bcvId?.toReferenceString()
+            )}
+            apiRef={apiRef}
+          />
+        </span>
       ))}
     </div>
   );

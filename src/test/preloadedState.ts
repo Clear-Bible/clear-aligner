@@ -1,3 +1,6 @@
+/**
+ * This file defines the preLoadedState for testing
+ */
 import { RootState } from 'test/harness';
 
 const preloadedState: RootState = {

@@ -1,3 +1,6 @@
+/**
+ * This file contains the fetchSyntaxData function which is not currently used.
+ */
 import xmlToJson from 'workbench/xmlToJson';
 import cachedSyntaxData from 'workbench/cachedSyntaxData';
 import { SyntaxRoot } from 'structs';

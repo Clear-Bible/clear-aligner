@@ -1,7 +1,12 @@
+/**
+ * This file contains the logic to use the VerseDisplay component
+ * in Storybook
+ */
 import { Meta } from '@storybook/react';
 import { VerseDisplay, VerseDisplayProps } from './verseDisplay';
-import { AlignmentSide, Corpus, TextDirection, Verse } from '../../structs';
+import { Corpus, TextDirection, Verse } from '../../structs';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const meta: Meta<typeof VerseDisplay> = {
   title: 'VerseDisplay',
@@ -20,6 +25,8 @@ const mockVerse: Verse = {
       side: AlignmentSide.TARGET,
       text: 'And',
       position: 1,
+      normalizedText: 'and',
+      lemma: 'and',
     },
     {
       id: '45005003002',
@@ -27,6 +34,8 @@ const mockVerse: Verse = {
       side: AlignmentSide.TARGET,
       text: 'not',
       position: 2,
+      normalizedText: 'not',
+      lemma: 'not',
     },
     {
       id: '45005003003',
@@ -34,6 +43,8 @@ const mockVerse: Verse = {
       side: AlignmentSide.TARGET,
       text: 'only',
       position: 3,
+      normalizedText: 'only',
+      lemma: 'only',
     },
     {
       id: '45005003004',
@@ -41,6 +52,8 @@ const mockVerse: Verse = {
       side: AlignmentSide.TARGET,
       text: 'so',
       position: 4,
+      normalizedText: 'so',
+      lemma: 'so',
     },
   ],
 };
@@ -172,7 +185,7 @@ RTLVerse.args = {
       textDirection: TextDirection.RTL,
     },
     hasGloss: false,
-    words: mockRtlWords
+    words: mockRtlWords,
   } as unknown as Corpus,
 } as VerseDisplayProps;
 
@@ -286,6 +299,6 @@ Hebrew.args = {
       fontFamily: 'sbl-hebrew',
     },
     hasGloss: false,
-    words: mockHebrewWords
+    words: mockHebrewWords,
   } as unknown as Corpus,
 } as VerseDisplayProps;

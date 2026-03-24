@@ -1,3 +1,7 @@
+/**
+ * This file contains the CorpusComponent which is used in the Alignment editor
+ * to display the current verse and related functionality/context
+ */
 import React, {
   ReactElement,
   useCallback,
@@ -9,7 +13,7 @@ import React, {
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer, Verse } from 'structs';
+import { CorpusContainer, NamedContainers, Verse } from 'structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { VerseDisplay } from './verseDisplay';
 import {
@@ -18,15 +22,15 @@ import {
   findPreviousNavigableVerse,
   getReferenceListFromWords,
 } from '../bcvNavigation/structs';
+import { AlignmentSide } from '../../common/data/project/corpus';
+import { WordDisplayVariant } from '../wordDisplay';
 
 export interface CorpusProps {
   viewCorpora: CorpusContainer;
   viewportIndex: number;
   position: BCVWP | null;
-  containers: {
-    source?: CorpusContainer,
-    target?: CorpusContainer
-  }
+  containers: NamedContainers;
+  setChangedVisibleVerses?: (verses: Verse[], corpus: CorpusContainer) => void;
 }
 
 const determineCorpusView = (
@@ -34,21 +38,21 @@ const determineCorpusView = (
   verses: Verse[],
   bcvId: BCVWP | null
 ) => {
-  const corpus = bcvId ? viewCorpora.corpusAtReferenceString(bcvId.toReferenceString()) : undefined;
-  if (!corpus) return <></>;
   return verses.map((verse) => {
-    const languageInfo = viewCorpora.languageAtReferenceString(verse.bcvId.toReferenceString());
+    const languageInfo = viewCorpora.languageAtReferenceString(
+      verse.bcvId.toReferenceString()
+    );
     return (
       <Grid
         container
-        key={`${corpus.id}/${verse.bcvId.toReferenceString()}`}
+        key={`${viewCorpora.id}/${verse.bcvId.toReferenceString()}`}
         sx={{ marginRight: '.7em' }}
       >
         <Grid item xs={1} sx={{ p: '1px' }}>
           <Typography
             sx={
               bcvId?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
-                ? { textDecoration: 'underline', fontStyle: 'italic' }
+                ? { fontStyle: 'italic' }
                 : {}
             }
           >
@@ -77,7 +81,13 @@ const determineCorpusView = (
                 paddingRight: '0.7rem',
               }}
             >
-              <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())} verse={verse} allowGloss />
+              <VerseDisplay
+                corpus={viewCorpora.corpusAtReferenceString(
+                  verse.bcvId.toReferenceString()
+                )}
+                verse={verse}
+                variant={WordDisplayVariant.BUTTON}
+              />
             </Typography>
           </Grid>
         </Grid>
@@ -86,49 +96,52 @@ const determineCorpusView = (
   });
 };
 
-export const CorpusComponent = (props: CorpusProps): ReactElement => {
-  const textContainerRef = useRef<HTMLDivElement | null>(null);
-  const { viewCorpora, containers } = props;
-  useDebug('TextComponent');
+export const CorpusComponent = ({
+  containers,
+  position,
+  viewCorpora,
+  setChangedVisibleVerses,
+}: CorpusProps): ReactElement => {
+  useDebug('Corpus');
 
+  const textContainerRef = useRef<HTMLDivElement | null>(null);
+  const [verseElement, setVerseElement] = useState<JSX.Element[]>();
   const computedPosition = useMemo(() => {
-    if (viewCorpora.id === 'target') {
-      return props.position ?? null;
+    if (viewCorpora.id === AlignmentSide.TARGET) {
+      return position ?? null;
     }
     // displaying source
-    if (!props.position || !containers.target) return null;
-    const verseString = containers.target.verseByReference(props.position)?.sourceVerse;
-    if (verseString) return BCVWP.parseFromString(verseString);
-    return props.position;
-  }, [viewCorpora.id, props.position, containers.target]);
-
-  const verseAtPosition: Verse | undefined = useMemo(
+    if (!position || !containers.targets) return null;
+    const verseString =
+      containers.targets.verseByReference(position)?.sourceVerse;
+    if ((verseString ?? '').trim().length)
+      return BCVWP.parseFromString(verseString!);
+    return position;
+  }, [viewCorpora.id, position, containers]);
+  const computedVerse: Verse | undefined = useMemo(
     () =>
       computedPosition
         ? viewCorpora.verseByReference(computedPosition)
         : undefined,
     [computedPosition, viewCorpora]
   );
-
   const initialVerses = useMemo(() => {
-    if (!computedPosition || !viewCorpora) return [];
-    const verse = viewCorpora.verseByReference(computedPosition);
-    if (!verse) return [];
-    return [verse].filter((v) => v);
-  }, [viewCorpora, computedPosition]);
-
+    return [computedVerse].filter(Boolean) as Verse[];
+  }, [computedVerse]);
   const [visibleVerses, setVisibleVerses] = useState<Verse[]>(initialVerses);
   const verseKeys = useMemo(
     () =>
       viewCorpora.corpora
-        .flatMap((corpus) => Object.keys(corpus.wordsByVerse))
+        .flatMap((viewCorpus) => Object.keys(viewCorpus.wordsByVerse))
         .sort(),
     [viewCorpora.corpora]
   );
-
   useEffect(() => {
     setVisibleVerses(initialVerses);
   }, [initialVerses]);
+  useEffect(() => {
+    setChangedVisibleVerses?.(visibleVerses, viewCorpora);
+  }, [setChangedVisibleVerses, viewCorpora, visibleVerses]);
 
   const addBcvId = useCallback(() => {
     const firstExistingRef = visibleVerses?.at(0)?.bcvId ?? computedPosition;
@@ -173,25 +186,27 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     setVisibleVerses(updatedVerses);
   }, [visibleVerses, viewCorpora, computedPosition]);
 
-  const removeBcvId = useCallback(() => {
-    setVisibleVerses((verses) => {
-      if (verses.length < 1 || !computedPosition) {
-        return verses;
-      }
-      return verses.slice(
-        computedPosition?.matchesTruncated(verses[0]?.bcvId, BCVWPField.Verse)
-          ? 0
-          : 1,
-        verses.length === 1 ||
-          computedPosition?.matchesTruncated(
-            verses[verses.length - 1]?.bcvId,
-            BCVWPField.Verse
-          )
-          ? verses.length
-          : -1
-      );
-    });
-  }, [computedPosition]);
+  const removeBcvId = useCallback(
+    () =>
+      setVisibleVerses((verses) => {
+        if (verses.length < 1 || !computedPosition) {
+          return verses;
+        }
+        return verses.slice(
+          computedPosition?.matchesTruncated(verses[0]?.bcvId, BCVWPField.Verse)
+            ? 0
+            : 1,
+          verses.length === 1 ||
+            computedPosition?.matchesTruncated(
+              verses[verses.length - 1]?.bcvId,
+              BCVWPField.Verse
+            )
+            ? verses.length
+            : -1
+        );
+      }),
+    [computedPosition]
+  );
 
   const corpusActionEnableState = useMemo(() => {
     const firstBcvId = viewCorpora.verseByReferenceString(
@@ -209,6 +224,11 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     const showAdd = !firstBcvId && !lastBcvId ? 'add' : null;
     return visibleVerses.length <= 1 ? 'remove' : showAdd;
   }, [viewCorpora, visibleVerses, verseKeys]);
+  useEffect(() => {
+    setVerseElement(
+      determineCorpusView(viewCorpora, visibleVerses, computedPosition)
+    );
+  }, [computedPosition, viewCorpora, visibleVerses, computedVerse]);
 
   if (!viewCorpora) {
     return <Typography>Empty State</Typography>;
@@ -241,7 +261,11 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           sx={{ flex: 1 }}
         >
           <Typography variant="h6" sx={{ mr: 1 }}>
-            {computedPosition ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name : ''}
+            {computedPosition
+              ? viewCorpora.corpusAtReferenceString(
+                  computedPosition.toReferenceString()
+                )?.name
+              : ''}
           </Typography>
 
           <Tooltip
@@ -249,18 +273,24 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
               <>
                 <Typography variant="h6">
                   {computedPosition
-                    ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.fullName
+                    ? viewCorpora.corpusAtReferenceString(
+                        computedPosition.toReferenceString()
+                      )?.fullName
                     : ''}
                 </Typography>
                 <Typography>
                   {computedPosition
-                    ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name
+                    ? viewCorpora.corpusAtReferenceString(
+                        computedPosition.toReferenceString()
+                      )?.name
                     : ''}
                 </Typography>
                 <Typography>
                   Language:{' '}
                   {computedPosition
-                    ? viewCorpora.languageAtReferenceString(computedPosition.toReferenceString())?.code
+                    ? viewCorpora.languageAtReferenceString(
+                        computedPosition.toReferenceString()
+                      )?.code
                     : ''}
                 </Typography>
               </>
@@ -276,8 +306,8 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         container
         sx={{ pl: 4, flex: 8, overflow: 'auto' }}
       >
-        {verseAtPosition || visibleVerses.length > 0 ? (
-          determineCorpusView(viewCorpora, visibleVerses, computedPosition)
+        {(verseElement?.length ?? 0) > 0 ? (
+          verseElement
         ) : (
           <Typography>No verse data for this reference.</Typography>
         )}
@@ -296,25 +326,23 @@ const CorpusAction: React.FC<CorpusActionProps> = ({
   add,
   remove,
   disabled,
-}) => {
-  return (
-    <Grid container>
-      <Tooltip title="Show the next verses">
-        <span>
-          <IconButton onClick={add} disabled={disabled === 'add'}>
-            <Add sx={{ fontSize: 18 }} />
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip title="Remove the outer verses">
-        <span>
-          <IconButton onClick={remove} disabled={disabled === 'remove'}>
-            <Remove sx={{ fontSize: 18 }} />
-          </IconButton>
-        </span>
-      </Tooltip>
-    </Grid>
-  );
-};
+}) => (
+  <Grid container>
+    <Tooltip title="Show the next verses" placement="left">
+      <span>
+        <IconButton onClick={add} disabled={disabled === 'add'}>
+          <Add sx={{ fontSize: 18 }} />
+        </IconButton>
+      </span>
+    </Tooltip>
+    <Tooltip title="Remove the outer verses" placement="right">
+      <span>
+        <IconButton onClick={remove} disabled={disabled === 'remove'}>
+          <Remove sx={{ fontSize: 18 }} />
+        </IconButton>
+      </span>
+    </Tooltip>
+  </Grid>
+);
 
 export default CorpusComponent;

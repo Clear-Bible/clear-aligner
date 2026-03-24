@@ -1,7 +1,11 @@
-import { Link } from 'structs';
+/**
+ * This file contains the generateLinkId helper function, which is not currently
+ * used.
+ */
+import { RepositoryLink } from 'structs';
 
 // Generate a new link ID for a given Link[].
-const generateLinkId = (links: Link[]): number => {
+const generateLinkId = (links: RepositoryLink[]): number => {
   try {
     const linkIds = links
       .map((link) => {

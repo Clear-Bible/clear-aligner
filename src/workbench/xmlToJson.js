@@ -1,3 +1,6 @@
+/**
+ * This file exports the convert function used to convert xml to JSON.
+ */
 import parseXml from '@rgrove/parse-xml';
 
 let attrsToKeep = [];

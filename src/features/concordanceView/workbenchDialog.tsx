@@ -1,10 +1,15 @@
+/**
+ * This file contains the WorkBenchDialog which is a Modal/Dialog that wraps the
+ * AlignmentEditor component for usage inside ConcordanceView
+ */
 import React from 'react';
 import { AppContext } from '../../App';
-import { Dialog, DialogTitle, DialogContent, Grid, IconButton, Typography } from '@mui/material';
+import { Dialog, DialogContent, IconButton } from '@mui/material';
 import { AlignmentEditor } from '../alignmentEditor/alignmentEditor';
-import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { Close } from '@mui/icons-material';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { UserPreference } from 'state/preferences/tableManager';
+import { LinksTable } from '../../state/links/tableManager';
 
 interface WorkbenchDialogProps {
   alignment: BCVWP | null;
@@ -12,41 +17,70 @@ interface WorkbenchDialogProps {
   updateAlignments: (resetState: boolean) => void;
 }
 
-const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({alignment, setAlignment, updateAlignments}) => {
-  const appCtx = React.useContext(AppContext);
-  const initialUpdateTime = React.useMemo(() => (
-    appCtx.appState.currentProject?.linksTable?.lastUpdate
+const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({
+  alignment,
+  setAlignment,
+  updateAlignments,
+}) => {
+  const { projectState, setPreferences } = React.useContext(AppContext);
+  const initialUpdateTime = React.useMemo(
+    () => LinksTable.getLatestLastUpdateTime(),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [alignment]);
+    [alignment]
+  );
 
   const handleClose = React.useCallback(() => {
-    updateAlignments(initialUpdateTime !== appCtx.appState.currentProject?.linksTable?.lastUpdate);
+    updateAlignments(
+      initialUpdateTime !== LinksTable.getLatestLastUpdateTime()
+    );
     setAlignment(null);
-  }, [initialUpdateTime, appCtx.appState.currentProject?.linksTable?.lastUpdate, updateAlignments, setAlignment]);
+  }, [initialUpdateTime, updateAlignments, setAlignment]);
 
   React.useEffect(() => {
-    if(alignment) {
-      appCtx.setCurrentReference(alignment);
+    if (alignment) {
+      setPreferences((p: UserPreference | undefined) => ({
+        ...((p ?? {}) as UserPreference),
+        bcv: alignment,
+      }));
     }
-  }, [appCtx, alignment]);
+  }, [projectState.userPreferenceTable, alignment, setPreferences]);
 
   return (
-    <Dialog maxWidth="lg" open={!!alignment} onClose={handleClose}>
-      <DialogTitle>
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">
-            <BCVDisplay currentPosition={alignment} />
-          </Typography>
-          <IconButton onClick={handleClose}>
-            <Close />
-          </IconButton>
-        </Grid>
-      </DialogTitle>
-      <DialogContent sx={{height: '100%', width: '100%'}}>
-        <AlignmentEditor showNavigation={false} />
+    <Dialog
+      maxWidth="lg"
+      open={!!alignment}
+      fullWidth
+      disableEscapeKeyDown={true}
+    >
+      <DialogContent
+        sx={{
+          height: '80vh',
+          width: '100%',
+          pb: 0,
+          pt: 1,
+        }}
+      >
+        <AlignmentEditor
+          showNavigation={false}
+          showProfileAvatar={false}
+          usePaddingForEditorContainer={false}
+          useZeroYPaddingForToolbar={true}
+          actions={{
+            onClose: (
+              <IconButton onClick={handleClose} sx={{ zIndex: 20 }}>
+                <Close />
+              </IconButton>
+            ),
+          }}
+          styles={{
+            contextPanel: {
+              height: '15rem',
+            },
+          }}
+        />
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
 export default WorkbenchDialog;

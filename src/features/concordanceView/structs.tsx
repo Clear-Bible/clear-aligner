@@ -1,17 +1,18 @@
-import { AlignmentSide, LanguageInfo, Link, Word } from '../../structs';
-import BCVWP from '../bcvwp/BCVWPSupport';
+/**
+ * This file contains a collection of interfaces to support the
+ * ConcordanceView component
+ */
+import { LanguageInfo, RepositoryLink, Word } from '../../structs';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 /**
  * represents rows displayed in the pivot word table in the concordance view
  */
 export interface PivotWord {
-  instances: BCVWP[]; // instances of this pivot word appearing in the text
-  normalizedText: string; // normalized text of the pivot word being representeda
+  word: string; // normalized text of the pivot word being represented
   side: AlignmentSide;
-  languageInfo?: LanguageInfo;
-  alignedWords?: AlignedWord[];
-  alignmentLinks?: Link[];
-  hasAlignmentLinks?: boolean;
+  frequency: number;
+  languageInfo: LanguageInfo;
 }
 
 /**
@@ -19,7 +20,6 @@ export interface PivotWord {
  */
 export interface LocalizedWordEntry {
   text: string; // actual text of the word
-  position: string; // BCVWP string
   languageInfo?: LanguageInfo;
 }
 
@@ -29,12 +29,9 @@ export interface LocalizedWordEntry {
 export interface AlignedWord {
   id: string;
   frequency: number;
-  sourceTextId: string;
-  targetTextId: string;
-  sourceWordTexts: LocalizedWordEntry[];
-  targetWordTexts: LocalizedWordEntry[];
+  sourceWordTexts: LocalizedWordEntry;
+  targetWordTexts: LocalizedWordEntry;
   gloss?: string[] | null;
-  alignments?: Link[];
 }
 
 /**
@@ -49,7 +46,7 @@ export interface ResolvedWordEntry {
  * a Link hydrated with enough information that no additional lookups should be required to display or otherwise work
  * with this Link in the code
  */
-export interface FullyResolvedLink extends Link {
+export interface FullyResolvedLink extends RepositoryLink {
   sourceResolvedWords: Set<ResolvedWordEntry>;
   targetResolvedWords: Set<ResolvedWordEntry>;
 }

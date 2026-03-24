@@ -1,3 +1,6 @@
+/**
+ * This file combines the various reducers into a single combinedReducer object
+ */
 import undoable from 'redux-undo';
 
 import AppReducer from 'state/app.slice';

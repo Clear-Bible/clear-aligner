@@ -1,3 +1,6 @@
+/**
+ * This file contains the NewFeatureComponent.
+ */
 import { ReactElement, Fragment } from 'react';
 
 export const NewFeatureComponent = (): ReactElement => {

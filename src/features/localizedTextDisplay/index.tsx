@@ -1,7 +1,11 @@
+/**
+ * This file contains the LocalizedTextDisplay component, used throughout the UI
+ * to render localized text.
+ */
 import { LanguageInfo } from '../../structs';
 import { Typography } from '@mui/material';
-import { PropsWithChildren } from 'react';
 import * as React from 'react';
+import { PropsWithChildren } from 'react';
 
 export interface LocalizedTextDisplayProps
   extends React.ComponentProps<typeof Typography> {
@@ -22,12 +26,13 @@ export const LocalizedTextDisplay = ({
   return (
     <Typography
       component={'span'}
+      noWrap={true}
       {...typographyProps}
-      sx={theme => ({
+      sx={(theme) => ({
         ...(languageInfo?.fontFamily
           ? { fontFamily: languageInfo?.fontFamily }
           : {}),
-        ...((typographyProps.sx as CallableFunction | undefined)?.(theme) ?? {})
+        ...((typographyProps as any).sx ?? {}),
       })}
     >
       {children}

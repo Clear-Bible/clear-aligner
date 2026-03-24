@@ -1,3 +1,6 @@
+/**
+ * This file contains the CorpusSettingComponent which is not currently used.
+ */
 import { useState } from 'react';
 import {
   Typography,

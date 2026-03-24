@@ -1,11 +1,15 @@
+/**
+ * This file contains the logic to use the PivotWordTable component
+ * in Storybook
+ */
 import { Meta } from '@storybook/react';
 import { PivotWordTable, PivotWordTableProps } from './pivotWordTable';
 import { useState } from 'react';
 import { PivotWord } from './structs';
 import { Paper } from '@mui/material';
 import { GridSortItem } from '@mui/x-data-grid';
-import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
-import { AlignmentSide } from '../../structs';
+import { TextDirection } from '../../structs';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const meta: Meta<typeof PivotWordTable> = {
   title: 'Concordance View/PivotWordTable',
@@ -16,94 +20,67 @@ export default meta;
 
 const pivotWords: PivotWord[] = [
   {
-    instances: [],
     side: AlignmentSide.TARGET,
-    normalizedText: 'the',
-    alignedWords: [
-      {
-        id: 'the',
-        frequency: 73_611,
-        sourceTextId: 'srcId',
-        targetTextId: 'tgtId',
-        sourceWordTexts: [
-          {
-            text: 'the',
-            position: BCVWP.parseFromString(
-              '010010010011'
-            ).toTruncatedReferenceString(BCVWPField.Word),
-          },
-        ],
-        targetWordTexts: [
-          {
-            text: 'der',
-            position: BCVWP.parseFromString(
-              '010010010011'
-            ).toTruncatedReferenceString(BCVWPField.Word),
-          },
-        ],
-        alignments: [],
-      },
-    ],
+    word: 'the',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR,
+    },
+    frequency: 1,
   },
   {
-    instances: [],
     side: AlignmentSide.TARGET,
-    normalizedText: 'and',
-    alignedWords: [
-      {
-        id: 'and',
-        frequency: 60_382,
-        sourceTextId: 'srcId',
-        targetTextId: 'tgtId',
-        sourceWordTexts: [
-          {
-            text: 'and',
-            position: BCVWP.parseFromString(
-              '010010010011'
-            ).toTruncatedReferenceString(BCVWPField.Word),
-          },
-        ],
-        targetWordTexts: [
-          {
-            text: 'und',
-            position: BCVWP.parseFromString(
-              '010010010011'
-            ).toTruncatedReferenceString(BCVWPField.Word),
-          },
-        ],
-        alignments: [],
-      },
-    ],
+    word: 'and',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR,
+    },
+    frequency: 1,
   },
   {
-    instances: [],
     side: AlignmentSide.TARGET,
-    normalizedText: 'of',
-    alignedWords: [],
+    word: 'of',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR,
+    },
+    frequency: 1,
   },
   {
-    instances: [],
     side: AlignmentSide.TARGET,
-    normalizedText: 'to',
-    alignedWords: [],
+    word: 'to',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR,
+    },
+    frequency: 1,
   },
   {
-    instances: [],
     side: AlignmentSide.TARGET,
-    normalizedText: 'thus',
-    alignedWords: [],
+    word: 'thus',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR,
+    },
+    frequency: 1,
   },
   {
-    instances: [],
     side: AlignmentSide.TARGET,
-    normalizedText: 'so',
-    alignedWords: [],
+    word: 'so',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR,
+    },
+    frequency: 1,
   },
   {
-    instances: [],
     side: AlignmentSide.TARGET,
-    normalizedText: 'as',
-    alignedWords: [],
+    word: 'as',
+    languageInfo: {
+      code: 'eng',
+      textDirection: TextDirection.LTR,
+    },
+    frequency: 1,
   },
 ];
 

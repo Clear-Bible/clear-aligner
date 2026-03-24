@@ -1,3 +1,7 @@
+/**
+ * This file contains the AlignedWordTable component which is the second table
+ * in the concordanceView component
+ */
 import {
   DataGrid,
   GridColDef,
@@ -9,54 +13,39 @@ import { AlignedWord, LocalizedWordEntry, PivotWord } from './structs';
 import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import {
+  DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
-  DataGridSetMinRowHeightToDefault
+  DataGridSetMinRowHeightToDefault,
+  DataGridTripleIconMarginFix,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
-import { groupLocalizedPartsByWord } from '../../helpers/groupPartsIntoWords';
-import BCVWP from '../bcvwp/BCVWPSupport';
 import { TextDirection } from '../../structs';
 import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
 import { Box } from '@mui/system';
-
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
  * @param words words to be rendered
  */
-const renderWords = (words: LocalizedWordEntry[]) => {
-  const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
-  const partsByWord = groupLocalizedPartsByWord(
-    words.sort((a, b) =>
-      BCVWP.compare(
-        BCVWP.parseFromString(a.position),
-        BCVWP.parseFromString(b.position)
-      )
-    )
-  );
+const renderWords = (words: LocalizedWordEntry) => {
+  const { languageInfo } = words;
   return (
     <span
       style={{
         ...(languageInfo?.textDirection === TextDirection.RTL
           ? { direction: languageInfo.textDirection! }
           : {}),
-        width: '100%'
+        width: '100%',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
     >
-      {partsByWord?.map((word, idx) => (
-        <React.Fragment key={idx}>
-          {word.map((wordPart, wordPartIndex) => (
-            <LocalizedTextDisplay
-              key={wordPartIndex}
-              languageInfo={wordPart.languageInfo}
-            >
-              {wordPart.text}
-            </LocalizedTextDisplay>
-          ))}
-          {words.length - 1 !== idx && ' '}
-        </React.Fragment>
-      ))}
+      <React.Fragment>
+        <LocalizedTextDisplay languageInfo={languageInfo}>
+          {words.text}
+        </LocalizedTextDisplay>
+      </React.Fragment>
     </span>
   );
 };
@@ -64,8 +53,9 @@ const renderWords = (words: LocalizedWordEntry[]) => {
 const columns: GridColDef[] = [
   {
     field: 'frequency',
-    headerName: 'Frequency',
+    headerName: 'Freq.',
     flex: 1,
+    maxWidth: 90,
   },
   {
     field: 'sourceWordTexts',
@@ -94,12 +84,16 @@ const columnsWithGloss: GridColDef[] = [
   },
 ];
 
+/**
+ * Props for the AlignedWordTable component
+ */
 export interface AlignedWordTableProps {
   sort: GridSortItem | null;
   pivotWord?: PivotWord;
   chosenAlignedWord?: AlignedWord | null;
   onChooseAlignedWord: (alignedWord: AlignedWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
+  lemmaToggled: boolean;
 }
 
 /**
@@ -116,13 +110,19 @@ export const AlignedWordTable = ({
   chosenAlignedWord,
   onChooseAlignedWord,
   onChangeSort,
+  lemmaToggled,
 }: AlignedWordTableProps) => {
-  const alignedWords = useAlignedWordsFromPivotWord(pivotWord);
+  const alignedWords = useAlignedWordsFromPivotWord(
+    pivotWord,
+    sort,
+    lemmaToggled
+  );
 
   const loading: boolean = useMemo(
     () => !!pivotWord && !alignedWords,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  [pivotWord, alignedWords, alignedWords?.length]);
+    [pivotWord, alignedWords, alignedWords?.length]
+  );
 
   const hasGlossData = useMemo(
     () => {
@@ -145,12 +145,14 @@ export const AlignedWordTable = ({
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
-        <CircularProgress sx={{
-          display: 'flex',
-          '.MuiLinearProgress-bar': {
-            transition: 'none'
-          },
-        }} />
+        <CircularProgress
+          sx={{
+            display: 'flex',
+            '.MuiLinearProgress-bar': {
+              transition: 'none',
+            },
+          }}
+        />
       </Box>
     );
   }
@@ -175,6 +177,8 @@ export const AlignedWordTable = ({
             ...DataGridSetMinRowHeightToDefault,
             ...DataGridScrollbarDisplayFix,
             ...DataGridResizeAnimationFixes,
+            ...DataGridTripleIconMarginFix,
+            ...DataGridOutlineFix,
           }}
           rowSelection={true}
           rowSelectionModel={
@@ -195,18 +199,13 @@ export const AlignedWordTable = ({
               paginationModel: { page: initialPage, pageSize: 20 },
             },
           }}
-          pageSizeOptions={[20, 50]}
-          onRowClick={(clickEvent: GridRowParams<AlignedWord>) => {
-            if (onChooseAlignedWord) {
-              onChooseAlignedWord(clickEvent.row);
-            }
-          }}
-          isRowSelectable={({
-            row: { alignments },
-          }: GridRowParams<AlignedWord>) =>
-            !!alignments && (alignments?.length || 0) > 0
+          pageSizeOptions={[20]}
+          onRowClick={(clickEvent: GridRowParams<AlignedWord>) =>
+            onChooseAlignedWord?.(clickEvent.row)
           }
+          isRowSelectable={(_: GridRowParams<AlignedWord>) => true}
           getRowHeight={() => 'auto'}
+          hideFooterSelectedRowCount={true}
         />
       )}
     </TableContainer>

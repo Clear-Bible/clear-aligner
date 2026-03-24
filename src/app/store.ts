@@ -1,3 +1,6 @@
+/**
+ * This file creates a Redux store based on the combinedReducer object
+ */
 import { configureStore } from '@reduxjs/toolkit';
 import combinedReducer from 'app/combinedReducer';
 

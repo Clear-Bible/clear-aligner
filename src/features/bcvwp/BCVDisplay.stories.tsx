@@ -1,3 +1,7 @@
+/**
+ * This file contains the logic to use the BCVDisplay component in Storybook
+ */
+
 import React from 'react';
 import { Meta } from '@storybook/react';
 import { BCVDisplay, BCVDisplayProps } from './BCVDisplay';

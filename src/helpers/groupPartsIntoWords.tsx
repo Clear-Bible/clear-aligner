@@ -1,3 +1,7 @@
+/**
+ * This file contains the groupPartsIntoWords helper function that returns a
+ * two-dimensional array of word parts grouped by word.
+ */
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { Word } from '../structs';
 import { LocalizedWordEntry } from '../features/concordanceView/structs';
@@ -42,20 +46,5 @@ export const groupPartsIntoWords = <T extends Word>(words: T[]): T[][] =>
       (accumulator, currentValue) =>
         groupingReducer(accumulator, currentValue, (part: T) => part.id),
       [] as T[][]
-    )
-    .filter((value) => value.length >= 1);
-
-export const groupLocalizedPartsByWord = (
-  words: LocalizedWordEntry[]
-): LocalizedWordEntry[][] =>
-  words
-    .reduce(
-      (accumulator, currentValue) =>
-        groupingReducer(
-          accumulator,
-          currentValue,
-          (part: LocalizedWordEntry) => part.position
-        ),
-      [] as LocalizedWordEntry[][]
     )
     .filter((value) => value.length >= 1);

@@ -1,13 +1,16 @@
+/**
+ * This file contains the LinkBuilder Component which is used in the
+ * Alignment Editor mode.
+ */
 import React, { ReactElement, useMemo } from 'react';
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
-
-import { CorpusContainer, Word } from 'structs';
+import { CorpusContainer, TextDirection, Word } from 'structs';
 import findWordById from 'helpers/findWord';
-
 import cssVar from 'styles/cssVar';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../common/data/project/corpus';
 import { WordDisplay } from '../wordDisplay';
 
 interface LinkBuilderProps {
@@ -20,13 +23,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
   useDebug('LinkBuilderComponent');
 
   const sourceContainer = useMemo(
-    () => containers.find(({ id }) => id === 'source')!,
+    () => containers.find(({ id }) => id === AlignmentSide.SOURCE)!,
     // reference to `containers` doesn't change, but the length does
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]
   );
   const targetContainer = useMemo(
-    () => containers.find(({ id }) => id === 'target')!,
+    () => containers.find(({ id }) => id === AlignmentSide.TARGET)!,
     // reference to `containers` doesn't change, but the length does
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]
@@ -46,7 +49,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             BCVWP.parseFromString(sourceId)
           );
         })
-        .filter((x): x is Word => x !== null);
+        .filter((x): x is Word => !!x);
 
       const targetWords: Word[] = inProgressLink.targets
         .map((targetId) => {
@@ -58,11 +61,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             BCVWP.parseFromString(targetId)
           );
         })
-        .filter((x): x is Word => x !== null);
+        .filter((x): x is Word => !!x);
 
       return {
-        source: sourceWords ?? [],
-        target: targetWords ?? [],
+        sources: sourceWords ?? [],
+        targets: targetWords ?? [],
       } as Record<string, Word[]>;
     }
     return {};
@@ -72,7 +75,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
     return state.app.theme;
   });
 
-  if (!Object.keys(selectedWords).length) {
+  if (!selectedWords?.sources?.length && !selectedWords?.targets?.length) {
     return (
       <>
         <div
@@ -118,12 +121,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
 
           const selectedPartsForText = selectedWords[textId];
           const sortedSelectedPartsForText = selectedPartsForText.sort(
-            (a: Word, b: Word) => {
-              if (a.position === b.position) {
-                return a.id > b.id ? 1 : -1;
-              }
-              return a.position > b.position ? 1 : -1;
-            }
+            (a: Word, b: Word) =>
+              BCVWP.compare(
+                BCVWP.parseFromString(a.id),
+                BCVWP.parseFromString(b.id)
+              )
           );
           const partsAsWords: Word[][] = [];
           sortedSelectedPartsForText.forEach((part) => {
@@ -145,18 +147,18 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             }
           });
 
-        const wordInDisplayGroup = partsAsWords
-          .find(({ length }) => length > 0)
-          ?.find((word) => word.id);
-        const corpusAtRef = wordInDisplayGroup
-          ? container?.corpusAtReferenceString(wordInDisplayGroup.id)
-          : undefined;
+          const wordInDisplayGroup = partsAsWords
+            .find(({ length }) => length > 0)
+            ?.find((word) => word.id);
+          const corpusAtRef = wordInDisplayGroup
+            ? container?.corpusAtReferenceString(wordInDisplayGroup.id)
+            : undefined;
 
-          if (!corpusAtRef?.name) return <div key={index} />;
+          const corpus = (container.corpora || [])[0];
 
           return (
             <div
-              key={`linkBuilder_${corpusAtRef?.name}`}
+              key={`linkBuilder_${corpus?.name}`}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -168,43 +170,58 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
               }}
             >
               <Typography variant="h6" style={{ textAlign: 'right' }}>
-                {corpusAtRef?.name}
+                {corpus?.name}
               </Typography>
               <div style={{ marginBottom: '8px' }}>
                 <Divider />
               </div>
-              <div>
+              <div
+                style={{
+                  direction: corpus.language.textDirection ?? TextDirection.LTR,
+                }}
+              >
                 <span>&nbsp;</span>
-                {partsAsWords
-                  .filter((word) => word.length > 0)
-                  .map((selectedWord, index: number): ReactElement => {
+                {partsAsWords.map(
+                  (selectedWord, index: number): ReactElement => {
+                    const lastWord =
+                      index > 0 ? partsAsWords.at(index - 1) : undefined;
+                    const lastWordId = lastWord
+                      ? BCVWP.parseFromString(lastWord.at(0)!.id!)
+                      : undefined;
                     const wordId = BCVWP.parseFromString(
                       selectedWord.at(0)!.id
                     ).toTruncatedReferenceString(BCVWPField.Word);
-                    let nextIsSequential: boolean = true;
-                    const next = partsAsWords[index + 1];
-                    if (next) {
-                      const sequenceDiff =
-                        next.at(0)!.position - selectedWord.at(0)!.position;
-                      if (sequenceDiff > 1) {
-                        nextIsSequential = false;
-                      }
-                    }
                     return (
-                      <span key={`selected_${wordId}`}>
+                      <span
+                        id={`selected_${wordId}`}
+                        key={`selected_${wordId}`}
+                      >
+                        {lastWordId &&
+                        container
+                          .findNext(lastWordId, BCVWPField.Word)
+                          ?.toTruncatedReferenceString(BCVWPField.Word) !==
+                          wordId ? (
+                          <span
+                            id={`selected_${lastWordId}_ellipsis`}
+                            key={`selected_${lastWordId}_ellipsis`}
+                          >
+                            ...{' '}
+                          </span>
+                        ) : (
+                          ''
+                        )}
                         <WordDisplay
+                          suppressAfter={true}
                           readonly={true}
                           key={wordId}
                           parts={selectedWord}
                           corpus={corpusAtRef}
+                          disableHighlighting
                         />
-
-                        {!nextIsSequential ? (
-                          <span key={`selected_${wordId}_ellipsis`}>... </span>
-                        ) : null}
                       </span>
                     );
-                  })}
+                  }
+                )}
               </div>
               <div style={{ marginTop: '8px' }}>
                 <Divider />

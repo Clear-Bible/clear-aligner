@@ -1,3 +1,6 @@
+/**
+ * This file contains the styling for the TextSegment component.
+ */
 .text-segment {
   cursor: pointer;
 }
@@ -17,6 +20,4 @@
 }
 
 .text-segment.related {
-  -webkit-text-stroke: 1px black;
-  background-color: yellow;
 }

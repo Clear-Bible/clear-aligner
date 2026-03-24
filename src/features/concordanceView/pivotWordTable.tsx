@@ -1,3 +1,7 @@
+/**
+ * This file contains the PivotWordTable component which is the first table
+ * in the ConcordanceView component
+ */
 import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import { PivotWord } from './structs';
@@ -11,44 +15,47 @@ import {
   GridValueGetterParams,
 } from '@mui/x-data-grid';
 import {
+  DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
+  DataGridTripleIconMarginFix,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
-import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
 import { TextDirection } from '../../structs';
 
 interface PivotWordTextCellProps {
   pivotWord: PivotWord;
 }
+
 const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _alignedWords = useAlignedWordsFromPivotWord(pivotWord);
   return (
     <span
-      key={pivotWord.normalizedText}
+      key={pivotWord.word}
       style={{
         ...(pivotWord.languageInfo?.textDirection === TextDirection.RTL
           ? { direction: pivotWord.languageInfo.textDirection! }
           : {}),
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
     >
       <LocalizedTextDisplay languageInfo={pivotWord.languageInfo}>
-        {pivotWord.normalizedText}
+        {pivotWord.word}
       </LocalizedTextDisplay>
-    </span>);
-}
+    </span>
+  );
+};
 
 const columns: GridColDef[] = [
   {
-    field: 'instances.length',
-    headerName: 'Frequency',
+    field: 'frequency',
+    headerName: 'Freq.',
     flex: 1,
-    valueGetter: (row: GridValueGetterParams<PivotWord>) =>
-      row.row.instances.length,
+    maxWidth: 90,
+    valueGetter: (row: GridValueGetterParams<PivotWord>) => row.row.frequency,
   },
   {
-    field: 'normalizedText',
+    field: 'word',
     headerName: 'Pivot Word',
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
@@ -57,6 +64,9 @@ const columns: GridColDef[] = [
   },
 ];
 
+/**
+ * props for the PivotWordTable
+ */
 export interface PivotWordTableProps {
   loading?: boolean;
   sort: GridSortItem | null;
@@ -93,12 +103,14 @@ export const PivotWordTable = ({
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
-        <CircularProgress sx={{
-          margin: 'auto',
-          '.MuiLinearProgress-bar': {
-            transition: 'none'
-          },
-        }} />
+        <CircularProgress
+          sx={{
+            margin: 'auto',
+            '.MuiLinearProgress-bar': {
+              transition: 'none',
+            },
+          }}
+        />
       </Box>
     );
   }
@@ -117,14 +129,14 @@ export const PivotWordTable = ({
           width: '100%',
           ...DataGridScrollbarDisplayFix,
           ...DataGridResizeAnimationFixes,
+          ...DataGridTripleIconMarginFix,
+          ...DataGridOutlineFix,
         }}
         rowSelection={true}
-        rowSelectionModel={
-          chosenWord?.normalizedText ? [chosenWord.normalizedText] : undefined
-        }
+        rowSelectionModel={chosenWord?.word ? [chosenWord.word] : undefined}
         rows={pivotWords}
         columns={columns}
-        getRowId={(row) => row.normalizedText}
+        getRowId={(row) => row.word}
         sortModel={sort ? [sort] : []}
         onSortModelChange={(newSort) => {
           if (!newSort || newSort.length < 1) {
@@ -138,15 +150,14 @@ export const PivotWordTable = ({
           },
         }}
         pagination={true}
-        pageSizeOptions={[20, 50]}
+        pageSizeOptions={[20]}
         onRowClick={(clickEvent: GridRowParams<PivotWord>) => {
           if (onChooseWord) {
             onChooseWord(clickEvent.row);
           }
         }}
-        isRowSelectable={({
-          row: { hasAlignmentLinks },
-        }: GridRowParams<PivotWord>) => !!hasAlignmentLinks}
+        isRowSelectable={(_: GridRowParams<PivotWord>) => true}
+        hideFooterSelectedRowCount={true}
       />
     </TableContainer>
   );

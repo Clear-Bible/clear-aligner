@@ -1,3 +1,7 @@
+/**
+ * This file contains a collection of interfaces and helper functions to support navigation
+ */
+
 import { Word } from '../../structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { BookInfo } from '../../workbench/books';
@@ -169,8 +173,10 @@ export const findPreviousNavigableVerse = (
   }
 
   if (availableVerses) {
-    const selectedVerse = availableVerses.find(
-      (verse) => verse.reference === currentPosition.verse! - 1
+    const selectedVerse = availableVerses.toReversed().find(
+      (verse) =>
+        // catch the cases where previous verse number in sequence is missing
+        verse.reference < currentPosition.verse!
     );
     if (selectedVerse) {
       return new BCVWP(
@@ -226,18 +232,16 @@ export const findNextNavigableVerse = (
   if (
     !availableBooks ||
     !currentPosition ||
-    !currentPosition?.hasFields(
-      BCVWPField.Book,
-      BCVWPField.Chapter,
-      BCVWPField.Verse
-    )
+    !currentPosition?.hasUpToField(BCVWPField.Verse)
   ) {
     return null;
   }
 
   if (availableVerses) {
     const selectedVerse = availableVerses.find(
-      (verse) => verse.reference === currentPosition.verse! + 1
+      (verse) =>
+        // catch the cases where next verse number in sequence is missing
+        verse.reference > currentPosition.verse!
     );
     if (selectedVerse) {
       // if not the last verse in the chapter

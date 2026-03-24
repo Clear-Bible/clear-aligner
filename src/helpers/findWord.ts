@@ -1,3 +1,6 @@
+/**
+ * This file contains helper functions to find Words.
+ */
 import { Corpus, Word } from 'structs';
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 

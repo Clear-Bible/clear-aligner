@@ -1,3 +1,7 @@
+/**
+ * This file containers styling for the editor and configures the
+ * custom font-face styling.
+ */
 .editor-container {
   --night-background: black;
   --night-border-color: white;

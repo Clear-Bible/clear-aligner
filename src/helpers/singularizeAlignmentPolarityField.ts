@@ -1,3 +1,7 @@
+/**
+ * This file contains the singularizeAlignmentPolarityField helper function, which is not
+ * currently used.
+ */
 import { AlignmentPolarity } from 'structs';
 
 const singularizeField = (field: string): 'source' | 'target' => {

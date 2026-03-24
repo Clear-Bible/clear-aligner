@@ -1,3 +1,8 @@
+/**
+ * This file contains the logic to use the BCVNavigation component
+ * in Storybook
+ */
+
 import React, { useMemo, useState } from 'react';
 import BCVNavigation, { BCVNavigationProps } from './BCVNavigation';
 import { Meta } from '@storybook/react';
