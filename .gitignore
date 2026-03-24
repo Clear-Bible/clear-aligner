@@ -37,6 +37,11 @@ yarn-error.log*
 .idea
 
 /storybook-static
+docs/site
+
+
+# Local Netlify folder
+.netlify
 *.sqlite
 **/*.sqlite-shm
 **/*.sqlite-wal
